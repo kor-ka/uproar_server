@@ -71,9 +71,9 @@ def echo(bot):
                     return
                 file_path = result.get('file_path')
                 durl = 'https://api.telegram.org/file/bot304064430:AAGy50irNZ2tD1_jBO-8imca5_jhTHgI618/' + file_path
-                data = json.dumps({"track_url":durl, "chat_id":chat_id, "message_id":update.message.message_id})
+                reply = update.message.reply_text("added " + update.message.audio.title)
+                data = json.dumps({"track_url":durl, "chat_id":reply.chat_id, "message_id":reply.message_id})
                 client.publish("track_test", data.__str__())
-                update.message.reply_text("added " + update.message.audio.title)
 
         if update.callback_query:
             if str(update.callback_query.data) == "volume_down":
