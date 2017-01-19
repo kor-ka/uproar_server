@@ -107,6 +107,7 @@ def on_connect(client, userdata, flags, rc):
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
     client.subscribe("server_" + "test", 0)
+    client.subscribe("update_test", 0)
 
 
 def initMqtt():
