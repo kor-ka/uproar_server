@@ -98,7 +98,10 @@ def on_message(client, userdata, msg):
     elif msg.topic == 'update_test':
         if bott is not None:
             data = json.loads(str(msg.payload))
-            bott.editMessageText(data.get("message"), chat_id = data.get("chat_id"), message_id = data.get("message_id"))
+            try:
+                bott.editMessageText(data.get("message"), chat_id = data.get("chat_id"), message_id = data.get("message_id"))
+            except Exception as ex:
+                print ex
 
 
 # The callback for when the client receives a CONNACK response from the server.
