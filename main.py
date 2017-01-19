@@ -11,6 +11,7 @@ from time import sleep
 import paho.mqtt.client as mqtt
 import urllib
 import json
+from telegram import InlineKeyboardButton, CallbackQuery
 
 update_id = None
 
@@ -52,6 +53,11 @@ def echo(bot):
         # chat_id is required to reply to any message
         chat_id = update.message.chat_id
         update_id = update.update_id + 1
+        if update.callback_query:
+            if str(update.callback_query) == "volume_down":
+                client.publish("volume_test", 0)
+            elif str(update.callback_query) == "volume_up":
+                client.publish("volume_test", 1)
 
         if update.message:
             lastmessage = update.message
@@ -74,7 +80,9 @@ def on_message(client, userdata, msg):
         print(str(msg.payload))
         if (lastmessage is not None):
             print('have last message, forvard to to chat')
-            lastmessage.reply_text(str(msg.payload))
+            btn_down = InlineKeyboardButton('vol -', "volume_down")
+            btn_up = InlineKeyboardButton('vol +', "volume_up")
+            lastmessage.reply_text(str(msg.payload), btn_down, btn_up)
 
 
 # The callback for when the client receives a CONNACK response from the server.
