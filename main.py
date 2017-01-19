@@ -6,6 +6,8 @@
 # This program is dedicated to the public domain under the CC0 license.
 import logging
 import telegram
+from telegram import Bot
+from telegram import InlineKeyboardMarkup
 from telegram.error import NetworkError, Unauthorized
 from time import sleep
 import paho.mqtt.client as mqtt
@@ -42,47 +44,56 @@ def main():
             update_id += 1
 
 
-lastmessage = None
-
+bott = None
+last_chat_id = None
 
 def echo(bot):
-    global lastmessage
+    global bott
+    global last_chat_id
     global update_id
+
+    bott = bot
     # Request updates after the last update_id
     for update in bot.getUpdates(offset=update_id, timeout=10):
         # chat_id is required to reply to any message
-        chat_id = update.message.chat_id
         update_id = update.update_id + 1
-        if update.callback_query:
-            if str(update.callback_query) == "volume_down":
-                client.publish("volume_test", 0)
-            elif str(update.callback_query) == "volume_up":
-                client.publish("volume_test", 1)
 
         if update.message:
-            lastmessage = update.message
-        if update.message.audio:  # your bot can receive updates without messages
-            track_info_raw = urllib.urlopen(
-                'https://api.telegram.org/bot304064430:AAGy50irNZ2tD1_jBO-8imca5_jhTHgI618/getFile?file_id=' + update.message.audio.file_id)
-            load = json.load(track_info_raw.fp)
-            result = load.get('result')
-            if result is None:
-                return
-            file_path = result.get('file_path')
-            durl = 'https://api.telegram.org/file/bot304064430:AAGy50irNZ2tD1_jBO-8imca5_jhTHgI618/' + file_path
-            client.publish("track_test", durl)
-            update.message.reply_text("added!")
+            chat_id = update.message.chat_id
+            last_chat_id = update.message.chat_id
 
+            if update.message.audio:  # your bot can receive updates without messages
+                track_info_raw = urllib.urlopen(
+                    'https://api.telegram.org/bot304064430:AAGy50irNZ2tD1_jBO-8imca5_jhTHgI618/getFile?file_id=' + update.message.audio.file_id)
+                load = json.load(track_info_raw.fp)
+                result = load.get('result')
+                if result is None:
+                    return
+                file_path = result.get('file_path')
+                durl = 'https://api.telegram.org/file/bot304064430:AAGy50irNZ2tD1_jBO-8imca5_jhTHgI618/' + file_path
+                client.publish("track_test", durl)
+                update.message.reply_text("added!")
+
+        if update.callback_query:
+            if str(update.callback_query.data) == "volume_down":
+                client.publish("volume_test", 0)
+            elif str(update.callback_query.data) == "volume_up":
+                client.publish("volume_test", 1)
+            else:
+                return
+            bott.answer_callback_query(update.callback_query.id)
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
     if (msg.topic == 'server_test'):
         print(str(msg.payload))
-        if (lastmessage is not None):
+        if (last_chat_id is not None):
             print('have last message, forvard to to chat')
-            btn_down = InlineKeyboardButton('vol -', "volume_down")
-            btn_up = InlineKeyboardButton('vol +', "volume_up")
-            lastmessage.reply_text(str(msg.payload), btn_down, btn_up)
+            btn_down = InlineKeyboardButton('vol -', callback_data="volume_down")
+            btn_up = InlineKeyboardButton('vol +', callback_data="volume_up")
+
+            bott.send_message(last_chat_id, 'lets make some nooooise!',  reply_markup=InlineKeyboardMarkup(
+                            [[btn_down, btn_up]]))
 
 
 # The callback for when the client receives a CONNACK response from the server.
