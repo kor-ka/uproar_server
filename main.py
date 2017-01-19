@@ -71,8 +71,9 @@ def echo(bot):
                     return
                 file_path = result.get('file_path')
                 durl = 'https://api.telegram.org/file/bot304064430:AAGy50irNZ2tD1_jBO-8imca5_jhTHgI618/' + file_path
-                client.publish("track_test", durl)
-                update.message.reply_text("added!")
+                data = json.dumps({"track_url":durl, "chat_id":chat_id, "message_id":update.message.message_id})
+                client.publish("track_test", data.__str__())
+                update.message.reply_text("added " + update.message.audio.title)
 
         if update.callback_query:
             if str(update.callback_query.data) == "volume_down":
@@ -85,15 +86,19 @@ def echo(bot):
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
-    if (msg.topic == 'server_test'):
+    if msg.topic == 'server_test':
         print(str(msg.payload))
-        if (last_chat_id is not None):
+        if last_chat_id is not None:
             print('have last message, forvard to to chat')
             btn_down = InlineKeyboardButton('vol -', callback_data="volume_down")
             btn_up = InlineKeyboardButton('vol +', callback_data="volume_up")
 
             bott.send_message(last_chat_id, 'lets make some nooooise!',  reply_markup=InlineKeyboardMarkup(
                             [[btn_down, btn_up]]))
+    elif msg.topic == 'update_test':
+        if bott is not None:
+            data = json.loads(str(msg.payload))
+            bott.editMessageText(data.get("message"), chat_id = data.get("chat_id"), message_id = data.get("message_id"))
 
 
 # The callback for when the client receives a CONNACK response from the server.
