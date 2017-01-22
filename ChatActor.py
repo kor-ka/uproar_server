@@ -27,11 +27,11 @@ class ChatActor(pykka.ThreadingActor):
                     return
 
                 token_message = self.bot.ask(
-                    {'command': 'send', 'message': emoji_prefix + ' ' + message.from_user.username + '\' device'})
+                    {'command': 'send', 'chat_id':message.chat_id, 'message': emoji_prefix + ' ' + message.from_user.username + '\' device'})
 
                 token = token_message.from_user.username + ':' + token_message.date
 
-                self.bot.tell({'command': 'send', 'message': 'token: ' + token + '\n\n Сообщение выше - идентификатор '
+                self.bot.tell({'command': 'send','chat_id':message.chat_id, 'message': 'token: ' + token + '\n\n Сообщение выше - идентификатор '
                                                                                  'вашего устройства. Перешлите его в '
                                                                                  'чат, на который хотите подписать '
                                                                                  'устройство'})
