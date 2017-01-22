@@ -13,17 +13,20 @@ from time import sleep
 import paho.mqtt.client as mqtt
 import urllib
 import json
+import os
 from telegram import InlineKeyboardButton, CallbackQuery
 
 update_id = None
 
 client = mqtt.Client()
 
+token = os.getenv('BOTTOKEN','')
 
 def main():
     global update_id
+    global token
     # Telegram Bot Authorization Token
-    bot = telegram.Bot('304064430:AAGy50irNZ2tD1_jBO-8imca5_jhTHgI618')
+    bot = telegram.Bot(token)
 
     # get the first pending update_id, this is so we can skip over it in case
     # we get an "Unauthorized" exception.
@@ -51,6 +54,7 @@ def echo(bot):
     global bott
     global last_chat_id
     global update_id
+    global token
 
     bott = bot
     # Request updates after the last update_id
@@ -64,13 +68,13 @@ def echo(bot):
 
             if update.message.audio:  # your bot can receive updates without messages
                 track_info_raw = urllib.urlopen(
-                    'https://api.telegram.org/bot304064430:AAGy50irNZ2tD1_jBO-8imca5_jhTHgI618/getFile?file_id=' + update.message.audio.file_id)
+                    'https://api.telegram.org/bot' + token + '/getFile?file_id=' + update.message.audio.file_id)
                 load = json.load(track_info_raw.fp)
                 result = load.get('result')
                 if result is None:
                     return
                 file_path = result.get('file_path')
-                durl = 'https://api.telegram.org/file/bot304064430:AAGy50irNZ2tD1_jBO-8imca5_jhTHgI618/' + file_path
+                durl = 'https://api.telegram.org/file/bot' + token + '/' + file_path
                 reply = update.message.reply_text("added " + update.message.audio.title)
                 data = json.dumps({"track_url":durl, "chat_id":reply.chat_id, "message_id":reply.message_id})
                 client.publish("track_test", data.__str__())
