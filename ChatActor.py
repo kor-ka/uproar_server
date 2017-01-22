@@ -4,8 +4,7 @@ import string
 
 import pykka, os, urllib, json
 
-emoji_prefix = '\xF0\x9F\x94\x8A'
-
+emoji_prefix = u'\U0001F50A'
 
 class ChatActor(pykka.ThreadingActor):
     def __init__(self, chat_id, manager, bot):
