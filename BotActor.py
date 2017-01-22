@@ -19,8 +19,8 @@ class BotActor(pykka.ThreadingActor):
         self.manager = manager
         self.token = os.getenv('BOTTOKEN', '')
         self.update_id = None
-        self.main()
         self.bot = None
+        self.main()
 
     def main(self):
         # Telegram Bot Authorization Token
@@ -38,14 +38,15 @@ class BotActor(pykka.ThreadingActor):
         self.actor_ref.tell({'command': 'loop'})
 
     def loop(self):
-        while True:
-            try:
-                self.apply(self.bot)
-            except NetworkError:
-                sleep(1)
-            except Unauthorized:
-                # The user has removed or blocked the bot.
-                self.update_id += 1
+        try:
+            self.apply(self.bot)
+        except NetworkError:
+            sleep(1)
+        except Unauthorized:
+            # The user has removed or blocked the bot.
+            self.update_id += 1
+        finally:
+            self.actor_ref.tell({'command': 'loop'})
 
     def apply(self, bot):
 
