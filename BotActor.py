@@ -51,7 +51,7 @@ class BotActor(pykka.ThreadingActor):
     def apply(self, bot):
 
         # Request updates after the last update_id
-        for update in bot.getUpdates(offset=self.update_id, timeout=10):
+        for update in bot.getUpdates(offset=self.update_id):
             self.update_id = update.update_id + 1
             self.manager.tell({'command': 'update', 'update': update})
 

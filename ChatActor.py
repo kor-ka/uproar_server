@@ -1,4 +1,5 @@
-# coding=utf-8
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import random
 import string
 
@@ -29,9 +30,9 @@ class ChatActor(pykka.ThreadingActor):
                 token_message = self.bot.ask(
                     {'command': 'send', 'chat_id':message.chat_id, 'message': emoji_prefix + ' ' + message.from_user.username + '\' device'})
 
-                token = token_message.from_user.username + ':' + hash(token_message.date)
+                token = token_message.from_user.username + ':' + str(hash(token_message.date))
 
-                self.bot.tell({'command': 'send','chat_id':message.chat_id, 'message': 'token: ' + token + '\n\n Сообщение выше - идентификатор '
+                self.bot.tell({'command': 'send','chat_id':message.chat_id, 'message': 'token: ' + token + '\n\nСообщение выше - идентификатор '
                                                                                  'вашего устройства. Перешлите его в '
                                                                                  'чат, на который хотите подписать '
                                                                                  'устройство'})
@@ -39,7 +40,7 @@ class ChatActor(pykka.ThreadingActor):
                 if text.startswith(emoji_prefix):
                     if message.forward_date and message.text.replase(emoji_prefix + ' ', 1).startsWith(
                             message.from_user.username):
-                        token = message.from_user.username + ':' + hash(message.forward_date)
+                        token = message.from_user.username + ':' + str(hash(message.forward_date))
                         self.actor_ref.tell(
                             {
                                 'command': 'add_device',
