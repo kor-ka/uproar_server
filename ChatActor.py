@@ -32,10 +32,12 @@ class ChatActor(pykka.ThreadingActor):
 
                 token = token_message.from_user.username + ':' + str(hash(token_message.date))
 
-                self.bot.tell({'command': 'send','chat_id':message.chat_id, 'message': 'token: ' + token + '\n\nСообщение выше - идентификатор '
-                                                                                 'вашего устройства. Перешлите его в '
-                                                                                 'чат, на который хотите подписать '
-                                                                                 'устройство'})
+                # '\n\nСообщение выше - идентификатор '
+                # 'вашего устройства. Перешлите его в '
+                # 'чат, на который хотите подписать '
+                # 'устройство'
+
+                self.bot.tell({'command': 'send','chat_id':message.chat_id, 'message': 'token: ' + token})
 
                 if text.startswith(emoji_prefix):
                     if message.forward_date and message.text.replase(emoji_prefix + ' ', 1).startsWith(
