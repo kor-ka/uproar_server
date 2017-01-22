@@ -24,13 +24,13 @@ class ChatActor(pykka.ThreadingActor):
                 if not message.from_user.username:
                     self.bot.tell(
                         {'command': 'send',
-                         'message': 'У тебя что, ник не установлен? Омг, это в 21 то веке! Сходи поставь, потом возвращайся'})
+                         'message': 'Please, setup username first'})
                     return
 
                 token_message = self.bot.ask(
                     {'command': 'send', 'chat_id':message.chat_id, 'message': emoji_prefix + ' ' + message.from_user.username + '\' device'})
 
-                token = token_message.from_user.username + ':' + str(hash(token_message.date))
+                token = message.from_user.username + ':' + str(abs(hash(token_message.date)))
 
                 # '\n\nСообщение выше - идентификатор '
                 # 'вашего устройства. Перешлите его в '
