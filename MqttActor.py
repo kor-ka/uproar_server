@@ -21,7 +21,7 @@ class MqttACtor(pykka.ThreadingActor):
             #
             #     bot.send_message(last_chat_id, 'lets make some nooooise!', reply_markup=InlineKeyboardMarkup(
             #         [[btn_down, btn_up]]))
-        elif msg.topic.startsWisth("update_"):
+        elif str(msg.topic).startswith("update_"):
             token = msg.topic.replce("update_", 1)
             self.manager.tell({'command':'device_update_status', 'token':token, 'update':json.loads(str(msg.payload))})
 

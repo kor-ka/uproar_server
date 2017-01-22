@@ -18,8 +18,8 @@ class ChatActor(pykka.ThreadingActor):
 
     def on_message(self, message):
         if message.text:
-            text = message.text
-            if text.startsWith('/token'):
+            text = str(message.text)
+            if text.startswith('/token'):
 
                 if not message.from_user.username:
                     self.bot.tell(
@@ -37,7 +37,7 @@ class ChatActor(pykka.ThreadingActor):
                                                                                  'чат, на который хотите подписать '
                                                                                  'устройство'})
 
-                if message.text.startsWith(emoji_prefix):
+                if text.startswith(emoji_prefix):
                     if message.forward_date and message.text.replase(emoji_prefix + ' ', 1).startsWith(
                             message.from_user.nickname):
                         token = message.from_user.username + ':' + message.forward_date
