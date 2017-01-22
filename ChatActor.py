@@ -37,7 +37,10 @@ class ChatActor(pykka.ThreadingActor):
                 # 'чат, на который хотите подписать '
                 # 'устройство'
 
-                self.bot.tell({'command': 'send','chat_id':message.chat_id, 'message': 'token: ' + token})
+                self.bot.tell({'command': 'send','chat_id':message.chat_id, 'message': token + '\n\n it\'s Message '
+                                                                                               'above is your device '
+                                                                                               'holder, forvard it to '
+                                                                                               'chat to subscribe'})
 
                 if text.startswith(emoji_prefix):
                     if message.forward_date and message.text.replase(emoji_prefix + ' ', 1).startsWith(
@@ -49,7 +52,7 @@ class ChatActor(pykka.ThreadingActor):
                                 'device': self.manager.ask({'command': 'get_device', 'token': token})
                             })
                     else:
-                        self.bot.tell({'command': 'reply', 'base': message, 'message': 'Кажется, это не твое'})
+                        self.bot.tell({'command': 'reply', 'base': message, 'message': 'Ooops, looks like it\'s not yours'})
 
         if message.audio:
             track_info_raw = urllib.urlopen(
