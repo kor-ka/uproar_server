@@ -18,7 +18,7 @@ class ChatActor(pykka.ThreadingActor):
 
     def on_message(self, message):
         if message.text:
-            text = unicode(message.text, 'utf-8')
+            text = message.text
             if text.startswith('/token'):
 
                 if not message.from_user.username:
@@ -42,19 +42,19 @@ class ChatActor(pykka.ThreadingActor):
                                                                                                'holder, forward it to '
                                                                                                'chat to subscribe'})
 
-                if text.startswith(emoji_prefix):
-                    if message.forward_date and message.text.replase(emoji_prefix + ' ', 1).startsWith(
-                            message.from_user.username):
-                        token = message.from_user.username + ':' + str(hash(message.forward_date))
-                        self.actor_ref.tell(
-                            {
-                                'command': 'add_device',
-                                'device': self.manager.ask({'command': 'get_device', 'token': token})
-                            })
-                        self.bot.tell({'command': 'reply', 'base': message, 'message': 'Device added!'})
+            elif text.startswith(emoji_prefix):
+                if message.forward_date and message.text.replace(emoji_prefix + ' ', '').startswith(
+                        message.from_user.username):
+                    token = message.from_user.username + ':' + str(hash(message.forward_date))
+                    self.actor_ref.tell(
+                        {
+                            'command': 'add_device',
+                            'device': self.manager.ask({'command': 'get_device', 'token': token})
+                        })
+                    self.bot.tell({'command': 'reply', 'base': message, 'message': 'Device added!'})
 
-                    else:
-                        self.bot.tell({'command': 'reply', 'base': message, 'message': 'Ooops, looks like it\'s not yours'})
+                else:
+                    self.bot.tell({'command': 'reply', 'base': message, 'message': 'Ooops, looks like it\'s not yours'})
 
         if message.audio:
             track_info_raw = urllib.urlopen(
