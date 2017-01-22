@@ -27,17 +27,19 @@ class ChatActor(pykka.ThreadingActor):
                          'message': 'Please, setup username first'})
                     return
 
-                token_message = self.bot.ask(
-                    {'command': 'send', 'chat_id':message.chat_id, 'message': emoji_prefix + ' ' + message.from_user.username + '\' device'})
+                random_str = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(5))
 
-                token = message.from_user.username + ':' + str(abs(hash(token_message.date)))
+                token_message = self.bot.ask(
+                    {'command': 'send', 'chat_id':message.chat_id, 'message': emoji_prefix + ' ' + message.from_user.username + '\' device: ' + random_str})
+
+                token_set = message.from_user.username + ':' + random_str
 
                 # '\n\nСообщение выше - идентификатор '
                 # 'вашего устройства. Перешлите его в '
                 # 'чат, на который хотите подписать '
                 # 'устройство'
 
-                self.bot.tell({'command': 'send','chat_id':message.chat_id, 'message': token + '\n\nMessage '
+                self.bot.tell({'command': 'send','chat_id':message.chat_id, 'message': token_set + '\n\nMessage '
                                                                                                'above is your device '
                                                                                                'holder, forward it to '
                                                                                                'chat to subscribe'})
@@ -45,7 +47,7 @@ class ChatActor(pykka.ThreadingActor):
             elif text.startswith(emoji_prefix):
                 if message.forward_date and message.text.replace(emoji_prefix + ' ', '').startswith(
                         message.from_user.username):
-                    token = message.from_user.username + ':' + str(hash(message.forward_date))
+                    token = message.from_user.username + ':' + text[-5:]
                     self.actor_ref.tell(
                         {
                             'command': 'add_device',
@@ -65,11 +67,15 @@ class ChatActor(pykka.ThreadingActor):
                 return
             file_path = result.get('file_path')
             durl = 'https://api.telegram.org/file/bot' + self.token + '/' + file_path
-            reply = self.bot.ask({'command': 'reply', 'base': message, 'message': "added " + message.audio.title})
-
-            data = json.dumps({"track_url": durl, "chat_id": reply.chat_id, "message_id": reply.message_id})
             if self.device is not None:
+
+                reply = self.bot.ask({'command': 'reply', 'base': message, 'message': "added " + message.audio.title})
+
+                data = json.dumps({"track_url": durl, "chat_id": reply.chat_id, "message_id": reply.message_id})
                 self.device.tell({'command': 'add_track', 'track': data, 'chat': self.actor_ref})
+            else:
+                self.bot.ask({'command': 'reply', 'base': message, 'message': 'no devices, please forward one from @uproarbot'})
+
 
     def on_receive(self, message):
         if message.get('command') == 'message':

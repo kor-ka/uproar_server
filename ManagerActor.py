@@ -23,12 +23,14 @@ class ManagerActor(pykka.ThreadingActor):
         chat = self.chats.get(chat_id)
         if chat is None:
             chat = ChatActor.ChatActor.start(chat_id, self.actor_ref, self.bot)
+            self.chats[chat_id] = chat
         return chat
 
     def get_device(self, token):
         device = self.devices.get(token)
         if device is None:
             device = DeviceActor.DeviceActor.start(token, self.actor_ref, self.mqtt)
+            self.devices[token] = device
         return device
 
     def on_receive(self, message):
