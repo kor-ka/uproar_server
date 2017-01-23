@@ -33,7 +33,7 @@ class ChatActor(pykka.ThreadingActor):
                 token_message = self.bot.ask(
                     {'command': 'send', 'chat_id':message.chat_id, 'message': emoji_prefix + ' ' + message.from_user.username + '\' device: ' + random_str})
 
-                token_set = message.from_user.username + ':' + random_str + ':' + str(hash(self.secret + message.from_user.id))
+                token_set = message.from_user.username + ':' + random_str + ':' + str(hash(self.secret + str(message.from_user.id)))
 
                 # '\n\nСообщение выше - идентификатор '
                 # 'вашего устройства. Перешлите его в '
@@ -48,7 +48,7 @@ class ChatActor(pykka.ThreadingActor):
             elif text.startswith(emoji_prefix):
                 if message.from_user.username and message.text.replace(emoji_prefix + ' ', '').startswith(
                         message.from_user.username):
-                    token = message.from_user.username + ':' + text[-5:] + ':' + str(hash(self.secret + message.from_user.id))
+                    token = message.from_user.username + ':' + text[-5:] + ':' + str(hash(self.secret + str(message.from_user.id)))
                     self.actor_ref.tell(
                         {
                             'command': 'add_device',
