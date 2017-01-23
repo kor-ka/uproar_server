@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import random
 import string
+from array import array
 
 import pykka, os, urllib, json, config
 
@@ -15,7 +16,7 @@ class ChatActor(pykka.ThreadingActor):
         self.bot = bot
         self.token = config.bottoken
         self.secret = config.secret
-        self.device = None
+        self.devices = array()
 
     def on_message(self, message):
         if message.text:
@@ -68,12 +69,13 @@ class ChatActor(pykka.ThreadingActor):
                 return
             file_path = result.get('file_path')
             durl = 'https://api.telegram.org/file/bot' + self.token + '/' + file_path
-            if self.device is not None:
-
-                reply = self.bot.ask({'command': 'reply', 'base': message, 'message': "added " + message.audio.title})
-
-                data = json.dumps({"track_url": durl, "chat_id": reply.chat_id, "message_id": reply.message_id})
-                self.device.tell({'command': 'add_track', 'track': data, 'chat': self.actor_ref})
+            if self.devices.__sizeof__() > 0:
+                for device in self.devices:
+                    device_str = device.ask({'command':'get_name'})
+                    reply = self.bot.ask(
+                        {'command': 'reply', 'base': message, 'message': "sent  " + message.audio.title + " to " + device_str})
+                    data = json.dumps({"track_url": durl, "chat_id": reply.chat_id, "message_id": reply.message_id})
+                    device.tell({'command': 'add_track', 'track': data, 'chat': self.actor_ref})
             else:
                 self.bot.ask({'command': 'reply', 'base': message, 'message': 'no devices, please forward one from @uproarbot'})
 
@@ -82,8 +84,8 @@ class ChatActor(pykka.ThreadingActor):
         if message.get('command') == 'message':
             self.on_message(message.get('message'))
         elif message.get('command') == 'add_device':
-            self.device = message.get('device')
-            self.device.tell({'command': 'move_to', 'chat': self.actor_ref})
+            self.devices.append(message.get('device'))
+            message.get('device').tell({'command': 'move_to', 'chat': self.actor_ref})
         elif message.get('command') == 'remove_device':
             if self.device == message.get('device'):
-                self.device = None
+                self.devices.remove(message.get('device'))
