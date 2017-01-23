@@ -14,6 +14,6 @@ class DeviceActor(pykka.ThreadingActor):
             self.mqtt.tell({'command':'publish', 'topic':'track_'+self.token, 'payload':str(message.get('track'))})
         if message.get('command') == "move_to":
             self.mqtt.tell({'command':'subscribe', 'token':self.token})
-            if self.chat is not None:
+            if self.chat is not None and self.chat != message.get('chat'):
                 self.chat.tell({'command':'remove_device', 'device':self.actor_ref})
             self.chat = message.get('chat')
