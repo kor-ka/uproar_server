@@ -13,7 +13,7 @@ class MqttACtor(pykka.ThreadingActor):
     # The callback for when a PUBLISH message is received from the server.
     def on_message(self, client, userdata, msg):
         if msg.topic == 'server_test':
-            self.client.subscribe("update_", str(msg.payload), 1)
+            self.client.subscribe("update_" + str(msg.payload), 1)
         elif str(msg.topic).startswith("update_"):
             token = msg.topic.replace("update_", "")
             self.manager.tell({'command':'device_update_status', 'token':token, 'update':json.loads(str(msg.payload))})
