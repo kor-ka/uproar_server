@@ -17,7 +17,7 @@ class ManagerActor(pykka.ThreadingActor):
         pass
 
     def on_device_update(self, token, update):
-        self.bot.tell({'command':'update', 'update':update})
+        self.get_device(token).tell({'command':'update', 'update':update})
 
     def get_chat(self, chat_id):
         chat = self.chats.get(chat_id)
@@ -29,7 +29,7 @@ class ManagerActor(pykka.ThreadingActor):
     def get_device(self, token):
         device = self.devices.get(token)
         if device is None:
-            device = DeviceActor.DeviceActor.start(token, self.actor_ref, self.mqtt)
+            device = DeviceActor.DeviceActor.start(token, self.actor_ref, self.mqtt, self.bot)
             self.devices[token] = device
         return device
 
