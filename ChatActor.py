@@ -3,7 +3,7 @@
 import random
 import string
 
-import pykka, os, urllib, json
+import pykka, os, urllib, json, config
 
 emoji_prefix = u'\U0001F50A'
 
@@ -13,8 +13,8 @@ class ChatActor(pykka.ThreadingActor):
         self.chat_id = chat_id
         self.manager = manager
         self.bot = bot
-        self.token = os.getenv('BOTTOKEN', '')
-        self.secret = os.getenv('SECRET', '')
+        self.token = config.bottoken
+        self.secret = config.secret
         self.device = None
 
     def on_message(self, message):

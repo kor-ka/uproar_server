@@ -11,13 +11,13 @@ import json
 import os
 import ManagerActor
 from telegram import InlineKeyboardButton, CallbackQuery
-
+import config
 
 class BotActor(pykka.ThreadingActor):
     def __init__(self, manager):
         super(BotActor, self).__init__()
         self.manager = manager
-        self.token = os.getenv('BOTTOKEN', '')
+        self.token = config.bottoken
         self.update_id = None
         self.bot = None
         self.main()
