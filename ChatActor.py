@@ -69,7 +69,7 @@ class ChatActor(pykka.ThreadingActor):
                 return
             file_path = result.get('file_path')
             durl = 'https://api.telegram.org/file/bot' + self.token + '/' + file_path
-            if self.devices.__sizeof__() > 0:
+            if len(self.devices) > 0:
                 for device in self.devices:
                     device_str = device.ask({'command':'get_name'})
                     reply = self.bot.ask(
@@ -77,7 +77,7 @@ class ChatActor(pykka.ThreadingActor):
                     data = json.dumps({"track_url": durl, "chat_id": reply.chat_id, "message_id": reply.message_id})
                     device.tell({'command': 'add_track', 'track': data, 'chat': self.actor_ref})
             else:
-                self.bot.ask({'command': 'reply', 'base': message, 'message': 'no devices, please forward one from @uproarbot'})
+                self.bot.tell({'command': 'reply', 'base': message, 'message': 'no devices, please forward one from @uproarbot'})
 
 
     def on_receive(self, message):
