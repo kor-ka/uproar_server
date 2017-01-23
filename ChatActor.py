@@ -45,7 +45,7 @@ class ChatActor(pykka.ThreadingActor):
                                                                                                'chat to subscribe'})
 
             elif text.startswith(emoji_prefix):
-                if message.forward_date and message.text.replace(emoji_prefix + ' ', '').startswith(
+                if message.from_user.username and message.text.replace(emoji_prefix + ' ', '').startswith(
                         message.from_user.username):
                     token = message.from_user.username + ':' + text[-5:]
                     self.actor_ref.tell(
