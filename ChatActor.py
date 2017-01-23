@@ -87,5 +87,4 @@ class ChatActor(pykka.ThreadingActor):
             self.devices.append(message.get('device'))
             message.get('device').tell({'command': 'move_to', 'chat': self.actor_ref})
         elif message.get('command') == 'remove_device':
-            if self.device == message.get('device'):
-                self.devices.remove(message.get('device'))
+            self.devices.remove(message.get('device'))
