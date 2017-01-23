@@ -16,7 +16,7 @@ class ChatActor(pykka.ThreadingActor):
         self.bot = bot
         self.token = config.bottoken
         self.secret = config.secret
-        self.devices = array(None)
+        self.devices = []
 
     def on_message(self, message):
         if message.text:
