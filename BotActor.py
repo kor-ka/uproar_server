@@ -13,29 +13,21 @@ import ManagerActor
 from telegram import InlineKeyboardButton, CallbackQuery
 import config
 
-class BotActor(pykka.ThreadingActor):
-    def __init__(self, manager):
-        super(BotActor, self).__init__()
-        self.manager = manager
-        self.token = config.bottoken
+class UpdatesFetcher(pykka.ThreadingActor):
+    def __init__(self, bot, manager):
+        super(UpdatesFetcher, self).__init__()
+  	self.bot=bot
         self.update_id = None
-        self.bot = None
-        self.main()
-
-    def main(self):
-        # Telegram Bot Authorization Token
-        bot = telegram.Bot(self.token)
-        self.bot = bot
-
-        # get the first pending update_id, this is so we can skip over it in case
-        # we get an "Unauthorized" exception.
+        self.manager = manager
         try:
-            update_id = bot.getUpdates()[0].update_id
+             self.update_id = self.bot.getUpdates()[0].update_id
         except IndexError:
-            update_id = None
+             self.update_id = None
 
-        logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        self.actor_ref.tell({'command': 'loop'})
+
+    def on_receive(self, message):
+        if message.get('command') == 'loop':
+	    self.loop()    
 
     def loop(self):
         try:
@@ -46,14 +38,41 @@ class BotActor(pykka.ThreadingActor):
             # The user has removed or blocked the bot.
             self.update_id += 1
         finally:
-            self.actor_ref.tell({'command': 'loop'})
+            self.actor_ref.tell({'command':'loop'})
 
     def apply(self, bot):
 
         # Request updates after the last update_id
-        for update in bot.getUpdates(offset=self.update_id):
+        for update in bot.getUpdates(offset=self.update_id, timeout=10):
             self.update_id = update.update_id + 1
             self.manager.tell({'command': 'update', 'update': update})
+
+
+
+class BotActor(pykka.ThreadingActor):
+    def __init__(self, manager):
+        super(BotActor, self).__init__()
+        self.manager = manager
+        self.token = config.bottoken
+        self.bot = None
+        self.main()
+	self.fetcher = None
+
+    def main(self):
+        # Telegram Bot Authorization Token
+        bot = telegram.Bot(self.token)
+        self.bot = bot
+	self.fetcher = UpdatesFetcher.start(bot, self.manager)
+
+        # get the first pending update_id, this is so we can skip over it in case
+        # we get an "Unauthorized" exception.
+        try:
+            update_id = bot.getUpdates()[0].update_id
+        except IndexError:
+            update_id = None
+
+        logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        self.fetcher.tell({'command': 'loop'})
 
     def update(self, update):
         self.bot.editMessageText(update.get("message"), chat_id=update.get("chat_id"),
@@ -69,9 +88,8 @@ class BotActor(pykka.ThreadingActor):
         return self.bot.sendMessage(chat_id=chat_id, text=message)
 
     def on_receive(self, message):
-        if message.get('command') == 'loop':
-            self.loop()
-        elif message.get('command') == 'update':
+   
+        if message.get('command') == 'update':
             self.update(message.get('update'))
         elif message.get('command') == 'reply':
             return self.reply(message.get('base'), message.get('message'))
