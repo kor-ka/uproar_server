@@ -17,11 +17,11 @@ class DeviceActor(pykka.ThreadingActor):
             old_msg = u'\U00002B07 downloading...'
         elif old_msg == 'queue':
             old_msg = u'\U0000261D queued'
-        elif old_msg == 'play':
+        elif old_msg == 'playing':
             old_msg = u'\U0001F3B6 playing'
         elif old_msg == 'done':
             old_msg = u'\U00002B1B stop'
-        update['message'] = self.get_name() + ': ' + old_msg
+        update['message'] = old_msg + ' - ' + self.get_name()
         self.bot.tell({'command': 'update', 'update': update})
 
     def get_name(self):
