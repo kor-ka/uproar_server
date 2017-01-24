@@ -10,6 +10,20 @@ class DeviceActor(pykka.ThreadingActor):
         self.bot = bot
         self.chat = None
 
+    def on_update(self, message):
+        update = message.get('update')
+        old_msg = update['message']
+        if old_msg == 'download':
+            old_msg = u'\U00002B07 downloading...'
+        elif old_msg == 'queue':
+            old_msg = u'\U0000261D queued'
+        elif old_msg == 'play':
+            old_msg = u'\U0001F3B6 playing'
+        elif old_msg == 'done':
+            old_msg = u'\U00002B1B stop'
+        update['message'] = self.get_name() + ': ' + old_msg
+        self.bot.tell({'command': 'update', 'update': update})
+
     def get_name(self):
         split = self.token.split(':')
         return split[0] + '\'s device (' + split[1] + ')'
@@ -25,9 +39,8 @@ class DeviceActor(pykka.ThreadingActor):
         elif message.get('command') == "get_name":
             return self.get_name()
         elif message.get('command') == "update":
-            update = message.get('update')
-            old_msg = update['message']
-            update['message'] = self.get_name() + ': ' + old_msg
-            self.bot.tell({'command': 'update', 'update': update})
+            self.on_update(message)
+
+
 
 

@@ -55,7 +55,7 @@ class ChatActor(pykka.ThreadingActor):
                             'command': 'add_device',
                             'device': self.manager.ask({'command': 'get_device', 'token': token})
                         })
-                    self.bot.tell({'command': 'reply', 'base': message, 'message': 'Device added!'})
+                    self.bot.tell({'command': 'reply', 'base': message, 'message': u'\U00002705 Device added!'})
 
                 else:
                     self.bot.tell({'command': 'reply', 'base': message, 'message': 'Ooops, looks like it\'s not yours'})
