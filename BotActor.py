@@ -78,22 +78,22 @@ class BotActor(pykka.ThreadingActor):
         self.bot.editMessageText(update.get("message"), chat_id=update.get("chat_id"),
                                  message_id=update.get("message_id"))
 
-    def reply(self, base_message, message):
-        return base_message.reply_text(message)
+    def reply(self, base_message, message, reply_markup):
+        return base_message.reply_text(message, reply_markup=reply_markup)
 
     def edit(self, base_message, message):
         return base_message.edit_text(message)
 
-    def send(self, message, chat_id):
-        return self.bot.sendMessage(chat_id=chat_id, text=message)
+    def send(self, message, chat_id, reply_markup):
+        return self.bot.sendMessage(chat_id=chat_id, text=message, reply_markup=reply_markup)
 
     def on_receive(self, message):
    
         if message.get('command') == 'update':
             self.update(message.get('update'))
         elif message.get('command') == 'reply':
-            return self.reply(message.get('base'), message.get('message'))
+            return self.reply(message.get('base'), message.get('message'), message.get('reply_markup'))
         elif message.get('command') == 'edit':
             return self.edit(message.get('base'), message.get('message'))
         elif message.get('command') == 'send':
-            return self.send(message.get('message'), message.get('chat_id'))
+            return self.send(message.get('message'), message.get('chat_id'), message.get('reply_markup'))

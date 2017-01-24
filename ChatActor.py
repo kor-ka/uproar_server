@@ -5,8 +5,10 @@ import string
 from array import array
 
 import pykka, os, urllib, json, config
+from telegram import InlineKeyboardButton
 
-emoji_prefix = u'\U0001F50A'
+loud = u'\U0001F50A'
+not_so_loud = u'\U0001F509'
 
 class ChatActor(pykka.ThreadingActor):
     def __init__(self, chat_id, manager, bot):
@@ -32,7 +34,7 @@ class ChatActor(pykka.ThreadingActor):
                 random_str = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(5))
 
                 token_message = self.bot.ask(
-                    {'command': 'send', 'chat_id':message.chat_id, 'message': emoji_prefix + ' ' + message.from_user.username + '\' device: ' + random_str})
+                    {'command': 'send', 'chat_id':message.chat_id, 'message': loud + ' ' + message.from_user.username + '\' device: ' + random_str})
 
                 token_set = message.from_user.username + ':' + random_str + ':' + str(hash(self.secret + str(message.from_user.id)))
 
@@ -46,16 +48,28 @@ class ChatActor(pykka.ThreadingActor):
                                                                                                'holder, forward it to '
                                                                                                'chat to subscribe'})
 
-            elif text.startswith(emoji_prefix):
-                if message.from_user.username and message.text.replace(emoji_prefix + ' ', '').startswith(
+            elif text.startswith(loud):
+                if message.from_user.username and message.text.replace(loud + ' ', '').startswith(
                         message.from_user.username):
                     token = message.from_user.username + ':' + text[-5:] + ':' + str(hash(self.secret + str(message.from_user.id)))
                     self.actor_ref.tell(
                         {
                             'command': 'add_device',
-                            'device': self.manager.ask({'command': 'get_device', 'token': token})
+                            'device': self.get_device(token)
                         })
-                    self.bot.tell({'command': 'reply', 'base': message, 'message': u'\U00002705 Device added!'})
+
+                    callback_vol_plus = str(json.dumps({'token':token, 'command':'vol', 'param':'1'}))
+                    callback_vol_minus = str(json.dumps({'token':token, 'command':'vol', 'param':'0'}))
+
+                    keyboard = [
+                                    [InlineKeyboardButton(str(loud), callback_vol_plus), InlineKeyboardButton(str(not_so_loud), callback_data=callback_vol_minus)],
+                               ]
+
+                    self.bot.tell({'command': 'send',
+                                   'chat_id': message.chat_id,
+                                   'message': u'\U00002705 Device added!',
+                                   'reply_markup': keyboard,
+                                   })
 
                 else:
                     self.bot.tell({'command': 'reply', 'base': message, 'message': 'Ooops, looks like it\'s not yours'})
@@ -79,10 +93,33 @@ class ChatActor(pykka.ThreadingActor):
             else:
                 self.bot.tell({'command': 'reply', 'base': message, 'message': 'no devices, please forward one from @uproarbot'})
 
+    def get_device(self, token):
+        return self.manager.ask({'command': 'get_device', 'token': token})
+
+    def on_callback_query(self, callback_query):
+        callback = json.loads(callback_query)
+
+        answer = True
+        text = None
+        show_alert = False
+
+        if callback.get('command' == 'vol'):
+            token = callback.get('token')
+            if string.split(token, ':') == callback_query.from_user.username:
+                self.get_device(token).tell(callback)
+            else:
+                text = 'Ooops, looks like it\'s not yours'
+
+        if answer:
+            callback_query.answer(text=text, show_alert=show_alert)
+
+
 
     def on_receive(self, message):
         if message.get('command') == 'message':
             self.on_message(message.get('message'))
+        if message.get('command') == 'callback_query':
+            self.on_callback_query(message.get('callback_query'))
         elif message.get('command') == 'add_device':
             self.devices.append(message.get('device'))
             message.get('device').tell({'command': 'move_to', 'chat': self.actor_ref})
