@@ -21,7 +21,7 @@ class DeviceActor(pykka.ThreadingActor):
             old_msg = u'\U0001F3B6 playing'
         elif old_msg == 'done':
             old_msg = u'\U00002B1B stop'
-        update['message'] = old_msg + ' - ' + self.get_name()
+        update['message'] = old_msg + '\n' + self.get_name()
         self.bot.tell({'command': 'update', 'update': update})
 
     def get_name(self):
