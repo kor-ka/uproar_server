@@ -36,7 +36,10 @@ class MqttACtor(pykka.ThreadingActor):
         return client
 
     def on_receive(self, message):
-        if message.get('command') == "publish":
-            self.client.publish(message.get('topic'), message.get('payload'))
-        if message.get('command') == "subscribe":
-            self.client.subscribe('update_' + message.get('token'), 1)
+        try:
+            if message.get('command') == "publish":
+                self.client.publish(message.get('topic'), message.get('payload'))
+            if message.get('command') == "subscribe":
+                self.client.subscribe('update_' + message.get('token'), 1)
+        except Exception as ex:
+            print ex

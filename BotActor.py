@@ -84,16 +84,24 @@ class BotActor(pykka.ThreadingActor):
     def edit(self, base_message, message):
         return base_message.edit_text(message)
 
+    def edit(self, base_message, reply_markup):
+        return base_message.edit_reply_markup(base_message, reply_markup=reply_markup)
+
     def send(self, message, chat_id, reply_markup):
         return self.bot.sendMessage(chat_id=chat_id, text=message, reply_markup=reply_markup)
 
     def on_receive(self, message):
-   
-        if message.get('command') == 'update':
-            self.update(message.get('update'))
-        elif message.get('command') == 'reply':
-            return self.reply(message.get('base'), message.get('message'), message.get('reply_markup'))
-        elif message.get('command') == 'edit':
-            return self.edit(message.get('base'), message.get('message'))
-        elif message.get('command') == 'send':
-            return self.send(message.get('message'), message.get('chat_id'), message.get('reply_markup'))
+        try:
+
+            if message.get('command') == 'update':
+                self.update(message.get('update'))
+            elif message.get('command') == 'reply':
+                return self.reply(message.get('base'), message.get('message'), message.get('reply_markup'))
+            elif message.get('command') == 'edit':
+                return self.edit(message.get('base'), message.get('message'))
+            elif message.get('command') == 'edit_reply_markup':
+                return self.edit(message.get('base'), message.get('message'))
+            elif message.get('command') == 'send':
+                return self.send(message.get('message'), message.get('chat_id'), message.get('reply_markup'))
+        except Exception as ex:
+            print ex
