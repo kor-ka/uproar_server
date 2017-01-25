@@ -189,7 +189,8 @@ class ChatActor(pykka.ThreadingActor):
 
     def on_device_update(self, update):
 
-        if update.get('message').startswith(u'\U0001F3B6'):
+        org_msg = update.get('message')
+        if org_msg.startswith(u'\U0001F3B6') or org_msg.startswith(u'\U00002B1B'):
 
             callback_vol_plus = 'vol' + ':' + '1'
             callback_vol_minus = 'vol' + ':' + '0'
@@ -199,14 +200,16 @@ class ChatActor(pykka.ThreadingActor):
                  InlineKeyboardButton(loud, callback_data=callback_vol_plus)],
             ]
 
+            message = org_msg + '\n' + update.get('device_name')
+
             if update.get('placeholder'):
-                self.bot.tell({'command':'edit', 'base':update.get('placeholder'), 'message':update.get('message'), 'reply_markup':InlineKeyboardMarkup(keyboard)})
+                self.bot.tell({'command':'edit', 'base':update.get('placeholder'), 'message':message, 'reply_markup':InlineKeyboardMarkup(keyboard)})
 
         likes_data = latest_tracks[update.get('orig')]
         if likes_data:
             message = update.get('title')
 
-            likes_data.device_status[update.get('device')] = update.get('message')
+            likes_data.device_status[update.get('device')] = org_msg
 
             for k,v in likes_data.device_status.items():
                 message += "\n" + v
@@ -228,7 +231,7 @@ class ChatActor(pykka.ThreadingActor):
                 self.on_callback_query(message.get('callback_query'))
             elif message.get('command') == 'add_device':
                 self.devices.add(message.get('device'))
-                message.get('device').tell({'command': 'move_to', 'chat': self.actor_ref, 'plcaeholder':message.get('placeholder')})
+                message.get('device').tell({'command': 'move_to', 'chat': self.actor_ref, 'placeholder':message.get('placeholder')})
             elif message.get('command') == 'remove_device':
                 self.devices.remove(message.get('device'))
             elif message.get('command') == 'device_update':

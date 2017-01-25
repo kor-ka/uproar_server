@@ -81,8 +81,8 @@ class BotActor(pykka.ThreadingActor):
     def reply(self, base_message, message, reply_markup):
         return base_message.reply_text(message, reply_markup=reply_markup)
 
-    def edit(self, base_message, message):
-        return base_message.edit_text(message)
+    def edit(self, base_message, message, reply_markup):
+        return base_message.edit_text(message, reply_markup=reply_markup)
 
     def edit_reply_markup(self, query, reply_markup):
         return query.edit_message_reply_markup(reply_markup=reply_markup)
@@ -98,7 +98,7 @@ class BotActor(pykka.ThreadingActor):
             elif message.get('command') == 'reply':
                 return self.reply(message.get('base'), message.get('message'), message.get('reply_markup'))
             elif message.get('command') == 'edit':
-                return self.edit(message.get('base'), message.get('message'))
+                return self.edit(message.get('base'), message.get('message'), message.get('reply_markup'))
             elif message.get('command') == 'edit_reply_markup':
                 return self.edit_reply_markup(message.get('base'), message.get('reply_markup'))
             elif message.get('command') == 'send':
