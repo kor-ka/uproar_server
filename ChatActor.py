@@ -97,23 +97,23 @@ class ChatActor(pykka.ThreadingActor):
             file_path = result.get('file_path')
             durl = 'https://api.telegram.org/file/bot' + self.token + '/' + file_path
             if len(self.devices) > 0:
+
+                keyboard = [
+                    [InlineKeyboardButton(thumb_up, callback_data='like:1'),
+                     InlineKeyboardButton(thumb_down, callback_data='like:0')],
+                ]
+
+                title = message.audio.performer + " - " + message.audio.title
+                reply = self.bot.ask(
+                    {'command': 'reply', 'base': message,
+                     'message': title,
+                     'reply_markup': InlineKeyboardMarkup(keyboard)})
+
                 for device in self.devices:
-                    device_str = device.ask({'command':'get_name'})
-
-
-                    keyboard = [
-                        [InlineKeyboardButton(thumb_up, callback_data='like:1'),
-                         InlineKeyboardButton(thumb_down, callback_data='like:0')],
-                    ]
-
-                    reply = self.bot.ask(
-                        {'command': 'reply', 'base': message, 'message': "sent  " + message.audio.title + " to " + device_str, 'reply_markup': InlineKeyboardMarkup(keyboard)})
-                    data = json.dumps({"track_url": durl, "chat_id": reply.chat_id, "message_id": reply.message_id, "orig":message.message_id})
-
-
+                    data = json.dumps({"track_url": durl, "chat_id": reply.chat_id, "message_id": reply.message_id, "orig":message.message_id, 'title':title})
                     device.tell({'command': 'add_track', 'track': data, 'chat': self.actor_ref})
 
-                latest_tracks[message.message_id] = LikeStatus(message.message_id)
+                latest_tracks[message.message_id] = TrackStatus(message.message_id)
                 if len(latest_tracks) >= 100:
                     # TODO update deleted track - remove buttons
                     latest_tracks.popitem(False)
@@ -185,11 +185,19 @@ class ChatActor(pykka.ThreadingActor):
     def on_device_update(self, update):
         likes_data = latest_tracks[update.get('orig')]
         if likes_data:
+            message = update.get('title')
+
+            likes_data.device_status[update.get('device')] = update.get('message')
+
+            for k,v in likes_data.device_status.items():
+                message += "\n" + v
+
+            update['message'] = message
+
             keyboard = [
                 [InlineKeyboardButton(thumb_up + " " + str(likes_data.likes), callback_data='like:1'),
                  InlineKeyboardButton(thumb_down + " " + str(likes_data.dislikes), callback_data='like:0')],
             ]
-            
             self.bot.tell({'command': 'update', 'update': update, 'reply_markup':InlineKeyboardMarkup(keyboard)})
 
     def on_receive(self, message):
@@ -217,11 +225,12 @@ class DeviceData(object):
         self.owner = token_split[0]
         self.id = token_split[1]
 
-class LikeStatus(object):
+class TrackStatus(object):
     def __init__(self, orig):
-        super(LikeStatus, self).__init__()
+        super(TrackStatus, self).__init__()
         self.original_msg_id = orig
         self.likes = 0
         self.dislikes = 0
         self.likes_owners = set()
         self.dislikes_owners = set()
+        self.device_status = OrderedDict()
