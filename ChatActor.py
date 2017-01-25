@@ -212,7 +212,7 @@ class ChatActor(pykka.ThreadingActor):
             likes_data.device_status[update.get('device')] = org_msg
 
             for k,v in likes_data.device_status.items():
-                message += "\n" + v + + ' : ' + update.get('device_id')
+                message += "\n" + v + ' : ' + update.get('device')
 
             update['message'] = message
 

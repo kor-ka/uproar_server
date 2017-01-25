@@ -30,7 +30,6 @@ class DeviceActor(pykka.ThreadingActor):
         update['device'] = device_id
         update['placeholder'] = self.placeholder
         update['device_name'] = get_name(self.token)
-        update['device_id'] = device_id
         update['message'] = old_msg
         if self.chat is not None:
             self.chat.tell({'command':'device_update','update':update})
