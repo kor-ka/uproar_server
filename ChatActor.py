@@ -200,7 +200,7 @@ class ChatActor(pykka.ThreadingActor):
                  InlineKeyboardButton(loud, callback_data=callback_vol_plus)],
             ]
 
-            message = org_msg + '\n' + update.get('device_name')
+            message = org_msg + " " + update.get('title') + '\n' + update.get('device_name')
 
             if update.get('placeholder'):
                 self.bot.tell({'command':'edit', 'base':update.get('placeholder'), 'message':message, 'reply_markup':InlineKeyboardMarkup(keyboard)})
@@ -212,7 +212,7 @@ class ChatActor(pykka.ThreadingActor):
             likes_data.device_status[update.get('device')] = org_msg
 
             for k,v in likes_data.device_status.items():
-                message += "\n" + v
+                message += "\n" + v + + ' : ' + update.get('device_id')
 
             update['message'] = message
 
