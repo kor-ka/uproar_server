@@ -8,7 +8,7 @@ import pykka, os, urllib, json, config
 from telegram import InlineKeyboardButton
 import base64
 import DeviceActor
-from queue import Queue
+from collections import OrderedDict
 
 from telegram import InlineKeyboardMarkup
 
@@ -20,7 +20,7 @@ thumb_down = u'\U0001F44E'
 
 votes_to_skip = 2
 
-latest_tracks = Queue(100)
+latest_tracks = OrderedDict()
 
 class ChatActor(pykka.ThreadingActor):
     def __init__(self, chat_id, manager, bot):
@@ -46,7 +46,7 @@ class ChatActor(pykka.ThreadingActor):
                 random_str = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(5))
 
                 token_message = self.bot.ask(
-                    {'command': 'send', 'chat_id':message.chat_id, 'message': loud + ' ' + message.from_user.username + '\' device: ' + random_str})
+                    {'command': 'send', 'chat_id':message.chat_id, 'message': loud + ' ' + message.from_user.username + '\'s device: ' + random_str})
 
                 token_set = message.from_user.username + ':' + random_str + ':' + str(hash(self.secret + str(message.from_user.id)))
 
@@ -99,16 +99,25 @@ class ChatActor(pykka.ThreadingActor):
             if len(self.devices) > 0:
                 for device in self.devices:
                     device_str = device.ask({'command':'get_name'})
-                    reply = self.bot.ask(
-                        {'command': 'reply', 'base': message, 'message': "sent  " + message.audio.title + " to " + device_str})
-                    data = json.dumps({"track_url": durl, "chat_id": reply.chat_id, "message_id": reply.message_id, "orig":message.reply_to_message.id})
+
 
                     keyboard = [
                         [InlineKeyboardButton(thumb_up, callback_data='like:1'),
                          InlineKeyboardButton(thumb_down, callback_data='like:0')],
                     ]
-                    latest_tracks.put(data)
-                    device.tell({'command': 'add_track', 'track': data, 'chat': self.actor_ref, 'reply_markup': InlineKeyboardMarkup(keyboard),})
+
+                    reply = self.bot.ask(
+                        {'command': 'reply', 'base': message, 'message': "sent  " + message.audio.title + " to " + device_str, 'reply_markup': InlineKeyboardMarkup(keyboard)})
+                    data = json.dumps({"track_url": durl, "chat_id": reply.chat_id, "message_id": reply.message_id, "orig":message.message_id})
+
+
+                    device.tell({'command': 'add_track', 'track': data, 'chat': self.actor_ref})
+
+                latest_tracks[message.message_id] = LikeStatus(message.message_id)
+                if len(latest_tracks) >= 100:
+                    # TODO update deleted track - remove buttons
+                    latest_tracks.popitem(False)
+
             else:
                 self.bot.tell({'command': 'reply', 'base': message, 'message': 'no devices, please forward one from @uproarbot'})
 
@@ -136,12 +145,52 @@ class ChatActor(pykka.ThreadingActor):
             else:
                 text = 'Ooops, looks like it\'s not yours'
         elif callback[0] == 'like':
-            self.bot.tell({'command':'edit', 'base':callback_query, })
+            likes_data = latest_tracks[callback_query.message.reply_to_message.message_id]
+            if likes_data:
+                user_id = callback_query.from_user.id
+                if callback[1] == "1":
+                    if user_id in likes_data.likes_owners:
+                        likes_data.likes -= 1
+                        likes_data.likes_owners.remove(user_id)
+                        text = "you took your like back"
+                    elif user_id in likes_data.dislikes_owners:
+                        text = "take your dislike back first"
+                    else:
+                        likes_data.likes += 1
+                        likes_data.likes_owners.add(user_id)
+                        text = "+1"
+
+                elif callback[1] == "0":
+                    if user_id in likes_data.dislikes_owners:
+                        likes_data.dislikes -= 1
+                        likes_data.dislikes_owners.remove(user_id)
+                        text = "you took your dislike back"
+                    elif user_id in likes_data.likes_owners:
+                        text = "take your like back first"
+                    else:
+                        likes_data.dislikes += 1
+                        likes_data.dislikes_owners.add(user_id)
+                        text = "-1"
+
+                keyboard = [
+                    [InlineKeyboardButton(thumb_up + " " + str(likes_data.likes), callback_data='like:1'),
+                     InlineKeyboardButton(thumb_down + " " + str(likes_data.dislikes), callback_data='like:0')],
+                ]
+
+                self.bot.tell({'command':'edit_reply_markup', 'base':callback_query, 'reply_markup':InlineKeyboardMarkup(keyboard)})
 
         if answer:
             callback_query.answer(text=text, show_alert=show_alert)
 
-
+    def on_device_update(self, update):
+        likes_data = latest_tracks[update.get('orig')]
+        if likes_data:
+            keyboard = [
+                [InlineKeyboardButton(thumb_up + " " + str(likes_data.likes), callback_data='like:1'),
+                 InlineKeyboardButton(thumb_down + " " + str(likes_data.dislikes), callback_data='like:0')],
+            ]
+            
+            self.bot.tell({'command': 'update', 'update': update, 'reply_markup':InlineKeyboardMarkup(keyboard)})
 
     def on_receive(self, message):
         try:
@@ -154,6 +203,8 @@ class ChatActor(pykka.ThreadingActor):
                 message.get('device').tell({'command': 'move_to', 'chat': self.actor_ref})
             elif message.get('command') == 'remove_device':
                 self.devices.remove(message.get('device'))
+            elif message.get('command') == 'device_update':
+                self.on_device_update(message.get('update'))
         except Exception as ex:
             print ex
 
@@ -165,3 +216,12 @@ class DeviceData(object):
         token_split = string.split(token, ':')
         self.owner = token_split[0]
         self.id = token_split[1]
+
+class LikeStatus(object):
+    def __init__(self, orig):
+        super(LikeStatus, self).__init__()
+        self.original_msg_id = orig
+        self.likes = 0
+        self.dislikes = 0
+        self.likes_owners = set()
+        self.dislikes_owners = set()

@@ -26,7 +26,8 @@ class DeviceActor(pykka.ThreadingActor):
         elif old_msg == 'done':
             old_msg = u'\U00002B1B stop'
         update['message'] = old_msg + '\n' + get_name(self.token)
-        self.bot.tell({'command': 'update', 'update': update})
+        if self.chat is not None:
+            self.chat.tell({'command':'device_update','update':update})
 
     def on_receive(self, message):
         try:

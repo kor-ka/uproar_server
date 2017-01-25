@@ -74,9 +74,9 @@ class BotActor(pykka.ThreadingActor):
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         self.fetcher.tell({'command': 'loop'})
 
-    def update(self, update):
+    def update(self, update, reply_markup):
         self.bot.editMessageText(update.get("message"), chat_id=update.get("chat_id"),
-                                 message_id=update.get("message_id"))
+                                 message_id=update.get("message_id"), reply_markup=reply_markup)
 
     def reply(self, base_message, message, reply_markup):
         return base_message.reply_text(message, reply_markup=reply_markup)
@@ -84,8 +84,8 @@ class BotActor(pykka.ThreadingActor):
     def edit(self, base_message, message):
         return base_message.edit_text(message)
 
-    def edit(self, base_message, reply_markup):
-        return base_message.edit_reply_markup(base_message, reply_markup=reply_markup)
+    def edit_reply_markup(self, query, reply_markup):
+        return query.edit_message_reply_markup(reply_markup=reply_markup)
 
     def send(self, message, chat_id, reply_markup):
         return self.bot.sendMessage(chat_id=chat_id, text=message, reply_markup=reply_markup)
@@ -94,13 +94,13 @@ class BotActor(pykka.ThreadingActor):
         try:
 
             if message.get('command') == 'update':
-                self.update(message.get('update'))
+                self.update(message.get('update'), message.get('reply_markup'))
             elif message.get('command') == 'reply':
                 return self.reply(message.get('base'), message.get('message'), message.get('reply_markup'))
             elif message.get('command') == 'edit':
                 return self.edit(message.get('base'), message.get('message'))
             elif message.get('command') == 'edit_reply_markup':
-                return self.edit(message.get('base'), message.get('message'))
+                return self.edit_reply_markup(message.get('base'), message.get('reply_markup'))
             elif message.get('command') == 'send':
                 return self.send(message.get('message'), message.get('chat_id'), message.get('reply_markup'))
         except Exception as ex:
