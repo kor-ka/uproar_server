@@ -228,7 +228,7 @@ class ChatActor(pykka.ThreadingActor):
                 self.on_callback_query(message.get('callback_query'))
             elif message.get('command') == 'add_device':
                 self.devices.add(message.get('device'))
-                message.get('device').tell({'command': 'move_to', 'chat': self.actor_ref})
+                message.get('device').tell({'command': 'move_to', 'chat': self.actor_ref, 'plcaeholder':message.get('placeholder')})
             elif message.get('command') == 'remove_device':
                 self.devices.remove(message.get('device'))
             elif message.get('command') == 'device_update':
