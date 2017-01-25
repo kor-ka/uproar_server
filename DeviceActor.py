@@ -13,6 +13,7 @@ class DeviceActor(pykka.ThreadingActor):
         self.mqtt = mqtt
         self.bot = bot
         self.chat = None
+        self.placeholder = None
 
     def on_update(self, message):
         update = message.get('update')
@@ -27,6 +28,7 @@ class DeviceActor(pykka.ThreadingActor):
             old_msg = u'\U00002B1B stop'
         device_id = self.token.split(':')[1]
         update['device'] = device_id
+        update['placeholder'] = self.placeholder
         update['message'] = old_msg + ' : ' + device_id
         if self.chat is not None:
             self.chat.tell({'command':'device_update','update':update})
@@ -41,6 +43,7 @@ class DeviceActor(pykka.ThreadingActor):
                 if self.chat is not None and self.chat != message.get('chat'):
                     self.chat.tell({'command': 'remove_device', 'device': self.actor_ref})
                 self.chat = message.get('chat')
+                self.placeholder = message.get('placeholder')
 
             elif message.get('command') == "get_name":
                 return get_name(self.token)
@@ -50,6 +53,8 @@ class DeviceActor(pykka.ThreadingActor):
                 self.on_update(message)
             elif message.get('command') == "vol":
                 self.publish('volume', message.get('param'))
+            elif message.get('command') == "get_placeholder":
+                return self.placeholder
         except Exception as ex:
             print ex
 

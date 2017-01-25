@@ -64,11 +64,7 @@ class ChatActor(pykka.ThreadingActor):
                 if message.from_user.username and message.text.replace(loud + ' ', '').startswith(
                         message.from_user.username):
                     token = self.get_token(message.text, message.from_user)
-                    self.actor_ref.tell(
-                        {
-                            'command': 'add_device',
-                            'device': self.get_device(token)
-                        })
+
 
                     callback_vol_plus = 'vol' + ':' + '1'
 
@@ -78,11 +74,20 @@ class ChatActor(pykka.ThreadingActor):
                                     [InlineKeyboardButton(not_so_loud, callback_data=callback_vol_minus), InlineKeyboardButton(loud, callback_data=callback_vol_plus)],
                                ]
 
-                    self.bot.tell({'command': 'send',
+                    placeholder = self.bot.ask({'command': 'send',
                                    'chat_id': message.chat_id,
                                    'message': u'\U00002705 Device added!\n'+ DeviceActor.get_name(token),
                                    'reply_markup': InlineKeyboardMarkup(keyboard),
                                    })
+
+                    self.actor_ref.tell(
+                        {
+                            'command': 'add_device',
+                            'device': self.get_device(token),
+                            'placeholder':placeholder,
+                        })
+
+
 
                 else:
                     self.bot.tell({'command': 'reply', 'base': message, 'message': 'Ooops, looks like it\'s not yours'})
@@ -183,6 +188,20 @@ class ChatActor(pykka.ThreadingActor):
             callback_query.answer(text=text, show_alert=show_alert)
 
     def on_device_update(self, update):
+
+        if update.get('message').startswith(u'\U0001F3B6'):
+
+            callback_vol_plus = 'vol' + ':' + '1'
+            callback_vol_minus = 'vol' + ':' + '0'
+
+            keyboard = [
+                [InlineKeyboardButton(not_so_loud, callback_data=callback_vol_minus),
+                 InlineKeyboardButton(loud, callback_data=callback_vol_plus)],
+            ]
+
+            if update.get('placeholder'):
+                self.bot.tell({'command':'edit', 'message':update.get('message'), 'reply_markup':InlineKeyboardMarkup(keyboard)})
+
         likes_data = latest_tracks[update.get('orig')]
         if likes_data:
             message = update.get('title')
@@ -199,6 +218,7 @@ class ChatActor(pykka.ThreadingActor):
                  InlineKeyboardButton(thumb_down + " " + str(likes_data.dislikes), callback_data='like:0')],
             ]
             self.bot.tell({'command': 'update', 'update': update, 'reply_markup':InlineKeyboardMarkup(keyboard)})
+
 
     def on_receive(self, message):
         try:
