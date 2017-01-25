@@ -200,7 +200,7 @@ class ChatActor(pykka.ThreadingActor):
             ]
 
             if update.get('placeholder'):
-                self.bot.tell({'command':'edit', 'message':update.get('message'), 'reply_markup':InlineKeyboardMarkup(keyboard)})
+                self.bot.tell({'command':'edit', 'base':update.get('placeholder'), 'message':update.get('message'), 'reply_markup':InlineKeyboardMarkup(keyboard)})
 
         likes_data = latest_tracks[update.get('orig')]
         if likes_data:
