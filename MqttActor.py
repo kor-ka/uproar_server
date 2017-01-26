@@ -15,6 +15,8 @@ class MqttACtor(pykka.ThreadingActor):
         try:
             if msg.topic == 'server_test':
                 self.client.subscribe("update_" + str(msg.payload), 1)
+                device = self.manager.ask({'command': 'get_device', 'token': str(msg.payload)})
+                device.tell({'command':'online'})
             elif str(msg.topic).startswith("update_"):
                 token = msg.topic.replace("update_", "")
                 self.manager.tell({'command':'device_update_status', 'token':token, 'update':json.loads(str(msg.payload))})

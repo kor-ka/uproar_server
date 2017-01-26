@@ -20,9 +20,13 @@ thumb_down = u'\U0001F44E'
 
 skip = u'\U000023E9'
 
-votes_to_skip = 1
+downloading = u'\U00002B07'
+queued = u'\U0000261D'
+playing = u'\U0001F3B6'
+stopped = u'\U00002B1B'
 
-latest_tracks = OrderedDict()
+votes_to_skip = 2
+
 
 class ChatActor(pykka.ThreadingActor):
     def __init__(self, chat_id, manager, bot):
@@ -33,6 +37,7 @@ class ChatActor(pykka.ThreadingActor):
         self.token = config.bottoken
         self.secret = config.secret
         self.devices = set()
+        self.latest_tracks = OrderedDict()
 
     def on_message(self, message):
         if message.text:
@@ -118,12 +123,12 @@ class ChatActor(pykka.ThreadingActor):
 
                 for device in self.devices:
                     data = json.dumps({"track_url": durl, "chat_id": reply.chat_id, "message_id": reply.message_id, "orig":message.message_id, 'title':title})
-                    device.tell({'command': 'add_track', 'track': data, 'chat': self.actor_ref})
+                    device.tell({'command': 'add_track', 'track': data})
 
-                latest_tracks[message.message_id] = TrackStatus(message.message_id, title)
-                if len(latest_tracks) >= 100:
+                self.latest_tracks[message.message_id] = TrackStatus(message.message_id, title, data)
+                if len(self.latest_tracks) >= 100:
                     # TODO update deleted track - remove buttons
-                    latest_tracks.popitem(False)
+                    self.latest_tracks.popitem(False)
 
             else:
                 self.bot.tell({'command': 'reply', 'base': message, 'message': 'no devices, please forward one from @uproarbot'})
@@ -152,7 +157,7 @@ class ChatActor(pykka.ThreadingActor):
             else:
                 text = 'Ooops, looks like it\'s not yours'
         elif callback[0] == 'like':
-            likes_data = latest_tracks[callback_query.message.reply_to_message.message_id]
+            likes_data = self.latest_tracks[callback_query.message.reply_to_message.message_id]
             if likes_data:
                 user_id = callback_query.from_user.id
                 if callback[1] == "1":
@@ -183,7 +188,7 @@ class ChatActor(pykka.ThreadingActor):
 
                 self.bot.tell({'command':'edit_reply_markup', 'base':callback_query, 'reply_markup':InlineKeyboardMarkup(keyboard)})
         elif callback[0] == 'skip':
-            likes_data = latest_tracks[callback_query.message.reply_to_message.message_id]
+            likes_data = self.latest_tracks[callback_query.message.reply_to_message.message_id]
             if likes_data:
                 text = "skipping %s" % likes_data.title
                 for d in self.devices:
@@ -221,21 +226,26 @@ class ChatActor(pykka.ThreadingActor):
             if update.get('placeholder'):
                 self.bot.tell({'command':'edit', 'base':update.get('placeholder'), 'message':message, 'reply_markup':InlineKeyboardMarkup(keyboard)})
 
-        likes_data = latest_tracks[update.get('orig')]
-        if likes_data:
+        track_status = self.latest_tracks[update.get('orig')]
+        if track_status:
             message = update.get('title')
 
-            likes_data.device_status[update.get('device')] = org_msg
+            track_status.device_status[update.get('device')] = org_msg
 
-            for k,v in likes_data.device_status.items():
+            for k,v in track_status.device_status.items():
                 message += "\n" + v + ' : ' + update.get('device')
 
             update['message'] = message
 
-            keyboard = self.get_keyboard(likes_data)
+            keyboard = self.get_keyboard(track_status)
             self.bot.tell({'command': 'update', 'update': update, 'reply_markup':InlineKeyboardMarkup(keyboard)})
 
-
+    def on_device_online(self, token, device):
+        for t in self.latest_tracks:
+            status = t.device_status[token.splt(':')[1]]
+            if status in None or status.startswith(downloading) or status.startswith(playing) or status.startswith(queued):
+                device.tell({'command': 'add_track', 'track': t.data})
+    
     def on_receive(self, message):
         try:
             if message.get('command') == 'message':
@@ -249,6 +259,8 @@ class ChatActor(pykka.ThreadingActor):
                 self.devices.remove(message.get('device'))
             elif message.get('command') == 'device_update':
                 self.on_device_update(message.get('update'))
+            elif message.get('command') == 'device_online':
+                self.on_device_online(message.get('token'), message.get('device'))
         except Exception as ex:
             print ex
 
@@ -262,7 +274,7 @@ class DeviceData(object):
         self.id = token_split[1]
 
 class TrackStatus(object):
-    def __init__(self, orig, title):
+    def __init__(self, orig, title, data):
         super(TrackStatus, self).__init__()
         self.original_msg_id = orig
         self.likes = 0
@@ -271,3 +283,4 @@ class TrackStatus(object):
         self.dislikes_owners = set()
         self.device_status = OrderedDict()
         self.title = title
+        self.data = data

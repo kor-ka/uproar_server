@@ -60,6 +60,9 @@ class DeviceActor(pykka.ThreadingActor):
                 return self.placeholder
             elif message.get('command') == "skip":
                 self.publish('skip', message.get('orig'))
+            elif message.get('command') == "online":
+                if self.chat is not None:
+                    self.chat.tell({'command':'device_online', 'token':self.token, 'device':self.actor_ref})
         except Exception as ex:
             print ex
 
