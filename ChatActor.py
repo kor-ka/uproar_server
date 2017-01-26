@@ -241,8 +241,8 @@ class ChatActor(pykka.ThreadingActor):
             self.bot.tell({'command': 'update', 'update': update, 'reply_markup':InlineKeyboardMarkup(keyboard)})
 
     def on_device_online(self, token, device):
-        for k,t in self.latest_tracks:
-            status = t.device_status[token.splt(':')[1]]
+        for k, t in self.latest_tracks.items():
+            status = t.device_status.get(token.split(':')[1])
             if status is None or status.startswith(downloading) or status.startswith(playing) or status.startswith(queued):
                 device.tell({'command': 'add_track', 'track': t.data})
     
