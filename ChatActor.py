@@ -180,7 +180,7 @@ class ChatActor(pykka.ThreadingActor):
                         text = "-1"
 
                 option = None
-                if likes_data.dislikes > votes_to_skip and likes_data.dislikes > likes_data.likes:
+                if likes_data.dislikes >= votes_to_skip and likes_data.dislikes > likes_data.likes:
                     option = InlineKeyboardButton(skip, callback_data='skip')
 
                 first_row = [InlineKeyboardButton(thumb_up + " " + str(likes_data.likes), callback_data='like:1'),
