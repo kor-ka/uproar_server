@@ -13,21 +13,21 @@ import ManagerActor
 from telegram import InlineKeyboardButton, CallbackQuery
 import config
 
+
 class UpdatesFetcher(pykka.ThreadingActor):
     def __init__(self, bot, manager):
         super(UpdatesFetcher, self).__init__()
-  	self.bot=bot
+        self.bot = bot
         self.update_id = None
         self.manager = manager
         try:
-             self.update_id = self.bot.getUpdates()[0].update_id
+            self.update_id = self.bot.getUpdates()[0].update_id
         except IndexError:
-             self.update_id = None
-
+            self.update_id = None
 
     def on_receive(self, message):
         if message.get('command') == 'loop':
-	    self.loop()    
+            self.loop()
 
     def loop(self):
         try:
@@ -38,7 +38,7 @@ class UpdatesFetcher(pykka.ThreadingActor):
             # The user has removed or blocked the bot.
             self.update_id += 1
         finally:
-            self.actor_ref.tell({'command':'loop'})
+            self.actor_ref.tell({'command': 'loop'})
 
     def apply(self, bot):
 
@@ -48,7 +48,6 @@ class UpdatesFetcher(pykka.ThreadingActor):
             self.manager.tell({'command': 'update', 'update': update})
 
 
-
 class BotActor(pykka.ThreadingActor):
     def __init__(self, manager):
         super(BotActor, self).__init__()
@@ -56,13 +55,13 @@ class BotActor(pykka.ThreadingActor):
         self.token = config.bottoken
         self.bot = None
         self.main()
-	self.fetcher = None
+        self.fetcher = None
 
     def main(self):
         # Telegram Bot Authorization Token
         bot = telegram.Bot(self.token)
         self.bot = bot
-	self.fetcher = UpdatesFetcher.start(bot, self.manager)
+        self.fetcher = UpdatesFetcher.start(bot, self.manager)
 
         # get the first pending update_id, this is so we can skip over it in case
         # we get an "Unauthorized" exception.

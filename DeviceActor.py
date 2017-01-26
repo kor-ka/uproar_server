@@ -25,7 +25,9 @@ class DeviceActor(pykka.ThreadingActor):
         elif old_msg == 'playing':
             old_msg = u'\U0001F3B6 playing'
         elif old_msg == 'done':
-            old_msg = u'\U00002B1B stop'
+            old_msg = u'\U00002B1B stopped'
+        elif old_msg == 'skip':
+            old_msg = u'\U000023E9 skipped'
         device_id = self.token.split(':')[1]
         update['device'] = device_id
         update['placeholder'] = self.placeholder

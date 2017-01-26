@@ -104,8 +104,8 @@ class ChatActor(pykka.ThreadingActor):
             if len(self.devices) > 0:
 
                 keyboard = [
-                    [InlineKeyboardButton(thumb_up, callback_data='like:1'),
-                     InlineKeyboardButton(thumb_down, callback_data='like:0')],
+                    [InlineKeyboardButton(thumb_up + " 0", callback_data='like:1'),
+                     InlineKeyboardButton(thumb_down + " 0", callback_data='like:0')],
                 ]
 
                 title = message.audio.performer + " - " + message.audio.title
