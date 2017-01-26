@@ -18,7 +18,9 @@ not_so_loud = u'\U0001F509'
 thumb_up = u'\U0001F44D'
 thumb_down = u'\U0001F44E'
 
-votes_to_skip = 2
+skip = u'\U000023E9'
+
+votes_to_skip = 1
 
 latest_tracks = OrderedDict()
 
@@ -118,7 +120,7 @@ class ChatActor(pykka.ThreadingActor):
                     data = json.dumps({"track_url": durl, "chat_id": reply.chat_id, "message_id": reply.message_id, "orig":message.message_id, 'title':title})
                     device.tell({'command': 'add_track', 'track': data, 'chat': self.actor_ref})
 
-                latest_tracks[message.message_id] = TrackStatus(message.message_id)
+                latest_tracks[message.message_id] = TrackStatus(message.message_id, title)
                 if len(latest_tracks) >= 100:
                     # TODO update deleted track - remove buttons
                     latest_tracks.popitem(False)
@@ -177,12 +179,25 @@ class ChatActor(pykka.ThreadingActor):
                         likes_data.dislikes_owners.add(user_id)
                         text = "-1"
 
+                option = None
+                if likes_data.dislikes > votes_to_skip and likes_data.dislikes > likes_data.likes:
+                    option = InlineKeyboardButton(skip, callback_data='skip')
+
+
                 keyboard = [
                     [InlineKeyboardButton(thumb_up + " " + str(likes_data.likes), callback_data='like:1'),
-                     InlineKeyboardButton(thumb_down + " " + str(likes_data.dislikes), callback_data='like:0')],
+                     InlineKeyboardButton(thumb_down + " " + str(likes_data.dislikes), callback_data='like:0'),
+                     option,
+                     ],
                 ]
 
                 self.bot.tell({'command':'edit_reply_markup', 'base':callback_query, 'reply_markup':InlineKeyboardMarkup(keyboard)})
+        elif callback[0] == 'skip':
+            likes_data = latest_tracks[callback_query.message.reply_to_message.message_id]
+            if likes_data:
+                text = "skipping %s" % likes_data.title
+                for d in self.devices:
+                    d.tell({'command':'skip', 'orig':likes_data.original_msg_id})
 
         if answer:
             callback_query.answer(text=text, show_alert=show_alert)
@@ -249,7 +264,7 @@ class DeviceData(object):
         self.id = token_split[1]
 
 class TrackStatus(object):
-    def __init__(self, orig):
+    def __init__(self, orig, title):
         super(TrackStatus, self).__init__()
         self.original_msg_id = orig
         self.likes = 0
@@ -257,3 +272,4 @@ class TrackStatus(object):
         self.likes_owners = set()
         self.dislikes_owners = set()
         self.device_status = OrderedDict()
+        self.title = title

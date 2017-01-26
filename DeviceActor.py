@@ -58,6 +58,8 @@ class DeviceActor(pykka.ThreadingActor):
                 self.publish('volume', message.get('param'))
             elif message.get('command') == "get_placeholder":
                 return self.placeholder
+            elif message.get('command') == "skip":
+                self.publish('skip', message.get('orig'))
         except Exception as ex:
             print ex
 
