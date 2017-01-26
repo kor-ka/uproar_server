@@ -179,17 +179,7 @@ class ChatActor(pykka.ThreadingActor):
                         likes_data.dislikes_owners.add(user_id)
                         text = "-1"
 
-                option = None
-                if likes_data.dislikes >= votes_to_skip and likes_data.dislikes > likes_data.likes:
-                    option = InlineKeyboardButton(skip, callback_data='skip')
-
-                first_row = [InlineKeyboardButton(thumb_up + " " + str(likes_data.likes), callback_data='like:1'),
-                 InlineKeyboardButton(thumb_down + " " + str(likes_data.dislikes), callback_data='like:0')]
-
-                if option is not None:
-                    first_row.append(option)
-
-                keyboard = [first_row]
+                keyboard = self.get_keyboard(likes_data)
 
                 self.bot.tell({'command':'edit_reply_markup', 'base':callback_query, 'reply_markup':InlineKeyboardMarkup(keyboard)})
         elif callback[0] == 'skip':
@@ -201,6 +191,17 @@ class ChatActor(pykka.ThreadingActor):
 
         if answer:
             callback_query.answer(text=text, show_alert=show_alert)
+
+    def get_keyboard(self, likes_data):
+        option = None
+        if likes_data.dislikes >= votes_to_skip and likes_data.dislikes > likes_data.likes:
+            option = InlineKeyboardButton(skip, callback_data='skip')
+        first_row = [InlineKeyboardButton(thumb_up + " " + str(likes_data.likes), callback_data='like:1'),
+                     InlineKeyboardButton(thumb_down + " " + str(likes_data.dislikes), callback_data='like:0')]
+        if option is not None:
+            first_row.append(option)
+        keyboard = [first_row]
+        return keyboard
 
     def on_device_update(self, update):
 
@@ -231,10 +232,7 @@ class ChatActor(pykka.ThreadingActor):
 
             update['message'] = message
 
-            keyboard = [
-                [InlineKeyboardButton(thumb_up + " " + str(likes_data.likes), callback_data='like:1'),
-                 InlineKeyboardButton(thumb_down + " " + str(likes_data.dislikes), callback_data='like:0')],
-            ]
+            keyboard = self.get_keyboard(likes_data)
             self.bot.tell({'command': 'update', 'update': update, 'reply_markup':InlineKeyboardMarkup(keyboard)})
 
 
