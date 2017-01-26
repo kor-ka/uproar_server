@@ -243,7 +243,7 @@ class ChatActor(pykka.ThreadingActor):
     def on_device_online(self, token, device):
         for k,t in self.latest_tracks:
             status = t.device_status[token.splt(':')[1]]
-            if status in None or status.startswith(downloading) or status.startswith(playing) or status.startswith(queued):
+            if status is None or status.startswith(downloading) or status.startswith(playing) or status.startswith(queued):
                 device.tell({'command': 'add_track', 'track': t.data})
     
     def on_receive(self, message):
