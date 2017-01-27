@@ -24,8 +24,9 @@ downloading = u'\U00002B07'
 queued = u'\U0000261D'
 playing = u'\U0001F3B6'
 stopped = u'\U00002B1B'
+promoted = u'\U00002B06'
 
-votes_to_skip = 2
+votes_to_skip = 1
 
 
 class ChatActor(pykka.ThreadingActor):
@@ -187,12 +188,20 @@ class ChatActor(pykka.ThreadingActor):
                 keyboard = self.get_keyboard(likes_data)
 
                 self.bot.tell({'command':'edit_reply_markup', 'base':callback_query, 'reply_markup':InlineKeyboardMarkup(keyboard)})
+
         elif callback[0] == 'skip':
             likes_data = self.latest_tracks[callback_query.message.reply_to_message.message_id]
             if likes_data:
                 text = "skipping %s" % likes_data.title
                 for d in self.devices:
                     d.tell({'command':'skip', 'orig':likes_data.original_msg_id})
+
+        elif callback[0] == 'promote':
+            likes_data = self.latest_tracks[callback_query.message.reply_to_message.message_id]
+            if likes_data:
+                text = "promoting %s" % likes_data.title
+                for d in self.devices:
+                    d.tell({'command':'promote', 'orig':likes_data.original_msg_id})
 
         if answer:
             callback_query.answer(text=text, show_alert=show_alert)
@@ -201,6 +210,8 @@ class ChatActor(pykka.ThreadingActor):
         option = None
         if likes_data.dislikes >= votes_to_skip and likes_data.dislikes > likes_data.likes:
             option = InlineKeyboardButton(skip, callback_data='skip')
+        if likes_data.likes >= votes_to_skip and likes_data.likes > likes_data.dislikes:
+            option = InlineKeyboardButton(skip, callback_data='promote')
         first_row = [InlineKeyboardButton(thumb_up + " " + str(likes_data.likes), callback_data='like:1'),
                      InlineKeyboardButton(thumb_down + " " + str(likes_data.dislikes), callback_data='like:0')]
         if option is not None:
@@ -243,7 +254,7 @@ class ChatActor(pykka.ThreadingActor):
     def on_device_online(self, token, device):
         for k, t in self.latest_tracks.items():
             status = t.device_status.get(token.split(':')[1])
-            if status is None or status.startswith(downloading) or status.startswith(playing) or status.startswith(queued):
+            if status is None or status.startswith(downloading) or status.startswith(playing) or status.startswith(queued) or status.startswith(promoted):
                 device.tell({'command': 'add_track', 'track': t.data})
     
     def on_receive(self, message):

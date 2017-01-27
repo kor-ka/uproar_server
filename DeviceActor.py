@@ -28,6 +28,8 @@ class DeviceActor(pykka.ThreadingActor):
             old_msg = u'\U00002B1B stopped'
         elif old_msg == 'skip':
             old_msg = u'\U000023E9 skipped'
+        elif old_msg == 'promote':
+            old_msg = u'\U00002B06 promoted'
         device_id = self.token.split(':')[1]
         update['device'] = device_id
         update['placeholder'] = self.placeholder
@@ -60,6 +62,8 @@ class DeviceActor(pykka.ThreadingActor):
                 return self.placeholder
             elif message.get('command') == "skip":
                 self.publish('skip', message.get('orig'))
+            elif message.get('command') == "promote":
+                self.publish('promote', message.get('orig'))
             elif message.get('command') == "online":
                 if self.chat is not None:
                     self.chat.tell({'command':'device_online', 'token':self.token, 'device':self.actor_ref})
