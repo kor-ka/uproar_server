@@ -9,6 +9,7 @@ from telegram import InlineKeyboardButton
 import base64
 import DeviceActor
 from collections import OrderedDict
+from operator import itemgetter
 
 from telegram import InlineKeyboardMarkup
 
@@ -39,6 +40,7 @@ class ChatActor(pykka.ThreadingActor):
         self.secret = config.secret
         self.devices = set()
         self.latest_tracks = OrderedDict()
+        self.users = dict()
 
     def on_message(self, message):
         if message.text:
@@ -99,6 +101,14 @@ class ChatActor(pykka.ThreadingActor):
 
                 else:
                     self.bot.tell({'command': 'reply', 'base': message, 'message': 'Ooops, looks like it\'s not yours'})
+
+            elif text.startswith('/score'):
+                sortd = sorted(self.users.items(), key=itemgetter(1))
+                score = ""
+                for user_likes in sortd:
+                    user = user_likes[1][0]
+                    score += (user.firstname if not user.username else  '@' + user.username) + ' ' + str(user_likes[1][1])
+                self.bot.tell({'command': 'reply', 'base': message, 'message': score})
 
         if message.audio:
             track_info_raw = urllib.urlopen(
@@ -172,6 +182,11 @@ class ChatActor(pykka.ThreadingActor):
                         likes_data.likes += 1
                         likes_data.likes_owners.add(user_id)
                         text = "+1"
+                        user_likes = self.users.get(callback_query.message.reply_to_message.from_user.id)
+                        if user_likes is None:
+                            user_likes = [callback_query.message.reply_to_message.from_user, 0]
+                            self.users[callback_query.message.reply_to_message.from_user.id] = user_likes
+                        user_likes[1] += 1
 
                 elif callback[1] == "0":
                     if user_id in likes_data.dislikes_owners:
