@@ -26,7 +26,7 @@ playing = u'\U0001F3B6'
 stopped = u'\U00002B1B'
 promoted = u'\U00002B06'
 
-votes_to_skip = 1
+votes_to_skip = 2
 
 
 class ChatActor(pykka.ThreadingActor):
