@@ -108,7 +108,7 @@ class ChatActor(pykka.ThreadingActor):
                 for user_likes in sortd:
                     user = user_likes[1][0]
                     score += (user.firstname if not user.username else  '@' + user.username) + ' ' + str(user_likes[1][1])
-                if score == '':
+                if not score:
                     score == 'no one have likes for now'
                 self.bot.tell({'command': 'reply', 'base': message, 'message': score})
 
