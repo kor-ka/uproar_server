@@ -211,7 +211,7 @@ class ChatActor(pykka.ThreadingActor):
         if likes_data.dislikes >= votes_to_skip and likes_data.dislikes > likes_data.likes:
             option = InlineKeyboardButton(skip, callback_data='skip')
         if likes_data.likes >= votes_to_skip and likes_data.likes > likes_data.dislikes:
-            option = InlineKeyboardButton(skip, callback_data='promote')
+            option = InlineKeyboardButton(promoted, callback_data='promote')
         first_row = [InlineKeyboardButton(thumb_up + " " + str(likes_data.likes), callback_data='like:1'),
                      InlineKeyboardButton(thumb_down + " " + str(likes_data.dislikes), callback_data='like:0')]
         if option is not None:
