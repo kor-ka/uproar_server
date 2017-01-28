@@ -12,17 +12,19 @@ class DeviceActor(pykka.ThreadingActor):
     def __init__(self, token, manager, mqtt, bot):
         super(DeviceActor, self).__init__()
         self.token = token
-        self.manager = manager
         self.mqtt = mqtt
+        self.mqtt.tell({'command': 'subscribe', 'token': self.token})
+        self.manager = manager
         self.bot = bot
         self.chat = None
         self.placeholder = None
         self.storage = None
 
+
     def on_start(self):
         if not os.path.exists('devices'):
             os.makedirs('devices')
-        self.storage = shelve.open('devices/%s' % self.token)
+        self.storage = shelve.open('devices/%s' % self.token, writeback=True)
         self.placeholder = self.storage.get('placeholder')
         if self.placeholder:
             self.chat = self.manager.ask({'command': 'get_chat', 'chat_id': self.placeholder.chat_id})
@@ -56,7 +58,6 @@ class DeviceActor(pykka.ThreadingActor):
                 self.publish("track", str(message.get('track')))
 
             elif message.get('command') == "move_to":
-                self.mqtt.tell({'command': 'subscribe', 'token': self.token})
                 if self.chat is not None and self.chat != message.get('chat'):
                     self.chat.tell({'command': 'remove_device', 'device': self.actor_ref, 'token':self.token})
 
@@ -64,7 +65,8 @@ class DeviceActor(pykka.ThreadingActor):
                 self.placeholder = message.get('placeholder')
 
                 self.storage['placeholder'] = self.placeholder
-                self.storage.sync()
+                self.storage.close()
+                self.storage = shelve.open('devices/%s' % self.token)
 
 
             elif message.get('command') == "get_name":
