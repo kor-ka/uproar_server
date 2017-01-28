@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import random
+import shelve
 import string
 from array import array
 
@@ -38,9 +39,35 @@ class ChatActor(pykka.ThreadingActor):
         self.bot = bot
         self.token = config.bottoken
         self.secret = config.secret
-        self.devices = set()
-        self.latest_tracks = OrderedDict()
-        self.users = dict()
+        # self.devices = set()
+        # self.devices_tokens = set()
+        # self.latest_tracks = OrderedDict()
+        # self.users = dict()
+        # self.storage = None
+        self.devices = None
+        self.devices_tokens = None
+        self.latest_tracks = None
+        self.users = None
+        self.storage = None
+        self.tracks_storage = None
+
+    def on_start(self):
+        self.tracks_storage = shelve.open('/chat/%s_tracks' % self.chat_id)
+        self.latest_tracks = self.tracks_storage.get('tracks', OrderedDict())
+        self.tracks_storage['tracks'] = self.latest_tracks
+
+        self.storage = shelve.open('/chat/%s' % self.chat_id)
+        self.devices = self.storage.get('devices', set())
+        self.storage['devices'] = self.devices
+
+        self.devices_tokens = self.storage.get('devices_tokens', set())
+        self.storage['devices_tokens'] = self.devices_tokens
+
+        self.users = self.storage.get('users', dict())
+        self.storage['users'] = self.users
+
+        for t in self.devices_tokens:
+            self.devices.add(self.manager.ask({'command':'get_device', 'token':t}))
 
     def on_message(self, message):
         if message.text:
@@ -94,6 +121,7 @@ class ChatActor(pykka.ThreadingActor):
                         {
                             'command': 'add_device',
                             'device': self.get_device(token),
+                            'token': token,
                             'placeholder':placeholder,
                         })
 
@@ -141,7 +169,8 @@ class ChatActor(pykka.ThreadingActor):
                 self.latest_tracks[message.message_id] = TrackStatus(message.message_id, title, data)
                 if len(self.latest_tracks) >= 100:
                     # TODO update deleted track - remove buttons
-                    self.latest_tracks.popitem(False)
+                    self.latest_tracks.popitem(last=False)
+                self.tracks_storage.sync()
 
             else:
                 self.bot.tell({'command': 'reply', 'base': message, 'message': 'no devices, please forward one from @uproarbot'})
@@ -204,13 +233,14 @@ class ChatActor(pykka.ThreadingActor):
                 keyboard = self.get_keyboard(likes_data)
 
                 self.bot.tell({'command':'edit_reply_markup', 'base':callback_query, 'reply_markup':InlineKeyboardMarkup(keyboard)})
-
+            self.tracks_storage.sync()
         elif callback[0] == 'skip':
             likes_data = self.latest_tracks[callback_query.message.reply_to_message.message_id]
             if likes_data:
                 text = "skipping %s" % likes_data.title
                 for d in self.devices:
                     d.tell({'command':'skip', 'orig':likes_data.original_msg_id})
+            self.tracks_storage.sync()
 
         elif callback[0] == 'promote':
             likes_data = self.latest_tracks[callback_query.message.reply_to_message.message_id]
@@ -218,6 +248,7 @@ class ChatActor(pykka.ThreadingActor):
                 text = "promoting %s" % likes_data.title
                 for d in self.devices:
                     d.tell({'command':'promote', 'orig':likes_data.original_msg_id})
+            self.tracks_storage.sync()
 
         if answer:
             callback_query.answer(text=text, show_alert=show_alert)
@@ -227,6 +258,7 @@ class ChatActor(pykka.ThreadingActor):
         if user_likes is None:
             user_likes = [callback_query.message.reply_to_message.from_user, 0]
             self.users[callback_query.message.reply_to_message.from_user.id] = user_likes
+            self.storage.sync()
         return user_likes
 
     def get_keyboard(self, likes_data):
@@ -273,13 +305,16 @@ class ChatActor(pykka.ThreadingActor):
 
             keyboard = self.get_keyboard(track_status)
             self.bot.tell({'command': 'update', 'update': update, 'reply_markup':InlineKeyboardMarkup(keyboard)})
+            self.tracks_storage.sync()
 
     def on_device_online(self, token, device):
         for k, t in self.latest_tracks.items():
             status = t.device_status.get(token.split(':')[1])
             if status is None or status.startswith(downloading) or status.startswith(playing) or status.startswith(queued) or status.startswith(promoted):
                 device.tell({'command': 'add_track', 'track': t.data})
-    
+
+        self.tracks_storage.sync()
+
     def on_receive(self, message):
         try:
             if message.get('command') == 'message':
@@ -288,9 +323,13 @@ class ChatActor(pykka.ThreadingActor):
                 self.on_callback_query(message.get('callback_query'))
             elif message.get('command') == 'add_device':
                 self.devices.add(message.get('device'))
+                self.devices_tokens.add(message.get('token'))
+                self.storage.sync()
                 message.get('device').tell({'command': 'move_to', 'chat': self.actor_ref, 'placeholder':message.get('placeholder')})
             elif message.get('command') == 'remove_device':
                 self.devices.remove(message.get('device'))
+                self.devices_tokens.remove(message.get('token'))
+                self.storage.sync()
             elif message.get('command') == 'device_update':
                 self.on_device_update(message.get('update'))
             elif message.get('command') == 'device_online':

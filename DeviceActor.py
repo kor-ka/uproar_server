@@ -1,9 +1,10 @@
-import pykka
+import pykka, shelve
 
 
 def get_name(token):
     split = token.split(':')
     return split[0] + '\'s device: ' + split[1]
+
 
 class DeviceActor(pykka.ThreadingActor):
     def __init__(self, token, manager, mqtt, bot):
@@ -14,6 +15,13 @@ class DeviceActor(pykka.ThreadingActor):
         self.bot = bot
         self.chat = None
         self.placeholder = None
+        self.storage = None
+
+    def on_start(self):
+        self.storage = shelve.open('/device/%s' % self.token)
+        self.placeholder = self.storage.get('placeholder')
+        if self.placeholder:
+            self.chat = self.manager.ask({'command': 'get_chat', 'chat_id': self.placeholder.chat_id})
 
     def on_update(self, message):
         update = message.get('update')
@@ -36,19 +44,24 @@ class DeviceActor(pykka.ThreadingActor):
         update['device_name'] = get_name(self.token)
         update['message'] = old_msg
         if self.chat is not None:
-            self.chat.tell({'command':'device_update','update':update})
+            self.chat.tell({'command': 'device_update', 'update': update})
 
     def on_receive(self, message):
         try:
             if message.get('command') == "add_track":
-                self.publish("track",str(message.get('track')))
+                self.publish("track", str(message.get('track')))
 
             elif message.get('command') == "move_to":
                 self.mqtt.tell({'command': 'subscribe', 'token': self.token})
                 if self.chat is not None and self.chat != message.get('chat'):
-                    self.chat.tell({'command': 'remove_device', 'device': self.actor_ref})
+                    self.chat.tell({'command': 'remove_device', 'device': self.actor_ref, 'token':self.token})
+
                 self.chat = message.get('chat')
                 self.placeholder = message.get('placeholder')
+
+                self.storage['placeholder'] = self.placeholder
+                self.storage.sync()
+
 
             elif message.get('command') == "get_name":
                 return get_name(self.token)
@@ -66,11 +79,10 @@ class DeviceActor(pykka.ThreadingActor):
                 self.publish('promote', message.get('orig'))
             elif message.get('command') == "online":
                 if self.chat is not None:
-                    self.chat.tell({'command':'device_online', 'token':self.token, 'device':self.actor_ref})
+                    self.chat.tell({'command': 'device_online', 'token': self.token, 'device': self.actor_ref})
+
         except Exception as ex:
             print ex
 
     def publish(self, topic, payload):
-        self.mqtt.tell({'command': 'publish', 'topic': topic+'_' + self.token, 'payload': payload})
-
-
+        self.mqtt.tell({'command': 'publish', 'topic': topic + '_' + self.token, 'payload': payload})

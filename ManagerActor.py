@@ -46,6 +46,8 @@ class ManagerActor(pykka.ThreadingActor):
                 self.on_device_update(message.get('token'), message.get('update'))
             elif message.get('command') == 'get_device':
                 return self.get_device(message.get('token'))
+            elif message.get('command') == 'get_chat':
+                return self.get_chat(message.get('chat_id'))
         except Exception as ex:
             print ex
 
