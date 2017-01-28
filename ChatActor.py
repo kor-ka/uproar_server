@@ -54,11 +54,11 @@ class ChatActor(pykka.ThreadingActor):
     def on_start(self):
         if not os.path.exists('chats'):
             os.makedirs('chats')
-        self.tracks_storage = shelve.open('/chats/%s_tracks' % self.chat_id)
+        self.tracks_storage = shelve.open('chats/%s_tracks' % self.chat_id)
         self.latest_tracks = self.tracks_storage.get('tracks', OrderedDict())
         self.tracks_storage['tracks'] = self.latest_tracks
 
-        self.storage = shelve.open('/chats/%s' % self.chat_id)
+        self.storage = shelve.open('chats/%s' % self.chat_id)
         self.devices = self.storage.get('devices', set())
         self.storage['devices'] = self.devices
 

@@ -22,7 +22,7 @@ class DeviceActor(pykka.ThreadingActor):
     def on_start(self):
         if not os.path.exists('devices'):
             os.makedirs('devices')
-        self.storage = shelve.open('/devices/%s' % self.token)
+        self.storage = shelve.open('devices/%s' % self.token)
         self.placeholder = self.storage.get('placeholder')
         if self.placeholder:
             self.chat = self.manager.ask({'command': 'get_chat', 'chat_id': self.placeholder.chat_id})
