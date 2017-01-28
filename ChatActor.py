@@ -54,11 +54,11 @@ class ChatActor(pykka.ThreadingActor):
     def on_start(self):
         if not os.path.exists('chats'):
             os.makedirs('chats')
-        self.tracks_storage = shelve.open('chats/%s_tracks' % self.chat_id, writeback=True)
+        self.tracks_storage = shelve.open('chats/%s_tracks' % self.chat_id)
         self.latest_tracks = self.tracks_storage.get('tracks', OrderedDict())
         self.tracks_storage['tracks'] = self.latest_tracks
 
-        self.storage = shelve.open('chats/%s' % self.chat_id, writeback=True)
+        self.storage = shelve.open('chats/%s' % self.chat_id)
         self.devices = set()
 
         self.devices_tokens = self.storage.get('devices_tokens', set())
@@ -72,12 +72,12 @@ class ChatActor(pykka.ThreadingActor):
         self.storage['users'] = self.users
         self.storage['devices_tokens'] = self.devices_tokens
         self.storage.close()
-        self.storage = shelve.open('chats/%s' % self.chat_id, writeback=True)
+        self.storage = shelve.open('chats/%s' % self.chat_id)
 
     def sync_tracks_storage(self):
         self.tracks_storage['tracks'] = self.latest_tracks
         self.tracks_storage.close()
-        self.tracks_storage = shelve.open('chats/%s_tracks' % self.chat_id, writeback=True)
+        self.tracks_storage = shelve.open('chats/%s_tracks' % self.chat_id)
 
     def on_message(self, message):
         if message.text:
@@ -309,7 +309,7 @@ class ChatActor(pykka.ThreadingActor):
             track_status.device_status[update.get('device')] = org_msg
 
             for k,v in track_status.device_status.items():
-                message += "\n" + v + ' : ' + update.get('device')
+                message += "\n" + v + ' : ' + k
 
             update['message'] = message
 
