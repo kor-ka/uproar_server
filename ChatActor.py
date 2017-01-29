@@ -159,6 +159,9 @@ class ChatActor(pykka.ThreadingActor):
                 return
             file_path = result.get('file_path')
             durl = 'https://api.telegram.org/file/bot' + self.token + '/' + file_path
+            print load
+            print durl
+
             if len(self.devices) > 0:
 
                 keyboard = [
@@ -240,6 +243,8 @@ class ChatActor(pykka.ThreadingActor):
                         likes_data.dislikes_owners.add(user_id)
                         text = "-1"
 
+                self.sync_storage()
+
                 keyboard = self.get_keyboard(likes_data)
 
                 self.bot.tell({'command':'edit_reply_markup', 'base':callback_query, 'reply_markup':InlineKeyboardMarkup(keyboard)})
@@ -268,7 +273,6 @@ class ChatActor(pykka.ThreadingActor):
         if user_likes is None:
             user_likes = [callback_query.message.reply_to_message.from_user, 0]
             self.users[callback_query.message.reply_to_message.from_user.id] = user_likes
-            self.sync_storage()
         return user_likes
 
     def get_keyboard(self, likes_data):
