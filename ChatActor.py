@@ -54,11 +54,11 @@ class ChatActor(pykka.ThreadingActor):
     def on_start(self):
         if not os.path.exists('chats'):
             os.makedirs('chats')
-        self.tracks_storage = shelve.open('chats/%s_tracks' % self.chat_id)
+        self.tracks_storage = self.open_shelve('chats/%s_tracks' % self.chat_id)
         self.latest_tracks = self.tracks_storage.get('tracks', OrderedDict())
         self.tracks_storage['tracks'] = self.latest_tracks
 
-        self.storage = shelve.open('chats/%s' % self.chat_id)
+        self.storage = self.open_shelve('chats/%s' % self.chat_id)
         self.devices = set()
 
         self.devices_tokens = self.storage.get('devices_tokens', set())
@@ -68,16 +68,23 @@ class ChatActor(pykka.ThreadingActor):
         for t in self.devices_tokens:
             self.devices.add(self.manager.ask({'command':'get_device', 'token':t}))
 
+    def open_shelve(self, path):
+        try:
+            return shelve.open(path)
+        except:
+            os.remove(path)
+            return shelve.open(path)
+
     def sync_storage(self):
         self.storage['users'] = self.users
         self.storage['devices_tokens'] = self.devices_tokens
         self.storage.close()
-        self.storage = shelve.open('chats/%s' % self.chat_id)
+        self.storage = self.open_shelve('chats/%s' % self.chat_id)
 
     def sync_tracks_storage(self):
         self.tracks_storage['tracks'] = self.latest_tracks
         self.tracks_storage.close()
-        self.tracks_storage = shelve.open('chats/%s_tracks' % self.chat_id)
+        self.tracks_storage = self.open_shelve('chats/%s_tracks' % self.chat_id)
 
     def on_message(self, message):
         if message.text:
@@ -145,7 +152,7 @@ class ChatActor(pykka.ThreadingActor):
                 score = ""
                 for user_likes in sortd:
                     user = user_likes[1][0]
-                    score += (user.first_name if not user.username else  '@' + user.username) + ' ' + str(user_likes[1][1])
+                    score += (user.first_name if not user.username else  '@' + user.username) + ' ' + str(user_likes[1][1]) + '\n'
                 if not score:
                     score = 'no one have likes for now'
                 self.bot.tell({'command': 'reply', 'base': message, 'message': score})

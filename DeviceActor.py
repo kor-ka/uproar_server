@@ -52,6 +52,14 @@ class DeviceActor(pykka.ThreadingActor):
         if self.chat is not None:
             self.chat.tell({'command': 'device_update', 'update': update})
 
+    def open_shelve(self, path):
+        try:
+            return shelve.open(path)
+        except:
+            os.remove(path)
+            return shelve.open(path)
+
+
     def on_receive(self, message):
         try:
             if message.get('command') == "add_track":
@@ -66,7 +74,7 @@ class DeviceActor(pykka.ThreadingActor):
 
                 self.storage['placeholder'] = self.placeholder
                 self.storage.close()
-                self.storage = shelve.open('devices/%s' % self.token)
+                self.storage = self.open_shelve('devices/%s' % self.token)
 
 
             elif message.get('command') == "get_name":
