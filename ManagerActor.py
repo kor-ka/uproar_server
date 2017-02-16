@@ -20,6 +20,9 @@ class ManagerActor(pykka.ThreadingActor):
     def on_device_update(self, token, update):
         self.get_device(token).tell({'command':'update', 'update':update})
 
+    def on_device_message(self, token, message):
+        self.get_device(token).tell({'command':'device_message', 'message':message})
+
     def get_chat(self, chat_id):
         chat = self.chats.get(chat_id)
         if chat is None or not chat.is_alive:
@@ -44,6 +47,8 @@ class ManagerActor(pykka.ThreadingActor):
                     self.on_callback_query(update.callback_query)
             elif message.get('command') == 'device_update_status':
                 self.on_device_update(message.get('token'), message.get('update'))
+            elif message.get('command') == 'device_message':
+                self.on_device_message(message.get('token'), message.get('message'))
             elif message.get('command') == 'get_device':
                 return self.get_device(message.get('token'))
             elif message.get('command') == 'get_chat':

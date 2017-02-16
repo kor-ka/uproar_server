@@ -158,6 +158,7 @@ class ChatActor(pykka.ThreadingActor):
                 self.bot.tell({'command': 'reply', 'base': message, 'message': score})
 
         if message.audio:
+            #TODO try catch, move to func - regenerate url before send todevice
             track_info_raw = urllib.urlopen(
                 'https://api.telegram.org/bot' + self.token + '/getFile?file_id=' + message.audio.file_id)
             load = json.load(track_info_raw.fp)
@@ -336,6 +337,9 @@ class ChatActor(pykka.ThreadingActor):
 
         self.sync_tracks_storage()
 
+    def on_boring(self):
+        pass
+
     def on_receive(self, message):
         try:
             if message.get('command') == 'message':
@@ -355,6 +359,10 @@ class ChatActor(pykka.ThreadingActor):
                 self.on_device_update(message.get('update'))
             elif message.get('command') == 'device_online':
                 self.on_device_online(message.get('token'), message.get('device'))
+            elif message.get('command') == 'device_message':
+                msg = message.get("message")
+                if msg == "boring":
+                    self.on_boring()
         except Exception as ex:
             print ex
 

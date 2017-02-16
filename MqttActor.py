@@ -15,11 +15,16 @@ class MqttACtor(pykka.ThreadingActor):
         try:
             if msg.topic == 'server_test':
                 self.client.subscribe("update_" + str(msg.payload), 1)
+                self.client.subscribe("message_" + str(msg.payload), 1)
                 device = self.manager.ask({'command': 'get_device', 'token': str(msg.payload)})
                 device.tell({'command':'online'})
             elif str(msg.topic).startswith("update_"):
                 token = msg.topic.replace("update_", "")
                 self.manager.tell({'command':'device_update_status', 'token':token, 'update':json.loads(str(msg.payload))})
+            elif str(msg.topic).startswith("message_"):
+                token = msg.topic.replace("message_", "")
+                self.manager.tell({'command':'device_message', 'token':token, 'message': str(msg.payload)})
+            
         except Exception as ex:
             print ex
     # The callback for when the client receives a CONNACK response from the server.
@@ -45,5 +50,6 @@ class MqttACtor(pykka.ThreadingActor):
                 self.client.publish(message.get('topic'), message.get('payload'))
             if message.get('command') == "subscribe":
                 self.client.subscribe('update_' + message.get('token'), 1)
+                self.client.subscribe('message_' + message.get('token'), 1)
         except Exception as ex:
             print ex
