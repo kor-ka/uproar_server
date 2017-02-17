@@ -4,6 +4,7 @@ import random
 import shelve
 import string
 from array import array
+import random
 
 import pykka, os, urllib, json, config
 from telegram import InlineKeyboardButton
@@ -159,16 +160,13 @@ class ChatActor(pykka.ThreadingActor):
 
         if message.audio:
             #TODO try catch, move to func - regenerate url before send todevice
-            track_info_raw = urllib.urlopen(
-                'https://api.telegram.org/bot' + self.token + '/getFile?file_id=' + message.audio.file_id)
-            load = json.load(track_info_raw.fp)
-            result = load.get('result')
-            if result is None:
+            durl = None
+
+            file_id = message.audio.file_id
+            durl = self.get_d_url(file_id)
+
+            if durl is None:
                 return
-            file_path = result.get('file_path')
-            durl = 'https://api.telegram.org/file/bot' + self.token + '/' + file_path
-            print load
-            print durl
 
             if len(self.devices) > 0:
 
@@ -183,11 +181,11 @@ class ChatActor(pykka.ThreadingActor):
                      'message': title,
                      'reply_markup': InlineKeyboardMarkup(keyboard)})
 
-                data = json.dumps({"track_url": durl, "chat_id": reply.chat_id, "message_id": reply.message_id, "orig":message.message_id, 'title':title})
+                data = {"track_url": durl, "chat_id": reply.chat_id, "message_id": reply.message_id, "orig":message.message_id, 'title':title}
                 for device in self.devices:
-                    device.tell({'command': 'add_track', 'track': data})
+                    device.tell({'command': 'add_track', 'track': json.dumps(data)})
 
-                self.latest_tracks[message.message_id] = TrackStatus(message.message_id, title, data)
+                self.latest_tracks[message.message_id] = TrackStatus(message.message_id, title, data, file_id)
                 if len(self.latest_tracks) >= 100:
                     # TODO update deleted track - remove buttons
                     self.latest_tracks.popitem(last=False)
@@ -195,6 +193,20 @@ class ChatActor(pykka.ThreadingActor):
 
             else:
                 self.bot.tell({'command': 'reply', 'base': message, 'message': 'no devices, please forward one from @uproarbot'})
+
+    def get_d_url(self, file_id):
+        durl = None
+        try:
+            track_info_raw = urllib.urlopen(
+                'https://api.telegram.org/bot' + self.token + '/getFile?file_id=' + file_id)
+            load = json.load(track_info_raw.fp)
+            result = load.get('result')
+            if result is not None:
+                file_path = result.get('file_path')
+                durl = 'https://api.telegram.org/file/bot' + self.token + '/' + file_path
+        except:
+            pass
+        return durl
 
     def get_token(self, text, user):
         last_str = string.split(text, '\n')[-1].replace(loud, '').replace(' ', '')
@@ -333,12 +345,17 @@ class ChatActor(pykka.ThreadingActor):
         for k, t in self.latest_tracks.items():
             status = t.device_status.get(token.split(':')[1])
             if status is None or status.startswith(downloading) or status.startswith(playing) or status.startswith(queued) or status.startswith(promoted):
-                device.tell({'command': 'add_track', 'track': t.data})
+                t.data["track_url"] = self.get_d_url(t.file_id)
+                device.tell({'command': 'add_track', 'track': json.dumps(t.data)})
 
         self.sync_tracks_storage()
 
-    def on_boring(self):
-        pass
+    def on_boring(self, token, device):
+        t = random.choice(self.latest_tracks.keys())
+        status = t.device_status.get(token.split(':')[1])
+        if status is not status.startswith(skip):
+            t.data["track_url"] = self.get_d_url(t.file_id)
+            device.tell({'command': 'add_track', 'track': json.dumps(t.data)})
 
     def on_receive(self, message):
         try:
@@ -362,7 +379,7 @@ class ChatActor(pykka.ThreadingActor):
             elif message.get('command') == 'device_message':
                 msg = message.get("message")
                 if msg == "boring":
-                    self.on_boring()
+                    self.on_boring(message.get("token"), message.get("device"))
         except Exception as ex:
             print ex
 
@@ -376,13 +393,15 @@ class DeviceData(object):
         self.id = token_split[1]
 
 class TrackStatus(object):
-    def __init__(self, orig, title, data):
+    def __init__(self, orig, title, data, file_id):
         super(TrackStatus, self).__init__()
         self.original_msg_id = orig
+        self.file_id = file_id
         self.likes = 0
         self.dislikes = 0
         self.likes_owners = set()
         self.dislikes_owners = set()
         self.device_status = OrderedDict()
+        self.played_once = False
         self.title = title
         self.data = data

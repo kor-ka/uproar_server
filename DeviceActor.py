@@ -94,6 +94,10 @@ class DeviceActor(pykka.ThreadingActor):
             elif message.get('command') == "online":
                 if self.chat is not None:
                     self.chat.tell({'command': 'device_online', 'token': self.token, 'device': self.actor_ref})
+            elif message.get('command') == "device_message":
+                if self.chat is not None:
+                    self.chat.tell({'command': 'device_message', 'token': self.token,
+                                    'device': self.actor_ref, "message": message.get("message")})
 
         except Exception as ex:
             print ex
