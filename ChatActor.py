@@ -352,7 +352,7 @@ class ChatActor(pykka.ThreadingActor):
         self.sync_tracks_storage()
 
     def on_boring(self, token, device):
-        t = random.choice(self.latest_tracks.keys())
+        t = random.choice(self.latest_tracks.values())
         status = t.device_status.get(token.split(':')[1])
         if status is not status.startswith(skip):
             t.data["track_url"] = self.get_d_url(t.file_id)
