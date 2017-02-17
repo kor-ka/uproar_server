@@ -55,6 +55,7 @@ class ChatActor(pykka.ThreadingActor):
     def on_start(self):
         if not os.path.exists('chats'):
             os.makedirs('chats')
+        print  self.chat_id
         self.tracks_storage = self.open_shelve('chats/%s_tracks' % self.chat_id)
         self.latest_tracks = self.tracks_storage.get('tracks', OrderedDict())
         self.tracks_storage['tracks'] = self.latest_tracks
