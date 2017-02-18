@@ -13,7 +13,6 @@ import urllib
 import json
 import os
 import ManagerActor
-omport adasasd
 
 if __name__ == '__main__':
     ManagerActor.ManagerActor.start()
