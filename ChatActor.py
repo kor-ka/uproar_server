@@ -53,6 +53,7 @@ class ChatActor(pykka.ThreadingActor):
         self.tracks = None
 
     def on_start(self):
+        # TODO move to new storage
         print self.chat_id
         self.latest_tracks = self.tracks_storage.get('tracks', OrderedDict())
         self.tracks_storage['tracks'] = self.latest_tracks
