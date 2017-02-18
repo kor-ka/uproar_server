@@ -75,6 +75,24 @@ class StorageActor(pykka.ThreadingActor):
             cur = self.db.cursor()
             table = "%s1_%s2" % (message.get('name'), message.get('suffix'))
             cur.execute('''CREATE TABLE %s1 (id SERIAL PRIMARY KEY, val varchar);''' % table)
+            cur.execute('''CREATE OR REPLACE FUNCTION trf_keep_row_number_steady()
+                            RETURNS TRIGGER AS
+                            $body$
+                            BEGIN
+                                -- delete only where are too many rows
+                                IF (SELECT count(id) FROM %s1) > %s2
+                                THEN
+                                    -- I assume here that id is an auto-incremented value in log_table
+                                    DELETE FROM %s3
+                                    WHERE id = (SELECT min(id) FROM %s4);
+                                END IF;
+                            END;
+                            $body$
+                            LANGUAGE plpgsql;
+
+                            CREATE TRIGGER tr_keep_row_number_steady
+                            AFTER INSERT ON %s5
+                            FOR EACH ROW EXECUTE PROCEDURE trf_keep_row_number_steady();''' % (table, 100, table, table, table))
             cur.close()
             return DbList(message.get('name'), message.get('suffix'), self.actor_ref)
 
