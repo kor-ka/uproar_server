@@ -1,0 +1,8 @@
+{
+  "name": "uproar bot",
+  "description": "server for uproar bot",
+  "image": "heroku/python",
+  "repository": "https://github.com/kor-ka/uproar_server",
+  "keywords": ["python", "telegram", "bot" ],
+  "addons": []
+}
