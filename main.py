@@ -15,7 +15,6 @@ import os
 import ManagerActor
 
 if __name__ == '__main__':
-    print 'log, pls?'
     ManagerActor.ManagerActor.start()
     while True:
         sleep(100)
