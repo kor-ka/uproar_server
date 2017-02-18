@@ -6,7 +6,7 @@ import string
 from array import array
 import random
 
-import pykka, os, urllib, json, config
+import pykka, os, urllib, json
 from telegram import InlineKeyboardButton
 import base64
 import DeviceActor
@@ -38,8 +38,8 @@ class ChatActor(pykka.ThreadingActor):
         self.chat_id = chat_id
         self.manager = manager
         self.bot = bot
-        self.token = config.bottoken
-        self.secret = config.secret
+        self.token = os.getenv('token')
+        self.secret = os.getenv('secret')
         # self.devices = set()
         # self.devices_tokens = set()
         # self.latest_tracks = OrderedDict()

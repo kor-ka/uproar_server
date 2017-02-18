@@ -11,8 +11,6 @@ import json
 import os
 import ManagerActor
 from telegram import InlineKeyboardButton, CallbackQuery
-import config
-
 
 class UpdatesFetcher(pykka.ThreadingActor):
     def __init__(self, bot, manager):
@@ -52,7 +50,7 @@ class BotActor(pykka.ThreadingActor):
     def __init__(self, manager):
         super(BotActor, self).__init__()
         self.manager = manager
-        self.token = config.bottoken
+        self.token = os.getenv('token')
         self.bot = None
         self.main()
         self.fetcher = None
