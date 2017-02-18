@@ -33,10 +33,11 @@ votes_to_skip = 2
 
 
 class ChatActor(pykka.ThreadingActor):
-    def __init__(self, chat_id, manager, bot):
+    def __init__(self, chat_id, manager, bot, db):
         super(ChatActor, self).__init__()
         self.chat_id = chat_id
         self.manager = manager
+        self.db = db
         self.bot = bot
         self.token = os.getenv('token')
         self.secret = os.getenv('secret')
@@ -49,14 +50,10 @@ class ChatActor(pykka.ThreadingActor):
         self.devices_tokens = None
         self.latest_tracks = None
         self.users = None
-        self.storage = None
-        self.tracks_storage = None
+        self.tracks = None
 
     def on_start(self):
-        if not os.path.exists('chats'):
-            os.makedirs('chats')
-        print  self.chat_id
-        self.tracks_storage = self.open_shelve('chats/%s_tracks' % self.chat_id)
+        print self.chat_id
         self.latest_tracks = self.tracks_storage.get('tracks', OrderedDict())
         self.tracks_storage['tracks'] = self.latest_tracks
 
@@ -69,24 +66,6 @@ class ChatActor(pykka.ThreadingActor):
 
         for t in self.devices_tokens:
             self.devices.add(self.manager.ask({'command':'get_device', 'token':t}))
-
-    def open_shelve(self, path):
-        try:
-            return shelve.open(path)
-        except:
-            os.remove(path)
-            return shelve.open(path)
-
-    def sync_storage(self):
-        self.storage['users'] = self.users
-        self.storage['devices_tokens'] = self.devices_tokens
-        self.storage.close()
-        self.storage = self.open_shelve('chats/%s' % self.chat_id)
-
-    def sync_tracks_storage(self):
-        self.tracks_storage['tracks'] = self.latest_tracks
-        self.tracks_storage.close()
-        self.tracks_storage = self.open_shelve('chats/%s_tracks' % self.chat_id)
 
     def on_message(self, message):
         if message.text:

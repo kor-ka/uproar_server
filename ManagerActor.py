@@ -1,5 +1,5 @@
 import pykka
-import BotActor, MqttActor, ChatActor, DeviceActor
+import BotActor, MqttActor, ChatActor, DeviceActor, StorageActor
 
 class ManagerActor(pykka.ThreadingActor):
     def __init__(self):
@@ -9,6 +9,10 @@ class ManagerActor(pykka.ThreadingActor):
 
         self.devices = dict()
         self.chats = dict()
+        self.db = None
+
+    def on_start(self):
+        self.db = StorageActor.StorageActor.start()
 
     def on_message(self, message):
         self.get_chat(message.chat_id).tell({'command':'message', 'message':message})
@@ -26,14 +30,14 @@ class ManagerActor(pykka.ThreadingActor):
     def get_chat(self, chat_id):
         chat = self.chats.get(chat_id)
         if chat is None or not chat.is_alive:
-            chat = ChatActor.ChatActor.start(chat_id, self.actor_ref, self.bot)
+            chat = ChatActor.ChatActor.start(chat_id, self.actor_ref, self.bot, self.db)
             self.chats[chat_id] = chat
         return chat
 
     def get_device(self, token):
         device = self.devices.get(token)
         if device is None or not device.is_alive:
-            device = DeviceActor.DeviceActor.start(token, self.actor_ref, self.mqtt, self.bot)
+            device = DeviceActor.DeviceActor.start(token, self.actor_ref, self.mqtt, self.bot, self.db)
             self.devices[token] = device
         return device
 

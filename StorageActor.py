@@ -33,8 +33,20 @@ class StorageActor(pykka.ThreadingActor):
             try:
                 cur = self.db.cursor()
 
-                cur.execute("SELECT 1 val from %s1 WHERE key = '%s2'" % (message.get("table"), message.get('key')))
-                vals = cur.fetchone()
+                limit = message.get("limit")
+                if limit is None:
+                    cur.execute("SELECT * val from %s1 WHERE key = '%s2'" % (message.get("table"), message.get('key')))
+
+                else:
+                    cur.execute('''SELECT *
+                                    FROM (SELECT * FROM %s1 ORDER BY id DESC LIMIT %s3)
+                                    WHERE key = %s2
+                                    ORDER BY id ASC;'''
+                                % (message.get("table"), message.get('key'), limit))
+
+                vals = cur.fetchall()
+                for k, v in vals:
+                    vals[k] = pickle.loads(v)
                 val = pickle.loads(vals)
                 cur.close()
             except Exception as ex:
@@ -62,7 +74,7 @@ class StorageActor(pykka.ThreadingActor):
         elif message.get('command') == "get_list":
             cur = self.db.cursor()
             table = "%s1_%s2" % (message.get('name'), message.get('suffix'))
-            cur.execute('''CREATE TABLE %s1 (id bigserial PRIMARY KEY, val varchar);''' % table)
+            cur.execute('''CREATE TABLE %s1 (id SERIAL PRIMARY KEY, val varchar);''' % table)
             cur.close()
             return DbList(message.get('name'), message.get('suffix'), self.actor_ref)
 
@@ -74,8 +86,8 @@ class DbList(object):
         self.suffix = suffix
         self.storage_ref = storage_ref
 
-    def get(self, key):
-        return self.storage_ref.ask({"command": "get", "table": "%s1_%s2" % (self.name, self.suffix), "key": key})
+    def get(self, key, limit=None):
+        return self.storage_ref.ask({"command": "get", "table": "%s1_%s2" % (self.name, self.suffix), "key": key, "limit":limit})
 
     def put(self, key, val):
         return self.storage_ref.ask(
@@ -85,4 +97,4 @@ class DbList(object):
 class GetList(object):
     def __init__(self, name, suffix):
         super(GetList, self).__init__()
-        self.message = {'command':'get_list','name':name, 'suffix':suffix}
+        self.message = {'command': 'get_list', 'name': name, 'suffix': suffix}

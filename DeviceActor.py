@@ -9,7 +9,7 @@ def get_name(token):
 
 
 class DeviceActor(pykka.ThreadingActor):
-    def __init__(self, token, manager, mqtt, bot):
+    def __init__(self, token, manager, mqtt, bot, db):
         super(DeviceActor, self).__init__()
         self.token = token
         self.mqtt = mqtt
@@ -18,6 +18,7 @@ class DeviceActor(pykka.ThreadingActor):
         self.bot = bot
         self.chat = None
         self.placeholder = None
+        self.db = db
         self.storage = None
 
 
