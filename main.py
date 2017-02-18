@@ -14,8 +14,8 @@ import json
 import os
 import ManagerActor
 
-# if __name__ == '__main__':
-
-ManagerActor.ManagerActor.start()
-while True:
-    sleep(100)
+if __name__ == '__main__':
+    print 'log, pls?'
+    ManagerActor.ManagerActor.start()
+    while True:
+        sleep(100)
