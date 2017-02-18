@@ -1,3 +1,4 @@
 paho-mqtt
 pykka
 python-telegram-bot
+psycopg2
