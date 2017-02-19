@@ -96,7 +96,6 @@ class StorageActor(pykka.ThreadingActor):
         elif message.get('command') == "get_list":
             cur = self.db.cursor()
             table = "%s_%s" % (message.get('name'), clean_suffix(message.get('suffix')))
-            cur.execute('''DROP TABLE IF EXISTS %s;''' % table)
             cur.execute('''CREATE TABLE IF NOT EXISTS %s (id SERIAL, val varchar, key varchar PRIMARY KEY);''' % table)
             cur.execute('''CREATE OR REPLACE FUNCTION trf_keep_row_number_steady()
                             RETURNS TRIGGER AS
@@ -108,7 +107,9 @@ class StorageActor(pykka.ThreadingActor):
                                     -- I assume here that id is an auto-incremented value in log_table
                                     DELETE FROM %s
                                     WHERE id = (SELECT min(id) FROM %s);
+                                    RETURN;
                                 END IF;
+                                RETURN;
                             END;
                             $body$
                             LANGUAGE plpgsql;
