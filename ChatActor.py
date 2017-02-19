@@ -132,6 +132,7 @@ class ChatActor(pykka.ThreadingActor):
                     self.bot.tell({'command': 'reply', 'base': message, 'message': 'Ooops, looks like it\'s not yours'})
 
             elif text.startswith('/score'):
+                print self.users.get()
                 sortd = sorted(self.users.get(), key=itemgetter(1))
                 score = ""
                 for user_likes in sortd:
