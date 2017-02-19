@@ -114,6 +114,7 @@ class StorageActor(pykka.ThreadingActor):
                             CREATE TRIGGER tr_keep_row_number_steady
                             AFTER INSERT ON %s
                             FOR EACH ROW EXECUTE PROCEDURE trf_keep_row_number_steady();''' % (table, 100, table, table, table))
+            print table + " created"
             cur.close()
             return DbList(message.get('name'), message.get('suffix'), self.actor_ref)
 
