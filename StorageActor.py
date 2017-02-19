@@ -31,7 +31,7 @@ class StorageActor(pykka.ThreadingActor):
 
         key = message.get('key')
         if message.get('command') == "get":
-            vals = []
+            res = []
             cur = self.db.cursor()
             try:
 
@@ -48,14 +48,16 @@ class StorageActor(pykka.ThreadingActor):
                                     ORDER BY id ASC;''' % (message.get("table"), limit, where))
 
                 vals = cur.fetchall()
-                for k, v in vals:
-                    vals[k] = pickle.loads(str(v[0]))
+                count = 0
+                for v in vals:
+                    res[count] = pickle.loads(str(v[0]))
+                    count += 1
                 cur.close()
             except Exception as ex:
                 print 'on get:' + str(ex)
                 self.db.rollback()
             cur.close()
-            return vals
+            return res
 
         elif message.get('command') == "put":
             cur = self.db.cursor()
