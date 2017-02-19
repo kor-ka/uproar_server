@@ -8,7 +8,6 @@ import random
 
 import pykka, os, urllib, json
 from telegram import InlineKeyboardButton
-from StorageActor import GetList
 import base64
 import StorageActor
 import DeviceActor
