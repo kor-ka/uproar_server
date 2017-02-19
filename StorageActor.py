@@ -78,7 +78,7 @@ class StorageActor(pykka.ThreadingActor):
                 cur = self.db.cursor()
 
                 cur.execute('''DELETE FROM %(table)s
-                                WHERE key = %(key)s;''', {'table':message.get('table'), 'key':key})
+                                WHERE key = %(key)s;''', {'table': message.get('table'), 'key': key})
                 cur.close()
                 return True
             except Exception as ex:
@@ -87,8 +87,9 @@ class StorageActor(pykka.ThreadingActor):
 
         elif message.get('command') == "get_list":
             cur = self.db.cursor()
-            table = "%s_%s" % (message.get('name'), message.get('suffix'))
-            cur.execute('''CREATE TABLE IF NOT EXISTS %(table)s (id SERIAL PRIMARY KEY, val varchar, key varchar);''', {'table':table})
+            table = "%s_%s" % (message.get('name'), clean_suffix(message.get('suffix')))
+            cur.execute(
+                '''CREATE TABLE IF NOT EXISTS %s (id SERIAL PRIMARY KEY, val varchar, key varchar);''' % table)
             cur.execute('''CREATE OR REPLACE FUNCTION trf_keep_row_number_steady()
                             RETURNS TRIGGER AS
                             $body$
@@ -107,7 +108,7 @@ class StorageActor(pykka.ThreadingActor):
                             CREATE TRIGGER tr_keep_row_number_steady
                             AFTER INSERT ON %(table)s
                             FOR EACH ROW EXECUTE PROCEDURE trf_keep_row_number_steady();''',
-                        {'table':table, 'limit':100})
+                        {'table': table, 'limit': 100})
             cur.close()
             return DbList(message.get('name'), message.get('suffix'), self.actor_ref)
 
