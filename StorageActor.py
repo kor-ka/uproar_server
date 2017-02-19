@@ -48,7 +48,6 @@ class StorageActor(pykka.ThreadingActor):
                                     ORDER BY id ASC;''' % (message.get("table"), limit, where))
 
                 vals = cur.fetchall()
-                count = 0
                 for v in vals:
                     res.append(pickle.loads(str(v[0])))
                 cur.close()

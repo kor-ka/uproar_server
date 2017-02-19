@@ -218,7 +218,7 @@ class ChatActor(pykka.ThreadingActor):
                 if callback[1] == "1":
                     if user_id in likes_data.likes_owners:
                         likes_data.likes -= 1
-                        for user_likes_raw in self.users(callback_query.message.reply_to_message.from_user.id):
+                        for user_likes_raw in self.users.get(callback_query.message.reply_to_message.from_user.id):
                             user_likes = 0 if user_likes_raw is None else user_likes_raw
                             user_likes -= 1
                             self.users.put(callback_query.message.reply_to_message.from_user.id, user_likes)
@@ -230,7 +230,7 @@ class ChatActor(pykka.ThreadingActor):
                         likes_data.likes += 1
                         likes_data.likes_owners.add(user_id)
                         text = "+1"
-                        for user_likes_raw in self.users(callback_query.message.reply_to_message.from_user.id):
+                        for user_likes_raw in self.users.get(callback_query.message.reply_to_message.from_user.id):
                             user_likes = 0 if user_likes_raw is None else user_likes_raw
                             user_likes += 1
                             self.users.put(callback_query.message.reply_to_message.from_user.id, user_likes)
