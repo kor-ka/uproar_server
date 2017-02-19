@@ -32,8 +32,8 @@ class StorageActor(pykka.ThreadingActor):
         key = message.get('key')
         if message.get('command') == "get":
             vals = []
+            cur = self.db.cursor()
             try:
-                cur = self.db.cursor()
 
                 limit = message.get("limit")
 
@@ -52,13 +52,14 @@ class StorageActor(pykka.ThreadingActor):
                     vals[k] = pickle.loads(v[0])
                 cur.close()
             except Exception as ex:
-                print ex
+                cur.close()
+                print 'on get:' + ex
 
             return vals
 
         elif message.get('command') == "put":
+            cur = self.db.cursor()
             try:
-                cur = self.db.cursor()
 
                 cur.execute('''INSERT INTO ${table} (key, val)
                     VALUES (%s, %s)
@@ -67,24 +68,24 @@ class StorageActor(pykka.ThreadingActor):
                           val = excluded.val;'''.replace('${table}',
                     message.get('table')), (key, pickle.dumps(message.get('val')))
                             )
-                cur.close()
                 self.db.commit()
                 return True
             except Exception as ex:
-                print ex
+                print 'on put:' + ex
+                cur.close()
                 return False
 
         elif message.get('command') == "remove":
+            cur = self.db.cursor()
             try:
-                cur = self.db.cursor()
 
                 cur.execute('''DELETE FROM ${table}
                                 WHERE key = %s;'''.replace('${table}',
-                    message.get('table')), (key))
-                cur.close()
+                                                           message.get('table')), (key))
                 return True
             except Exception as ex:
-                print ex
+                print 'on remove:' + ex
+                cur.close()
                 return False
 
         elif message.get('command') == "get_list":
