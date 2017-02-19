@@ -39,14 +39,13 @@ class StorageActor(pykka.ThreadingActor):
 
                 where = '' if key is None else ("WHERE key = '%s'" % key)
                 if limit is None:
-                    cur.execute("SELECT val from %(table)s %(where)s", {'table': message.get("table"), 'where': where})
+                    cur.execute("SELECT val from %s %s", (message.get("table"), where))
 
                 else:
                     cur.execute('''SELECT *
-                                    FROM (SELECT val FROM %(table)s ORDER BY id DESC LIMIT %(limit)s)
-                                    %(where)s
-                                    ORDER BY id ASC;''',
-                                {'table': message.get("table"), 'limit': limit, 'where': where})
+                                    FROM (SELECT val FROM %s ORDER BY id DESC LIMIT %s)
+                                    %s
+                                    ORDER BY id ASC;''', (message.get("table"), limit, where))
 
                 vals = cur.fetchall()
                 for k, v in vals:
@@ -61,12 +60,13 @@ class StorageActor(pykka.ThreadingActor):
             try:
                 cur = self.db.cursor()
 
-                cur.execute('''INSERT INTO %(table)s (key, val)
-                    VALUES (%(key)s, %(val)s)
+                cur.execute('''INSERT INTO %s (key, val)
+                    VALUES (%s, %s)
                     ON CONFLICT (key) DO UPDATE
                       SET key = excluded.key,
-                          val = excluded.val;''', {
-                    'table': message.get('table'), 'key': key, 'val': pickle.dumps(message.get('val'))})
+                          val = excluded.val;''', (
+                    message.get('table'), key, pickle.dumps(message.get('val')))
+                            )
                 cur.close()
                 return True
             except Exception as ex:
@@ -77,8 +77,8 @@ class StorageActor(pykka.ThreadingActor):
             try:
                 cur = self.db.cursor()
 
-                cur.execute('''DELETE FROM %(table)s
-                                WHERE key = %(key)s;''', {'table': message.get('table'), 'key': key})
+                cur.execute('''DELETE FROM %s
+                                WHERE key = %s;''', (message.get('table'), key))
                 cur.close()
                 return True
             except Exception as ex:
@@ -87,28 +87,26 @@ class StorageActor(pykka.ThreadingActor):
 
         elif message.get('command') == "get_list":
             cur = self.db.cursor()
-            table = "%s_%s" % (message.get('name'), clean_suffix(message.get('suffix')))
-            cur.execute(
-                '''CREATE TABLE IF NOT EXISTS %s (id SERIAL PRIMARY KEY, val varchar, key varchar);''' % table)
+            table = "%s_%s" % (message.get('name'), message.get('suffix'))
+            cur.execute('''CREATE TABLE IF NOT EXISTS %s (id SERIAL PRIMARY KEY, val varchar, key varchar);''', table)
             cur.execute('''CREATE OR REPLACE FUNCTION trf_keep_row_number_steady()
                             RETURNS TRIGGER AS
                             $body$
                             BEGIN
                                 -- delete only where are too many rows
-                                IF (SELECT count(id) FROM %(table)s) > %(limit)s
+                                IF (SELECT count(id) FROM %s) > %s
                                 THEN
                                     -- I assume here that id is an auto-incremented value in log_table
-                                    DELETE FROM %(table)s
-                                    WHERE id = (SELECT min(id) FROM %(table)s);
+                                    DELETE FROM %s
+                                    WHERE id = (SELECT min(id) FROM %s);
                                 END IF;
                             END;
                             $body$
                             LANGUAGE plpgsql;
 
                             CREATE TRIGGER tr_keep_row_number_steady
-                            AFTER INSERT ON %(table)s
-                            FOR EACH ROW EXECUTE PROCEDURE trf_keep_row_number_steady();''',
-                        {'table': table, 'limit': 100})
+                            AFTER INSERT ON %s
+                            FOR EACH ROW EXECUTE PROCEDURE trf_keep_row_number_steady();''', (table, 100, table, table, table))
             cur.close()
             return DbList(message.get('name'), message.get('suffix'), self.actor_ref)
 
@@ -121,8 +119,7 @@ class DbList(object):
         self.storage_ref = storage_ref
 
     def get(self, key=None, limit=None):
-        return self.storage_ref.ask(
-            {"command": "get", "table": "%s_%s" % (self.name, self.suffix), "key": key, "limit": limit})
+        return self.storage_ref.ask({"command": "get", "table": "%s_%s" % (self.name, self.suffix), "key": key, "limit":limit})
 
     def remove(self, key):
         return self.storage_ref.ask({"command": "remove", "table": "%s_%s" % (self.name, self.suffix), "key": key})
@@ -130,7 +127,6 @@ class DbList(object):
     def put(self, key, val):
         return self.storage_ref.ask(
             {"command": "put", "table": "%s_%s" % (self.name, self.suffix), "key": key, "val": val})
-
 
 def clean_suffix(suffix):
     return str(suffix).replace("-", "")
