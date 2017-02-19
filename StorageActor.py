@@ -39,11 +39,11 @@ class StorageActor(pykka.ThreadingActor):
 
                 where = '' if key is None else ("WHERE key = '%s'" % key)
                 if limit is None:
-                    cur.execute("SELECT * val from %s %s" % (message.get("table"), where))
+                    cur.execute("SELECT val from %s %s" % (message.get("table"), where))
 
                 else:
                     cur.execute('''SELECT *
-                                    FROM (SELECT * FROM %s ORDER BY id DESC LIMIT %s)
+                                    FROM (SELECT val FROM %s ORDER BY id DESC LIMIT %s)
                                     %s
                                     ORDER BY id ASC;'''
                                 % (message.get("table"), limit, where))
