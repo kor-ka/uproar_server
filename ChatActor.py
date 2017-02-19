@@ -14,6 +14,8 @@ import DeviceActor
 from collections import OrderedDict
 from operator import itemgetter
 
+from pprint import pprint
+
 from telegram import InlineKeyboardMarkup
 
 loud = u'\U0001F50A'
@@ -214,6 +216,8 @@ class ChatActor(pykka.ThreadingActor):
                 text = 'Ooops, looks like it\'s not yours'
         elif callback[0] == 'like':
             for likes_data in self.latest_tracks.get(key=message_id):
+                pprint(vars(likes_data))
+
                 user_id = callback_query.from_user.id
                 if callback[1] == "1":
                     if user_id in likes_data.likes_owners:
@@ -248,6 +252,9 @@ class ChatActor(pykka.ThreadingActor):
                         text = "-1"
 
                 self.latest_tracks.put(message_id, likes_data)
+
+                pprint(vars(likes_data))
+
                 keyboard = self.get_keyboard(likes_data)
 
                 self.bot.tell({'command': 'edit_reply_markup', 'base': callback_query,
@@ -269,7 +276,6 @@ class ChatActor(pykka.ThreadingActor):
             callback_query.answer(text=text, show_alert=show_alert)
 
     def get_keyboard(self, likes_data):
-        print  'updating likes:' + str(likes_data)
         option = None
         if likes_data.dislikes >= votes_to_skip and likes_data.dislikes > likes_data.likes:
             option = InlineKeyboardButton(skip, callback_data='skip')
