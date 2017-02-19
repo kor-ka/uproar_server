@@ -222,9 +222,9 @@ class ChatActor(pykka.ThreadingActor):
                     if user_id in likes_data.likes_owners:
                         likes_data.likes -= 1
                         likes_data.likes_owners.remove(user_id)
-                        user_likes = 0
+                        user_likes = (callback_query.message.reply_to_message.from_user, 0)
                         for user_likes_raw in self.users.get(callback_query.message.reply_to_message.from_user.id):
-                            user_likes = user_likes_raw - 1
+                            user_likes = (user_likes_raw[0], user_likes_raw[1] - 1)
                         self.users.put(callback_query.message.reply_to_message.from_user.id, user_likes)
                         text = "you took your like back"
                     elif user_id in likes_data.dislikes_owners:
@@ -233,9 +233,9 @@ class ChatActor(pykka.ThreadingActor):
                         likes_data.likes += 1
                         likes_data.likes_owners.add(user_id)
                         text = "+1"
-                        user_likes = 0
+                        user_likes = (callback_query.message.reply_to_message.from_user, 0)
                         for user_likes_raw in self.users.get(callback_query.message.reply_to_message.from_user.id):
-                            user_likes = user_likes_raw + 1
+                            user_likes = (user_likes_raw[0], user_likes_raw[1] + 1)
                         self.users.put(callback_query.message.reply_to_message.from_user.id, user_likes)
 
                 elif callback[1] == "0":
