@@ -89,8 +89,8 @@ class StorageActor(pykka.ThreadingActor):
 
         elif message.get('command') == "get_list":
             cur = self.db.cursor()
-            table = "%s_%s" % (message.get('name'), message.get('suffix'))
-            cur.execute('''CREATE TABLE %s (id SERIAL PRIMARY KEY, val varchar);''' % table)
+            table = "%s_%s" % (message.get('name'), clean_suffix(message.get('suffix')))
+            cur.execute('''CREATE TABLE IF NOT EXISTS %s (id SERIAL PRIMARY KEY, val varchar);''' % table)
             cur.execute('''CREATE OR REPLACE FUNCTION trf_keep_row_number_steady()
                             RETURNS TRIGGER AS
                             $body$
@@ -117,7 +117,7 @@ class DbList(object):
     def __init__(self, name, suffix, storage_ref):
         super(DbList, self).__init__()
         self.name = name
-        self.suffix = suffix
+        self.suffix = clean_suffix(suffix)
         self.storage_ref = storage_ref
 
     def get(self, key=None, limit=None):
@@ -129,15 +129,6 @@ class DbList(object):
     def put(self, key, val):
         return self.storage_ref.ask(
             {"command": "put", "table": "%s_%s" % (self.name, self.suffix), "key": key, "val": val})
-
-
-class GetList(dict):
-    def __init__(self, name, suffix):
-        super(GetList, self).__init__()
-        self['command'] = 'get_list'
-        self['name'] = name
-        self['suffix'] = clean_suffix(suffix)
-
 
 def clean_suffix(suffix):
     return str(suffix).replace("-", "")
