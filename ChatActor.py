@@ -227,9 +227,10 @@ class ChatActor(pykka.ThreadingActor):
                     elif user_id in likes_data.dislikes_owners:
                         text = "take your dislike back first"
                     else:
-                        likes_data.likes += 1
-                        likes_data.likes_owners.add(user_id)
-                        text = "+1"
+                        pass
+                        # likes_data.likes += 1
+                        # likes_data.likes_owners.add(user_id)
+                        # text = "+1"
                         # for user_likes_raw in self.users.get(callback_query.message.reply_to_message.from_user.id):
                         #     user_likes = 0 if user_likes_raw is None else user_likes_raw
                         #     user_likes += 1
