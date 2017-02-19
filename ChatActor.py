@@ -269,7 +269,7 @@ class ChatActor(pykka.ThreadingActor):
             callback_query.answer(text=text, show_alert=show_alert)
 
     def get_keyboard(self, likes_data):
-        print  'updating likes:' + likes_data
+        print  'updating likes:' + str(likes_data)
         option = None
         if likes_data.dislikes >= votes_to_skip and likes_data.dislikes > likes_data.likes:
             option = InlineKeyboardButton(skip, callback_data='skip')
