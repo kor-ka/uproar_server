@@ -213,28 +213,27 @@ class ChatActor(pykka.ThreadingActor):
             else:
                 text = 'Ooops, looks like it\'s not yours'
         elif callback[0] == 'like':
-            likes_data = self.latest_tracks.get(key=message_id)[0]
-            if likes_data:
+            for likes_data in self.latest_tracks.get(key=message_id):
                 user_id = callback_query.from_user.id
                 if callback[1] == "1":
                     if user_id in likes_data.likes_owners:
                         likes_data.likes -= 1
-                        user_likes_raw = self.users(callback_query.message.reply_to_message.from_user.id)[0]
-                        user_likes = 0 if user_likes_raw is None else user_likes_raw
-                        user_likes -= 1
-                        self.users.put(callback_query.message.reply_to_message.from_user.id, user_likes)
-                        likes_data.likes_owners.remove(user_id)
-                        text = "you took your like back"
+                        for user_likes_raw in self.users(callback_query.message.reply_to_message.from_user.id):
+                            user_likes = 0 if user_likes_raw is None else user_likes_raw
+                            user_likes -= 1
+                            self.users.put(callback_query.message.reply_to_message.from_user.id, user_likes)
+                            likes_data.likes_owners.remove(user_id)
+                            text = "you took your like back"
                     elif user_id in likes_data.dislikes_owners:
                         text = "take your dislike back first"
                     else:
                         likes_data.likes += 1
                         likes_data.likes_owners.add(user_id)
                         text = "+1"
-                        user_likes_raw = self.users(callback_query.message.reply_to_message.from_user.id)[0]
-                        user_likes = 0 if user_likes_raw is None else user_likes_raw
-                        user_likes += 1
-                        self.users.put(callback_query.message.reply_to_message.from_user.id, user_likes)
+                        for user_likes_raw in self.users(callback_query.message.reply_to_message.from_user.id):
+                            user_likes = 0 if user_likes_raw is None else user_likes_raw
+                            user_likes += 1
+                            self.users.put(callback_query.message.reply_to_message.from_user.id, user_likes)
 
                 elif callback[1] == "0":
                     if user_id in likes_data.dislikes_owners:
@@ -255,15 +254,13 @@ class ChatActor(pykka.ThreadingActor):
                                'reply_markup': InlineKeyboardMarkup(keyboard)})
 
         elif callback[0] == 'skip':
-            likes_data = self.latest_tracks.get(message_id)[0]
-            if likes_data:
+            for likes_data in self.latest_tracks.get(message_id):
                 text = "skipping %s" % likes_data.title
                 for d in self.devices:
                     d.tell({'command': 'skip', 'orig': likes_data.original_msg_id})
 
         elif callback[0] == 'promote':
-            likes_data = self.latest_tracks[message_id]
-            if likes_data:
+            for likes_data in self.latest_tracks.get(message_id):
                 text = "promoting %s" % likes_data.title
                 for d in self.devices:
                     d.tell({'command': 'promote', 'orig': likes_data.original_msg_id})
@@ -304,8 +301,7 @@ class ChatActor(pykka.ThreadingActor):
                                'reply_markup': InlineKeyboardMarkup(keyboard)})
 
         org_message_id = update.get('orig')
-        track_status = self.latest_tracks.get(org_message_id)[0]
-        if track_status:
+        for track_status in self.latest_tracks.get(org_message_id):
             message = update.get('title')
 
             track_status.device_status[update.get('device')] = org_msg

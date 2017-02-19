@@ -49,9 +49,8 @@ class StorageActor(pykka.ThreadingActor):
                                 % (message.get("table"), limit, where))
 
                 vals = cur.fetchall()
-                print vals
                 for k, v in vals:
-                    vals[k] = pickle.loads(v)
+                    vals[k] = pickle.loads(v[0])
                 cur.close()
             except Exception as ex:
                 print ex
