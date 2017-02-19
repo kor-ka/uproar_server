@@ -39,14 +39,13 @@ class StorageActor(pykka.ThreadingActor):
 
                 where = '' if key is None else ("WHERE key = '%s'" % key)
                 if limit is None:
-                    cur.execute("SELECT val from %s %s" % (message.get("table"), where))
+                    cur.execute("SELECT val from %s %s", (message.get("table"), where))
 
                 else:
                     cur.execute('''SELECT *
                                     FROM (SELECT val FROM %s ORDER BY id DESC LIMIT %s)
                                     %s
-                                    ORDER BY id ASC;'''
-                                % (message.get("table"), limit, where))
+                                    ORDER BY id ASC;''', (message.get("table"), limit, where))
 
                 vals = cur.fetchall()
                 for k, v in vals:
@@ -65,7 +64,7 @@ class StorageActor(pykka.ThreadingActor):
                     VALUES (%s, %s)
                     ON CONFLICT (key) DO UPDATE
                       SET key = excluded.key,
-                          val = excluded.val;''' % (
+                          val = excluded.val;''', (
                     message.get('table'), key, pickle.dumps(message.get('val')))
                             )
                 cur.close()
@@ -79,7 +78,7 @@ class StorageActor(pykka.ThreadingActor):
                 cur = self.db.cursor()
 
                 cur.execute('''DELETE FROM %s
-                                WHERE key = %s;''' % (message.get('table'), key))
+                                WHERE key = %s;''', (message.get('table'), key))
                 cur.close()
                 return True
             except Exception as ex:
@@ -89,7 +88,7 @@ class StorageActor(pykka.ThreadingActor):
         elif message.get('command') == "get_list":
             cur = self.db.cursor()
             table = "%s_%s" % (message.get('name'), clean_suffix(message.get('suffix')))
-            cur.execute('''CREATE TABLE IF NOT EXISTS %s (id SERIAL PRIMARY KEY, val varchar, key varchar);''' % table)
+            cur.execute('''CREATE TABLE IF NOT EXISTS %s (id SERIAL PRIMARY KEY, val varchar, key varchar);''', table)
             cur.execute('''CREATE OR REPLACE FUNCTION trf_keep_row_number_steady()
                             RETURNS TRIGGER AS
                             $body$
@@ -107,7 +106,7 @@ class StorageActor(pykka.ThreadingActor):
 
                             CREATE TRIGGER tr_keep_row_number_steady
                             AFTER INSERT ON %s
-                            FOR EACH ROW EXECUTE PROCEDURE trf_keep_row_number_steady();''' % (table, 100, table, table, table))
+                            FOR EACH ROW EXECUTE PROCEDURE trf_keep_row_number_steady();''', (table, 100, table, table, table))
             cur.close()
             return DbList(message.get('name'), message.get('suffix'), self.actor_ref)
 
