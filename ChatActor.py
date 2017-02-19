@@ -216,12 +216,12 @@ class ChatActor(pykka.ThreadingActor):
                 text = 'Ooops, looks like it\'s not yours'
         elif callback[0] == 'like':
             for likes_data in self.latest_tracks.get(key=message_id):
-                pprint(vars(likes_data))
 
                 user_id = callback_query.from_user.id
                 if callback[1] == "1":
                     if user_id in likes_data.likes_owners:
                         likes_data.likes -= 1
+                        likes_data.likes_owners.remove(user_id)
                         for user_likes_raw in self.users.get(callback_query.message.reply_to_message.from_user.id):
                             user_likes = 0 if user_likes_raw is None else user_likes_raw
                             user_likes -= 1
@@ -252,8 +252,6 @@ class ChatActor(pykka.ThreadingActor):
                         text = "-1"
 
                 self.latest_tracks.put(message_id, likes_data)
-
-                pprint(vars(likes_data))
 
                 keyboard = self.get_keyboard(likes_data)
 
