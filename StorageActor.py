@@ -63,7 +63,7 @@ class StorageActor(pykka.ThreadingActor):
 
                 cur.execute('''INSERT INTO ${table} (key, val)
                     VALUES (%s, %s)
-                    ON CONFLICT (key) DO UPDATE SET
+                    ON CONFLICT (key, val) DO UPDATE SET
                         key = excluded.key,
                         val = excluded.val;'''.replace('${table}',
                     message.get('table')), (key, pickle.dumps(message.get('val')))
