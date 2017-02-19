@@ -68,6 +68,7 @@ class StorageActor(pykka.ThreadingActor):
                     message.get('table'), key, pickle.dumps(message.get('val')))
                             )
                 cur.close()
+                self.db.commit()
                 return True
             except Exception as ex:
                 print ex
@@ -88,7 +89,7 @@ class StorageActor(pykka.ThreadingActor):
         elif message.get('command') == "get_list":
             cur = self.db.cursor()
             table = "%s_%s" % (message.get('name'), message.get('suffix'))
-            cur.execute('''CREATE TABLE IF NOT EXISTS %s (id SERIAL PRIMARY KEY, val varchar, key varchar);''', table)
+            cur.execute('''CREATE TABLE IF NOT EXISTS %s (id SERIAL PRIMARY KEY, val varchar, key varchar);''', (table,))
             cur.execute('''CREATE OR REPLACE FUNCTION trf_keep_row_number_steady()
                             RETURNS TRIGGER AS
                             $body$
