@@ -207,7 +207,7 @@ class ChatActor(pykka.ThreadingActor):
         text = None
         show_alert = False
 
-        message_id = callback_query.message.reply_to_message.message_id
+        message_id = None if not callback_query.message.reply_to_message else callback_query.message.reply_to_message.message_id
         if callback[0] == 'vol':
             dev = DeviceData(self.get_token(callback_query.message.text, callback_query.from_user))
             if dev.owner == callback_query.from_user.username:
