@@ -84,6 +84,7 @@ class StorageActor(pykka.ThreadingActor):
                 cur.execute('''DELETE FROM ${table}
                                 WHERE key = %s;'''.replace('${table}',
                                                            message.get('table')), (key))
+                self.db.commit()
                 return True
             except Exception as ex:
                 print 'on remove:' + str(ex)
@@ -114,6 +115,7 @@ class StorageActor(pykka.ThreadingActor):
                             CREATE TRIGGER tr_keep_row_number_steady
                             AFTER INSERT ON %s
                             FOR EACH ROW EXECUTE PROCEDURE trf_keep_row_number_steady();''' % (table, 100, table, table, table))
+            self.db.commit()
             print table + " created"
             cur.close()
             return DbList(message.get('name'), message.get('suffix'), self.actor_ref)
