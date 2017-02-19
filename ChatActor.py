@@ -227,14 +227,13 @@ class ChatActor(pykka.ThreadingActor):
                     elif user_id in likes_data.dislikes_owners:
                         text = "take your dislike back first"
                     else:
-                        pass
-                        # likes_data.likes += 1
-                        # likes_data.likes_owners.add(user_id)
-                        # text = "+1"
-                        # for user_likes_raw in self.users.get(callback_query.message.reply_to_message.from_user.id):
-                        #     user_likes = 0 if user_likes_raw is None else user_likes_raw
-                        #     user_likes += 1
-                        #     self.users.put(callback_query.message.reply_to_message.from_user.id, user_likes)
+                        likes_data.likes += 1
+                        likes_data.likes_owners.add(user_id)
+                        text = "+1"
+                        for user_likes_raw in self.users.get(callback_query.message.reply_to_message.from_user.id):
+                            user_likes = 0 if user_likes_raw is None else user_likes_raw
+                            user_likes += 1
+                            self.users.put(callback_query.message.reply_to_message.from_user.id, user_likes)
 
                 elif callback[1] == "0":
                     if user_id in likes_data.dislikes_owners:
@@ -270,6 +269,7 @@ class ChatActor(pykka.ThreadingActor):
             callback_query.answer(text=text, show_alert=show_alert)
 
     def get_keyboard(self, likes_data):
+        print  'updating likes:' + likes_data
         option = None
         if likes_data.dislikes >= votes_to_skip and likes_data.dislikes > likes_data.likes:
             option = InlineKeyboardButton(skip, callback_data='skip')
