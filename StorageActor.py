@@ -131,7 +131,9 @@ class DbList(object):
             {"command": "put", "table": "%s1_%s2" % (self.name, self.suffix), "key": key, "val": val})
 
 
-class GetList(object):
+class GetList(dict):
     def __init__(self, name, suffix):
         super(GetList, self).__init__()
-        self.message = {'command': 'get_list', 'name': name, 'suffix': suffix}
+        self['command'] = 'get_list'
+        self['name'] = name
+        self['suffix'] = suffix
