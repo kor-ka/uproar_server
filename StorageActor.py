@@ -107,9 +107,9 @@ class StorageActor(pykka.ThreadingActor):
                                     -- I assume here that id is an auto-incremented value in log_table
                                     DELETE FROM %s
                                     WHERE id = (SELECT min(id) FROM %s);
-                                    RETURN;
+                                    RETURN NULL;
                                 END IF;
-                                RETURN;
+                                RETURN NULL;
                             END;
                             $body$
                             LANGUAGE plpgsql;
