@@ -136,4 +136,8 @@ class GetList(dict):
         super(GetList, self).__init__()
         self['command'] = 'get_list'
         self['name'] = name
-        self['suffix'] = suffix
+        self['suffix'] = clean_suffix(suffix)
+
+
+def clean_suffix(suffix):
+    return str(suffix).replace("-", "")
