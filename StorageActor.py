@@ -52,7 +52,7 @@ class StorageActor(pykka.ThreadingActor):
                     vals[k] = pickle.loads(v[0])
                 cur.close()
             except Exception as ex:
-                print 'on get:' + ex
+                print 'on get:' + str(ex)
             cur.close()
             return vals
 
@@ -70,7 +70,7 @@ class StorageActor(pykka.ThreadingActor):
                 self.db.commit()
                 return True
             except Exception as ex:
-                print 'on put:' + ex
+                print 'on put:' + str(ex)
                 return False
             finally:
                 cur.close()
@@ -84,7 +84,7 @@ class StorageActor(pykka.ThreadingActor):
                                                            message.get('table')), (key))
                 return True
             except Exception as ex:
-                print 'on remove:' + ex
+                print 'on remove:' + str(ex)
                 return False
             finally:
                 cur.close()
