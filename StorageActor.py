@@ -63,7 +63,7 @@ class StorageActor(pykka.ThreadingActor):
 
                 cur.execute('''INSERT INTO ${table} (key, val)
                     VALUES (%s, %s)
-                    ON CONFLICT (key, val) DO UPDATE SET
+                    ON CONFLICT (key) DO UPDATE SET
                         key = excluded.key,
                         val = excluded.val;'''.replace('${table}',
                     message.get('table')), (key, pickle.dumps(message.get('val')))
@@ -96,7 +96,8 @@ class StorageActor(pykka.ThreadingActor):
         elif message.get('command') == "get_list":
             cur = self.db.cursor()
             table = "%s_%s" % (message.get('name'), clean_suffix(message.get('suffix')))
-            cur.execute('''CREATE TABLE IF NOT EXISTS %s (id SERIAL PRIMARY KEY, val varchar, key varchar);''' % table)
+            cur.execute('''DROP TABLE IF EXISTS %s;''' % table)
+            cur.execute('''CREATE TABLE IF NOT EXISTS %s (id SERIAL, val varchar, key varchar PRIMARY KEY);''' % table)
             cur.execute('''CREATE OR REPLACE FUNCTION trf_keep_row_number_steady()
                             RETURNS TRIGGER AS
                             $body$
