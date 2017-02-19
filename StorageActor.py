@@ -50,8 +50,7 @@ class StorageActor(pykka.ThreadingActor):
                 vals = cur.fetchall()
                 count = 0
                 for v in vals:
-                    res[count] = pickle.loads(str(v[0]))
-                    count += 1
+                    res.append(pickle.loads(str(v[0])))
                 cur.close()
             except Exception as ex:
                 print 'on get:' + str(ex)
