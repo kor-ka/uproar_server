@@ -53,6 +53,7 @@ class StorageActor(pykka.ThreadingActor):
                 cur.close()
             except Exception as ex:
                 print 'on get:' + str(ex)
+                self.db.rollback()
             cur.close()
             return vals
 
@@ -62,15 +63,16 @@ class StorageActor(pykka.ThreadingActor):
 
                 cur.execute('''INSERT INTO ${table} (key, val)
                     VALUES (%s, %s)
-                    ON CONFLICT (key) DO UPDATE
-                      SET key = excluded.key,
-                          val = excluded.val;'''.replace('${table}',
+                    ON CONFLICT (key) DO UPDATE SET
+                        key = excluded.key,
+                        val = excluded.val;'''.replace('${table}',
                     message.get('table')), (key, pickle.dumps(message.get('val')))
                             )
                 self.db.commit()
                 return True
             except Exception as ex:
                 print 'on put:' + str(ex)
+                self.db.rollback()
                 return False
             finally:
                 cur.close()
@@ -85,6 +87,7 @@ class StorageActor(pykka.ThreadingActor):
                 return True
             except Exception as ex:
                 print 'on remove:' + str(ex)
+                self.db.rollback()
                 return False
             finally:
                 cur.close()
