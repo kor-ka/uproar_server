@@ -37,14 +37,14 @@ class StorageActor(pykka.ThreadingActor):
 
                 limit = message.get("limit")
 
-                where = '' if key is None else ("WHERE key = '%s1'" % key)
+                where = '' if key is None else ("WHERE key = '%s'" % key)
                 if limit is None:
-                    cur.execute("SELECT * val from %s1 %s2" % (message.get("table"), where))
+                    cur.execute("SELECT * val from %s %s" % (message.get("table"), where))
 
                 else:
                     cur.execute('''SELECT *
-                                    FROM (SELECT * FROM %s1 ORDER BY id DESC LIMIT %s2)
-                                    %s3
+                                    FROM (SELECT * FROM %s ORDER BY id DESC LIMIT %s)
+                                    %s
                                     ORDER BY id ASC;'''
                                 % (message.get("table"), limit, where))
 
@@ -62,8 +62,8 @@ class StorageActor(pykka.ThreadingActor):
             try:
                 cur = self.db.cursor()
 
-                cur.execute('''INSERT INTO %s1 (key, val)
-                    VALUES (%s2, %s3)
+                cur.execute('''INSERT INTO %s (key, val)
+                    VALUES (%s, %s)
                     ON CONFLICT (key) DO UPDATE
                       SET key = excluded.key,
                           val = excluded.val;''' % (
@@ -79,8 +79,8 @@ class StorageActor(pykka.ThreadingActor):
             try:
                 cur = self.db.cursor()
 
-                cur.execute('''DELETE FROM %s1
-                                WHERE key = %s2;''' % (message.get('table'), key))
+                cur.execute('''DELETE FROM %s
+                                WHERE key = %s;''' % (message.get('table'), key))
                 cur.close()
                 return True
             except Exception as ex:
@@ -89,25 +89,25 @@ class StorageActor(pykka.ThreadingActor):
 
         elif message.get('command') == "get_list":
             cur = self.db.cursor()
-            table = "%s1_%s2" % (message.get('name'), message.get('suffix'))
-            cur.execute('''CREATE TABLE %s1 (id SERIAL PRIMARY KEY, val varchar);''' % table)
+            table = "%s_%s" % (message.get('name'), message.get('suffix'))
+            cur.execute('''CREATE TABLE %s (id SERIAL PRIMARY KEY, val varchar);''' % table)
             cur.execute('''CREATE OR REPLACE FUNCTION trf_keep_row_number_steady()
                             RETURNS TRIGGER AS
                             $body$
                             BEGIN
                                 -- delete only where are too many rows
-                                IF (SELECT count(id) FROM %s1) > %s2
+                                IF (SELECT count(id) FROM %s) > %s
                                 THEN
                                     -- I assume here that id is an auto-incremented value in log_table
-                                    DELETE FROM %s3
-                                    WHERE id = (SELECT min(id) FROM %s4);
+                                    DELETE FROM %s
+                                    WHERE id = (SELECT min(id) FROM %s);
                                 END IF;
                             END;
                             $body$
                             LANGUAGE plpgsql;
 
                             CREATE TRIGGER tr_keep_row_number_steady
-                            AFTER INSERT ON %s5
+                            AFTER INSERT ON %s
                             FOR EACH ROW EXECUTE PROCEDURE trf_keep_row_number_steady();''' % (table, 100, table, table, table))
             cur.close()
             return DbList(message.get('name'), message.get('suffix'), self.actor_ref)
@@ -121,14 +121,14 @@ class DbList(object):
         self.storage_ref = storage_ref
 
     def get(self, key=None, limit=None):
-        return self.storage_ref.ask({"command": "get", "table": "%s1_%s2" % (self.name, self.suffix), "key": key, "limit":limit})
+        return self.storage_ref.ask({"command": "get", "table": "%s_%s" % (self.name, self.suffix), "key": key, "limit":limit})
 
     def remove(self, key):
-        return self.storage_ref.ask({"command": "remove", "table": "%s1_%s2" % (self.name, self.suffix), "key": key})
+        return self.storage_ref.ask({"command": "remove", "table": "%s_%s" % (self.name, self.suffix), "key": key})
 
     def put(self, key, val):
         return self.storage_ref.ask(
-            {"command": "put", "table": "%s1_%s2" % (self.name, self.suffix), "key": key, "val": val})
+            {"command": "put", "table": "%s_%s" % (self.name, self.suffix), "key": key, "val": val})
 
 
 class GetList(dict):
