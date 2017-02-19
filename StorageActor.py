@@ -6,6 +6,7 @@ import pickle
 
 USER_TABLE = 'user_table'
 TRACK_TABLE = 'track_table'
+CHAT_DEVICES_TABLE = 'chat_devices_table'
 
 
 class StorageActor(pykka.ThreadingActor):
@@ -28,21 +29,24 @@ class StorageActor(pykka.ThreadingActor):
 
     def on_receive(self, message):
 
+        key = message.get('key')
         if message.get('command') == "get":
             val = None
             try:
                 cur = self.db.cursor()
 
                 limit = message.get("limit")
+
+                where = '' if key is None else ("WHERE key = '%s1'" % key)
                 if limit is None:
-                    cur.execute("SELECT * val from %s1 WHERE key = '%s2'" % (message.get("table"), message.get('key')))
+                    cur.execute("SELECT * val from %s1 %s2" % (message.get("table"), where))
 
                 else:
                     cur.execute('''SELECT *
-                                    FROM (SELECT * FROM %s1 ORDER BY id DESC LIMIT %s3)
-                                    WHERE key = %s2
+                                    FROM (SELECT * FROM %s1 ORDER BY id DESC LIMIT %s2)
+                                    %s3
                                     ORDER BY id ASC;'''
-                                % (message.get("table"), message.get('key'), limit))
+                                % (message.get("table"), limit, where))
 
                 vals = cur.fetchall()
                 for k, v in vals:
@@ -63,8 +67,20 @@ class StorageActor(pykka.ThreadingActor):
                     ON CONFLICT (key) DO UPDATE
                       SET key = excluded.key,
                           val = excluded.val;''' % (
-                    message.get('table'), message.get('key'), pickle.dumps(message.get('val')))
+                    message.get('table'), key, pickle.dumps(message.get('val')))
                             )
+                cur.close()
+                return True
+            except Exception as ex:
+                print ex
+                return False
+
+        elif message.get('command') == "remove":
+            try:
+                cur = self.db.cursor()
+
+                cur.execute('''DELETE FROM %s1
+                                WHERE key = %s2;''' % (message.get('table'), key))
                 cur.close()
                 return True
             except Exception as ex:
@@ -104,8 +120,11 @@ class DbList(object):
         self.suffix = suffix
         self.storage_ref = storage_ref
 
-    def get(self, key, limit=None):
+    def get(self, key=None, limit=None):
         return self.storage_ref.ask({"command": "get", "table": "%s1_%s2" % (self.name, self.suffix), "key": key, "limit":limit})
+
+    def remove(self, key):
+        return self.storage_ref.ask({"command": "remove", "table": "%s1_%s2" % (self.name, self.suffix), "key": key})
 
     def put(self, key, val):
         return self.storage_ref.ask(
