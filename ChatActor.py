@@ -132,13 +132,12 @@ class ChatActor(pykka.ThreadingActor):
                     self.bot.tell({'command': 'reply', 'base': message, 'message': 'Ooops, looks like it\'s not yours'})
 
             elif text.startswith('/score'):
-                print self.users.get()
                 sortd = sorted(self.users.get(), key=itemgetter(1))
                 score = ""
                 for user_likes in sortd:
-                    user = user_likes[1][0]
+                    user = user_likes[0]
                     score += (user.first_name if not user.username else  '@' + user.username) + ' ' + str(
-                        user_likes[1][1]) + '\n'
+                        user_likes[1]) + '\n'
                 if not score:
                     score = 'no one have likes for now'
                 self.bot.tell({'command': 'reply', 'base': message, 'message': score})
