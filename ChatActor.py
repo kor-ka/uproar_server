@@ -87,7 +87,7 @@ class ChatActor(pykka.ThreadingActor):
                      'message': loud + ' ' + message.from_user.username + '\'s device: ' + random_str})
 
                 token_set = message.from_user.username + ':' + random_str + ':' + str(
-                    hashlib.sha256(self.secret + str(message.from_user.id)))
+                    hashlib.sha256(self.secret + str(message.from_user.id)).hexdigest())
 
                 # '\n\nСообщение выше - идентификатор '
                 # 'вашего устройства. Перешлите его в '
@@ -193,7 +193,7 @@ class ChatActor(pykka.ThreadingActor):
 
     def get_token(self, text, user):
         last_str = string.split(text, '\n')[-1].replace(loud, '').replace(' ', '')
-        token = string.split(last_str, '\'')[0] + ':' + last_str[-5:] + ':' + str(hashlib.sha256(self.secret + str(user.id)))
+        token = string.split(last_str, '\'')[0] + ':' + last_str[-5:] + ':' + str(hashlib.sha256(self.secret + str(user.id)).hexdigest())
         return token
 
     def get_device(self, token):
