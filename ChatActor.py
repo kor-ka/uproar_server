@@ -168,10 +168,14 @@ class ChatActor(pykka.ThreadingActor):
 
                 data = {"track_url": durl, "chat_id": reply.chat_id, "message_id": reply.message_id,
                         "orig": message.message_id, 'title': title}
-                for device in self.devices:
-                    device.tell({'command': 'add_track', 'track': json.dumps(data)})
-
                 self.latest_tracks.put(message.message_id, TrackStatus(message.message_id, title, data, file_id))
+
+                for device in self.devices:
+                    try:
+                        device.tell({'command': 'add_track', 'track': json.dumps(data)})
+                    except Exception as e:
+                        self.devices.remove(device)
+                        print e
 
             else:
                 self.bot.tell(
