@@ -37,7 +37,7 @@ class DeviceActor(pykka.ThreadingActor):
         update = message.get('update')
         old_msg = update['message']
         if old_msg == 'download':
-            old_msg = u'\U00002B07 downloading...'
+            old_msg = u'\U00002B07 downloading....'
         elif old_msg == 'queue':
             old_msg = u'\U0000261D queued'
         elif old_msg == 'playing':
