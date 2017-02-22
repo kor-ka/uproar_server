@@ -236,10 +236,13 @@ class ChatActor(pykka.ThreadingActor):
                     elif user_id in likes_data.dislikes_owners:
                         text = "take your dislike back first"
                     else:
-                        if likes_data.owner and user_id == likes_data.owner:
-                            self.bot.tell(
-                                {'command': 'send', 'chat_id': self.chat_id,
-                                 'message': '%s SELFLIKE by %s' % (poo, callback.from_user.first_name)})
+                        try:
+                            if user_id == likes_data.owner:
+                                self.bot.tell(
+                                    {'command': 'send', 'chat_id': self.chat_id,
+                                     'message': '%s SELFLIKE by %s' % (poo, callback.from_user.first_name)})
+                        except:
+                            pass
                         likes_data.likes += 1
                         likes_data.likes_owners.add(user_id)
                         text = "+1"
