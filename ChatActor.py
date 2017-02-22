@@ -240,7 +240,7 @@ class ChatActor(pykka.ThreadingActor):
                             if user_id == likes_data.owner:
                                 self.bot.tell(
                                     {'command': 'send', 'chat_id': self.chat_id,
-                                     'message': '%s SELFLIKE by %s' % (poo, callback.from_user.first_name)})
+                                     'message': '%s SELFLIKE by %s' % (poo, callback_query.from_user.first_name)})
                         except Exception as e:
                             print  "selflike: %s" % str(e)
                         likes_data.likes += 1
