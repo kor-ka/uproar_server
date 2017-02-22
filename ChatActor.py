@@ -327,7 +327,7 @@ class ChatActor(pykka.ThreadingActor):
     def on_device_online(self, token, device):
         for t in self.latest_tracks.get():
             status = t.device_status.get(token.split(':')[1])
-            if status is None or status.startswith(downloading) or status.startswith(playing) or status.startswith(
+            if status is None or status.startswith(downloading) or status.startswith(
                     queued) or status.startswith(promoted):
                 t.data["track_url"] = self.get_d_url(t.file_id)
                 device.tell({'command': 'add_track', 'track': json.dumps(t.data)})
