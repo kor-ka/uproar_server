@@ -32,6 +32,7 @@ queued = u'\U0000261D'
 playing = u'\U0001F3B6'
 stopped = u'\U00002B1B'
 promoted = u'\U00002B06'
+poo = u'\U0001F4A9'
 
 votes_to_skip = 2
 
@@ -168,7 +169,7 @@ class ChatActor(pykka.ThreadingActor):
 
                 data = {"track_url": durl, "chat_id": reply.chat_id, "message_id": reply.message_id,
                         "orig": message.message_id, 'title': title}
-                self.latest_tracks.put(message.message_id, TrackStatus(message.message_id, title, data, file_id))
+                self.latest_tracks.put(message.message_id, TrackStatus(message.message_id, title, data, file_id, message.from_user.id))
 
                 for device in self.devices:
                     try:
@@ -235,6 +236,10 @@ class ChatActor(pykka.ThreadingActor):
                     elif user_id in likes_data.dislikes_owners:
                         text = "take your dislike back first"
                     else:
+                        if user_id == likes_data.owner:
+                            self.bot.tell(
+                                {'command': 'send', 'chat_id': self.chat_id,
+                                 'message': '%s SELFLIKE by %s' % (poo, callback.from_user.first_name)})
                         likes_data.likes += 1
                         likes_data.likes_owners.add(user_id)
                         text = "+1"
@@ -375,7 +380,7 @@ class DeviceData(object):
 
 
 class TrackStatus(object):
-    def __init__(self, orig, title, data, file_id):
+    def __init__(self, orig, title, data, file_id, owner):
         super(TrackStatus, self).__init__()
         self.original_msg_id = orig
         self.file_id = file_id
@@ -387,3 +392,4 @@ class TrackStatus(object):
         self.played_once = False
         self.title = title
         self.data = data
+        self.owner = owner
