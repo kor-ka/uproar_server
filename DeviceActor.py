@@ -24,7 +24,7 @@ class DeviceActor(pykka.ThreadingActor):
 
     def on_start(self):
         self.storage = self.db.ask(
-            {'command': 'get_list', 'name': StorageActor.DEVICE_STORAGE, 'suffix': get_name(self.token)})
+            {'command': 'get_list', 'name': StorageActor.DEVICE_STORAGE, 'suffix': self.token.split(':')[0]})
         for placeholder in self.storage.get('placeholder'):
             self.placeholder = placeholder
  
