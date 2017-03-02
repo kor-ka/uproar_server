@@ -343,7 +343,7 @@ class ChatActor(pykka.ThreadingActor):
     def on_boring(self, token, device):
         t = random.choice(self.latest_tracks.get())
         status = t.device_status.get(token.split(':')[1])
-        if status is not status.startswith(skip):
+        if status is None or not status.startswith(skip):
             t.data["track_url"] = self.get_d_url(t.file_id)
             device.tell({'command': 'add_track', 'track': json.dumps(t.data)})
 
