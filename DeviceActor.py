@@ -27,6 +27,7 @@ class DeviceActor(pykka.ThreadingActor):
             {'command': 'get_list', 'name': StorageActor.DEVICE_STORAGE, 'suffix': self.token.split(':')[1]})
         for placeholder in self.storage.get('placeholder'):
             self.placeholder = placeholder
+            self.chat = self.manager.ask({'command': 'get_chat', 'chat_id': self.placeholder.chat_id})
  
     def on_update(self, message):
         update = message.get('update')
