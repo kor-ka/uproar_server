@@ -7,6 +7,7 @@ import pickle
 USER_TABLE = 'user_table'
 TRACK_TABLE = 'track_table'
 CHAT_DEVICES_TABLE = 'chat_devices_table'
+DEVICE_STORAGE = 'devices_storage'
 
 
 class StorageActor(pykka.ThreadingActor):

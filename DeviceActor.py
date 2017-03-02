@@ -1,7 +1,7 @@
 import os
 
 import pykka, shelve
-
+import StorageActor
 
 def get_name(token):
     split = token.split(':')
@@ -23,16 +23,11 @@ class DeviceActor(pykka.ThreadingActor):
 
 
     def on_start(self):
-        try:
-            if not os.path.exists('devices'):
-                os.makedirs('devices')
-            self.storage = shelve.open('devices/%s' % self.token, writeback=True)
-            self.placeholder = self.storage.get('placeholder')
-            if self.placeholder:
-                self.chat = self.manager.ask({'command': 'get_chat', 'chat_id': self.placeholder.chat_id})
-        except Exception as e:
-            print e
-
+        self.storage = self.db.ask(
+            {'command': 'get_list', 'name': StorageActor.DEVICE_STORAGE, 'suffix': get_name(self.token)})
+        for placeholder in self.storage.get('placeholder'):
+            self.placeholder = placeholder
+ 
     def on_update(self, message):
         update = message.get('update')
         old_msg = update['message']
@@ -56,14 +51,6 @@ class DeviceActor(pykka.ThreadingActor):
         if self.chat is not None:
             self.chat.tell({'command': 'device_update', 'update': update})
 
-    def open_shelve(self, path):
-        try:
-            return shelve.open(path)
-        except:
-            os.remove(path)
-            return shelve.open(path)
-
-
     def on_receive(self, message):
         try:
             if message.get('command') == "add_track":
@@ -76,9 +63,7 @@ class DeviceActor(pykka.ThreadingActor):
                 self.chat = message.get('chat')
                 self.placeholder = message.get('placeholder')
 
-                self.storage['placeholder'] = self.placeholder
-                self.storage.close()
-                self.storage = self.open_shelve('devices/%s' % self.token)
+                self.storage.put('placeholder', self.placeholder)
 
 
             elif message.get('command') == "get_name":
