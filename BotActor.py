@@ -46,7 +46,7 @@ class UpdatesFetcher(pykka.ThreadingActor):
         for update in bot.getUpdates(offset=self.update_id, timeout=10):
             self.update_id = update.update_id + 1
             self.manager.tell({'command': 'update', 'update': update})
-            pprint(vars(update.message.document))
+            # pprint(vars(update.message.document))
 
 
 class BotActor(pykka.ThreadingActor):
@@ -90,6 +90,9 @@ class BotActor(pykka.ThreadingActor):
     def send(self, message, chat_id, reply_markup):
         return self.bot.sendMessage(chat_id=chat_id, text=message, reply_markup=reply_markup)
 
+    def sendDoc(self, caption, chat_id, file_id):
+        return self.bot.sendDocument(chat_id, file_id, caption=caption)
+
     def on_receive(self, message):
         try:
 
@@ -103,5 +106,7 @@ class BotActor(pykka.ThreadingActor):
                 return self.edit_reply_markup(message.get('base'), message.get('reply_markup'))
             elif message.get('command') == 'send':
                 return self.send(message.get('message'), message.get('chat_id'), message.get('reply_markup'))
+            elif message.get('command') == 'sendDoc':
+                return self.sendDoc(message.get('caption'), message.get('chat_id'), message.get('file_id'))
         except Exception as ex:
             print ex

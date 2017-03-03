@@ -34,7 +34,7 @@ stopped = u'\U00002B1B'
 promoted = u'\U00002B06'
 poo = u'\U0001F4A9'
 
-votes_to_skip = 2
+votes_to_skip = 1
 
 
 class ChatActor(pykka.ThreadingActor):
@@ -275,12 +275,15 @@ class ChatActor(pykka.ThreadingActor):
                 text = "skipping %s" % likes_data.title
                 for d in self.devices:
                     d.tell({'command': 'skip', 'orig': likes_data.original_msg_id})
+                self.bot.tell({"command":"sendDoc", "chat_id":self.chat_id, "caption":"Skip by anon azazaz", "file_id":"CgADBAADqWkAAtkcZAc7PiBvHsR8IwI"})
+
 
         elif callback[0] == 'promote':
             for likes_data in self.latest_tracks.get(message_id):
                 text = "promoting %s" % likes_data.title
                 for d in self.devices:
                     d.tell({'command': 'promote', 'orig': likes_data.original_msg_id})
+                self.bot.tell({"command":"sendDoc", "chat_id":self.chat_id, "caption":"Promote by %s" % callback_query.from_user.first_name, "file_id":"CgADBAADWSMAAjUeZAeEqT810zl7IgI"})
 
         if answer:
             callback_query.answer(text=text, show_alert=show_alert)
