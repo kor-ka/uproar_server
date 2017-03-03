@@ -55,6 +55,8 @@ class ChatActor(pykka.ThreadingActor):
         self.devices_tokens = None
         self.latest_tracks = None
         self.users = None
+        self.skip_gifs = ["CgADBAADqWkAAtkcZAc7PiBvHsR8IwI", "CgADBAADrgMAAuMYZAcKVOFNoEE_xgI", "CgADBAADJkAAAnobZAftbqSTl-HsIQI", "CgADBAADLBkAAuIaZAej8zwqpX3GeAI"]
+        self.promote_gifs = ["CgADBAADWSMAAjUeZAeEqT810zl7IgI", "CgADBAADUEkAAhEXZAfN5P28QjO3KQI", "CgADBAADpAMAAvkcZAfm332885NH7AI", "CgADBAADyQMAAsUZZAe4b-POmx-A8AI"]
 
     def on_start(self):
         print self.chat_id
@@ -275,7 +277,8 @@ class ChatActor(pykka.ThreadingActor):
                 text = "skipping %s" % likes_data.title
                 for d in self.devices:
                     d.tell({'command': 'skip', 'orig': likes_data.original_msg_id})
-                self.bot.tell({"command":"sendDoc", "chat_id":self.chat_id, "caption":"Skip by anon azazaz", "file_id":"CgADBAADqWkAAtkcZAc7PiBvHsR8IwI"})
+
+                self.bot.tell({"command":"sendDoc", "chat_id":self.chat_id, "caption":"Skip by anon azazaz", "file_id": random.choice(self.skip_gifs)})
 
 
         elif callback[0] == 'promote':
@@ -283,7 +286,7 @@ class ChatActor(pykka.ThreadingActor):
                 text = "promoting %s" % likes_data.title
                 for d in self.devices:
                     d.tell({'command': 'promote', 'orig': likes_data.original_msg_id})
-                self.bot.tell({"command":"sendDoc", "chat_id":self.chat_id, "caption":"Promote by %s" % callback_query.from_user.first_name, "file_id":"CgADBAADWSMAAjUeZAeEqT810zl7IgI"})
+                self.bot.tell({"command":"sendDoc", "chat_id":self.chat_id, "caption":"Promote by %s" % callback_query.from_user.first_name, "file_id":random.choice(self.promote_gifs)})
 
         if answer:
             callback_query.answer(text=text, show_alert=show_alert)
