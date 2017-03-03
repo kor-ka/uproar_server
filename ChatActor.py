@@ -34,7 +34,7 @@ stopped = u'\U00002B1B'
 promoted = u'\U00002B06'
 poo = u'\U0001F4A9'
 
-votes_to_skip = 1
+votes_to_skip = 2
 
 
 class ChatActor(pykka.ThreadingActor):
