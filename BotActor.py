@@ -46,7 +46,7 @@ class UpdatesFetcher(pykka.ThreadingActor):
         for update in bot.getUpdates(offset=self.update_id, timeout=10):
             self.update_id = update.update_id + 1
             self.manager.tell({'command': 'update', 'update': update})
-            pprint(vars(update.message.document))
+            # pprint(vars(update.message.document))
 
 
 class BotActor(pykka.ThreadingActor):
