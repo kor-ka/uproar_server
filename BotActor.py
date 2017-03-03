@@ -1,4 +1,6 @@
 import logging
+from pprint import pprint
+
 import telegram
 from telegram import Bot
 from telegram import InlineKeyboardMarkup
@@ -44,6 +46,7 @@ class UpdatesFetcher(pykka.ThreadingActor):
         for update in bot.getUpdates(offset=self.update_id, timeout=10):
             self.update_id = update.update_id + 1
             self.manager.tell({'command': 'update', 'update': update})
+            pprint(update)
 
 
 class BotActor(pykka.ThreadingActor):
