@@ -77,7 +77,7 @@ class ChatActor(pykka.ThreadingActor):
         self.users = self.db.ask({'command': 'get_list', 'name': Storage.USER_TABLE, 'suffix': self.chat_id})
 
         for t in self.devices_tokens.get():
-            self.devices.add(self.manager.ask({'command': 'get_device', 'token': t}))
+            self.devices.add((t, self.manager.ask({'command': 'get_device', 'token': t})))
 
     def on_message(self, message):
         if message.text:
@@ -200,15 +200,19 @@ class ChatActor(pykka.ThreadingActor):
                 self.latest_tracks.put(message.message_id, TrackStatus(message.message_id, title, data, file_id, message.from_user.id, time()))
 
                 for device in self.devices:
-                    try:
-                        device.tell({'command': 'add_track', 'track': data})
-                    except Exception as e:
-                        self.devices.remove(device)
-                        print e
+                    device_ref = self.enshure_device_ref(device)
+                    device_ref.tell({'command': 'add_track', 'track': data})
 
             else:
                 self.bot.tell(
                     {'command': 'reply', 'base': message, 'message': 'no devices, please forward one from @uproarbot'})
+
+    def enshure_device_ref(self, device):
+        device_ref = device[1]
+        if device_ref is None or not device_ref.is_alive():
+            device_ref = self.manager.ask({'command': 'get_device', 'token': device[0]})
+            device[1] = device_ref
+        return device_ref
 
     def get_d_url(self, file_id):
         durl = None
@@ -302,7 +306,8 @@ class ChatActor(pykka.ThreadingActor):
             for likes_data in self.latest_tracks.get(message_id):
                 text = "skipping %s" % likes_data.title
                 for d in self.devices:
-                    d.tell({'command': 'skip', 'orig': likes_data.original_msg_id})
+                    device_ref = self.enshure_device_ref(d)
+                    device_ref.tell({'command': 'skip', 'orig': likes_data.original_msg_id})
 
                 self.bot.tell({"command":"sendDoc", "chat_id":self.chat_id, "caption":"Skip by anon azazaz", "file_id": random.choice(self.skip_gifs)})
 
@@ -311,7 +316,8 @@ class ChatActor(pykka.ThreadingActor):
             for likes_data in self.latest_tracks.get(message_id):
                 text = "promoting %s" % likes_data.title
                 for d in self.devices:
-                    d.tell({'command': 'promote', 'orig': likes_data.original_msg_id})
+                    device_ref = self.enshure_device_ref(d)
+                    device_ref.tell({'command': 'promote', 'orig': likes_data.original_msg_id})
                 self.bot.tell({"command":"sendDoc", "chat_id":self.chat_id, "caption":"Promote by %s" % callback_query.from_user.first_name, "file_id":random.choice(self.promote_gifs)})
 
         if answer:
@@ -390,12 +396,14 @@ class ChatActor(pykka.ThreadingActor):
             if message.get('command') == 'callback_query':
                 self.on_callback_query(message.get('callback_query'))
             elif message.get('command') == 'add_device':
-                self.devices.add(message.get('device'))
+                self.devices.add((message.get('token'),message.get('device')))
                 self.devices_tokens.put(message.get('token'), message.get('token'))
                 message.get('device').tell(
                     {'command': 'move_to', 'chat': self.actor_ref, 'placeholder': message.get('placeholder')})
             elif message.get('command') == 'remove_device':
-                self.devices.remove(message.get('device'))
+                for d in self.devices:
+                    if d[0] == message.get('token'):
+                        self.devices.remove(d)
                 self.devices_tokens.remove(message.get('token'))
             elif message.get('command') == 'device_content_status':
                 self.on_device_update(message.get('content_status'))
