@@ -87,7 +87,7 @@ class DeviceActor(pykka.ThreadingActor):
             elif message.get('command') == "device_out":
                 update = message.get("update")
 
-                if update["update"] == "update_status":
+                if update["update"] == "update_track_status":
                     self.on_update_content_status(update['data'])
                 elif self.chat is not None:
                     self.chat.tell({'command': 'device_message', 'token': self.token,
