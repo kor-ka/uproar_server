@@ -398,7 +398,7 @@ class ChatActor(pykka.ThreadingActor):
                 self.on_device_online(message.get('token'), message.get('device'))
             elif message.get('command') == 'device_message':
                 msg = message.get("message")
-                if msg["data"] == "boring":
+                if msg["update"] == "boring":
                     self.on_boring(message.get("token"), message.get("device"))
         except Exception as ex:
             logging.exception(ex)
