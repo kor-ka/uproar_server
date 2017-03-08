@@ -190,7 +190,7 @@ class ChatActor(pykka.ThreadingActor):
                 ]
 
                 title = message.audio.performer + " - " + message.audio.title
-                title = title.decode('utf-8','ignore').encode("utf-8")
+                title = title.encode("utf-8")
                 reply = self.bot.ask(
                     {'command': 'reply', 'base': message,
                      'message': title,
