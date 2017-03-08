@@ -94,11 +94,6 @@ class ChatActor(pykka.ThreadingActor):
                 token_set = message.from_user.username + ':' + random_str + ':' + str(
                     hashlib.sha256(self.secret + str(message.from_user.id)).hexdigest())
 
-                # '\n\nСообщение выше - идентификатор '
-                # 'вашего устройства. Перешлите его в '
-                # 'чат, на который хотите подписать '
-                # 'устройство'
-
                 self.bot.tell({'command': 'send', 'chat_id': message.chat_id, 'message': token_set + '\n\nMessage '
                                                                                                      'above is your device '
                                                                                                      'holder, forward it to '
@@ -177,7 +172,7 @@ class ChatActor(pykka.ThreadingActor):
 
                 for device in self.devices:
                     try:
-                        device.tell({'command': 'add_track', 'track': json.dumps(data)})
+                        device.tell({'command': 'add_track', 'track': data})
                     except Exception as e:
                         self.devices.remove(device)
                         print e
@@ -369,8 +364,8 @@ class ChatActor(pykka.ThreadingActor):
             elif message.get('command') == 'remove_device':
                 self.devices.remove(message.get('device'))
                 self.devices_tokens.remove(message.get('token'))
-            elif message.get('command') == 'device_update':
-                self.on_device_update(message.get('update'))
+            elif message.get('command') == 'device_content_status':
+                self.on_device_update(message.get('content_status'))
             elif message.get('command') == 'device_online':
                 self.on_device_online(message.get('token'), message.get('device'))
             elif message.get('command') == 'device_message':

@@ -1,9 +1,11 @@
+import json
 import os
 
 import logging
 import pykka, shelve
 import Storage
 from Storage import StorageProvider
+
 
 def get_name(token):
     split = token.split(':')
@@ -24,45 +26,43 @@ class DeviceActor(pykka.ThreadingActor):
         self.db = storage_provider.get_storage()
         self.storage = None
 
-
     def on_start(self):
         self.storage = self.db.ask(
             {'command': 'get_list', 'name': Storage.DEVICE_STORAGE, 'suffix': self.token.split(':')[1]})
         for placeholder in self.storage.get('placeholder'):
             self.placeholder = placeholder
             self.chat = self.manager.ask({'command': 'get_chat', 'chat_id': self.placeholder.chat_id})
- 
-    def on_update(self, message):
-        update = message.get('update')
-        old_msg = update['message']
-        if old_msg == 'download':
-            old_msg = u'\U00002B07 downloading...'
-        elif old_msg == 'queue':
-            old_msg = u'\U0000261D queued'
-        elif old_msg == 'playing':
-            old_msg = u'\U0001F3B6 playing'
-        elif old_msg == 'done':
-            old_msg = u'\U00002B1B stopped'
-        elif old_msg == 'skip':
-            old_msg = u'\U000023E9 skipped'
-        elif old_msg == 'promote':
-            old_msg = u'\U00002B06 promoted'
+
+    def on_update_content_status(self, update):
+        msg = update['message']
+        if msg == 'download':
+            msg = u'\U00002B07 downloading...'
+        elif msg == 'queue':
+            msg = u'\U0000261D queued'
+        elif msg == 'playing':
+            msg = u'\U0001F3B6 playing'
+        elif msg == 'done':
+            msg = u'\U00002B1B stopped'
+        elif msg == 'skip':
+            msg = u'\U000023E9 skipped'
+        elif msg == 'promote':
+            msg = u'\U00002B06 promoted'
         device_id = self.token.split(':')[1]
         update['device'] = device_id
         update['placeholder'] = self.placeholder
         update['device_name'] = get_name(self.token)
-        update['message'] = old_msg
+        update['message'] = msg
         if self.chat is not None:
-            self.chat.tell({'command': 'device_update', 'update': update})
+            self.chat.tell({'command': 'device_content_status', 'content_status': update})
 
     def on_receive(self, message):
         try:
             if message.get('command') == "add_track":
-                self.publish("track", str(message.get('track')))
+                self.publish("add_content", {"audio": message.get('track')})
 
             elif message.get('command') == "move_to":
                 if self.chat is not None and self.chat != message.get('chat'):
-                    self.chat.tell({'command': 'remove_device', 'device': self.actor_ref, 'token':self.token})
+                    self.chat.tell({'command': 'remove_device', 'device': self.actor_ref, 'token': self.token})
 
                 self.chat = message.get('chat')
                 self.placeholder = message.get('placeholder')
@@ -73,9 +73,6 @@ class DeviceActor(pykka.ThreadingActor):
             elif message.get('command') == "get_name":
                 return get_name(self.token)
 
-            elif message.get('command') == "update":
-
-                self.on_update(message)
             elif message.get('command') == "vol":
                 self.publish('volume', message.get('param'))
             elif message.get('command') == "get_placeholder":
@@ -87,13 +84,18 @@ class DeviceActor(pykka.ThreadingActor):
             elif message.get('command') == "online":
                 if self.chat is not None:
                     self.chat.tell({'command': 'device_online', 'token': self.token, 'device': self.actor_ref})
-            elif message.get('command') == "device_message":
-                if self.chat is not None:
+            elif message.get('command') == "device_out":
+                update = message.get("update")
+
+                if update["update"].equals("update_status"):
+                    self.on_update_content_status()
+                elif self.chat is not None:
                     self.chat.tell({'command': 'device_message', 'token': self.token,
-                                    'device': self.actor_ref, "message": message.get("message")})
+                                    'device': self.actor_ref, "message": update})
 
         except Exception as ex:
             logging.exception(ex)
 
-    def publish(self, topic, payload):
-        self.mqtt.tell({'command': 'publish', 'topic': topic + '_' + self.token, 'payload': payload})
+    def publish(self, topic, data):
+        payload = {"update": topic, "data": str(json.dumps(data))}
+        self.mqtt.tell({'command': 'publish', 'topic': "device_out_" + self.token, 'payload': payload})

@@ -18,17 +18,13 @@ class MqttACtor(pykka.ThreadingActor):
         try:
             print "MQTT <-- topic: %s | msg: %s" % (msg.topic, str(msg.payload))
 
-            if msg.topic == 'server_test':
-                self.client.subscribe("update_" + str(msg.payload), 1)
-                self.client.subscribe("message_" + str(msg.payload), 1)
+            if msg.topic == 'registry':
+                self.client.subscribe("device_out_" + str(msg.payload), 2)
                 device = self.manager.ask({'command': 'get_device', 'token': str(msg.payload)})
                 device.tell({'command':'online'})
-            elif str(msg.topic).startswith("update_"):
-                token = msg.topic.replace("update_", "")
-                self.manager.tell({'command':'device_update_status', 'token':token, 'update':json.loads(str(msg.payload))})
-            elif str(msg.topic).startswith("message_"):
-                token = msg.topic.replace("message_", "")
-                self.manager.tell({'command':'device_message', 'token':token, 'message': str(msg.payload)})
+            elif str(msg.topic).startswith("device_out_"):
+                token = msg.topic.replace("device_out_", "")
+                self.manager.tell({'command':'device_out', 'token':token, 'update': str(msg.payload)})
             
         except Exception as ex:
             logging.exception(ex)
@@ -37,8 +33,8 @@ class MqttACtor(pykka.ThreadingActor):
         print("Connected with result code " + str(rc))
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
-        client.subscribe("server_" + "test", 1)
-        client.subscribe("update_test", 1)
+        client.subscribe("server_" + "test", 2)
+        client.subscribe("update_test", 2)
 
     def initMqtt(self):
         client = mqtt.Client()
@@ -56,7 +52,6 @@ class MqttACtor(pykka.ThreadingActor):
 
                 self.client.publish(message.get('topic'), message.get('payload'))
             if message.get('command') == "subscribe":
-                self.client.subscribe('update_' + message.get('token'), 1)
-                self.client.subscribe('message_' + message.get('token'), 1)
+                self.client.subscribe('device_out_' + message.get('token'), 2)
         except Exception as ex:
             logging.exception(ex)
