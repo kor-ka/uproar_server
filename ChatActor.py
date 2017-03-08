@@ -381,7 +381,7 @@ class ChatActor(pykka.ThreadingActor):
         status = t.device_status.get(token.split('-')[1])
         if status is None or not status.startswith(skip):
             t.data["track_url"] = self.get_d_url(t.file_id)
-            device.tell({'command': 'add_track', 'track': json.dumps(t.data)})
+            device.tell({'command': 'add_track', 'track': t.data})
 
     def on_receive(self, message):
         try:
