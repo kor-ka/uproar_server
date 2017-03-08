@@ -20,26 +20,20 @@ from telegram.ext import Updater
 import ManagerActor
 from telegram import InlineKeyboardButton, CallbackQuery
 
-class UpdatesFetcher(pykka.ThreadingActor):
-    def __init__(self, bot, manager):
-        super(UpdatesFetcher, self).__init__()
-        self.bot = bot
-        self.update_id = None
-        self.manager = manager
-        try:
-            self.update_id = self.bot.getUpdates()[0].update_id
-        except IndexError:
-            self.update_id = None
 
-    def on_receive(self, message):
-        if message.get('command') == 'loop':
-            self.loop()
+
+class BotActor(pykka.ThreadingActor):
+    def __init__(self, manager):
+        super(BotActor, self).__init__()
+        self.manager = manager
+        self.token = os.getenv('token')
+        self.loop()
 
     def post(self, bot, update):
         self.manager.tell({'command': 'update', 'update': update})
 
     def loop(self):
-        updater = Updater("TOKEN")
+        updater = Updater(self.token)
 
         # Get the dispatcher to register handlers
         dp = updater.dispatcher
@@ -50,33 +44,6 @@ class UpdatesFetcher(pykka.ThreadingActor):
 
         # Start the Bot
         updater.start_polling()
-
-
-
-class BotActor(pykka.ThreadingActor):
-    def __init__(self, manager):
-        super(BotActor, self).__init__()
-        self.manager = manager
-        self.token = os.getenv('token')
-        self.bot = None
-        self.main()
-        self.fetcher = None
-
-    def main(self):
-        # Telegram Bot Authorization Token
-        bot = telegram.Bot(self.token)
-        self.bot = bot
-        self.fetcher = UpdatesFetcher.start(bot, self.manager)
-
-        # get the first pending update_id, this is so we can skip over it in case
-        # we get an "Unauthorized" exception.
-        try:
-            update_id = bot.getUpdates()[0].update_id
-        except IndexError:
-            update_id = None
-
-        logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        self.fetcher.tell({'command': 'loop'})
 
     def update(self, update, reply_markup):
         self.bot.editMessageText(update.get("message"), chat_id=update.get("chat_id"),
