@@ -97,5 +97,5 @@ class DeviceActor(pykka.ThreadingActor):
             logging.exception(ex)
 
     def publish(self, topic, data):
-        payload = {"update": topic, "data": str(json.dumps(data))}
-        self.mqtt.tell({'command': 'publish', 'topic': "device_out_" + self.token, 'payload': payload})
+        payload = {"update": topic, "data": data}
+        self.mqtt.tell({'command': 'publish', 'topic': "device_out_" + self.token, 'payload': str(json.dumps(payload))})
