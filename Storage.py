@@ -10,6 +10,24 @@ CHAT_DEVICES_TABLE = 'chat_devices_table'
 DEVICE_STORAGE = 'devices_storage'
 
 
+class StorageProvider(object):
+    def __init__(self):
+        super(StorageProvider, self).__init__()
+        self.storage = None
+
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(StorageProvider, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+    def get_storage(self):
+        if self.storage is None:
+            self.storage = StorageActor.start()
+        return self.storage
+
+
 class StorageActor(pykka.ThreadingActor):
     def __init__(self):
         super(StorageActor, self).__init__()
@@ -67,7 +85,7 @@ class StorageActor(pykka.ThreadingActor):
                     ON CONFLICT (key) DO UPDATE SET
                         key = excluded.key,
                         val = excluded.val;'''.replace('${table}',
-                    message.get('table')), (key, pickle.dumps(message.get('val')))
+                                                       message.get('table')), (key, pickle.dumps(message.get('val')))
                             )
                 self.db.commit()
                 return True
@@ -118,7 +136,8 @@ class StorageActor(pykka.ThreadingActor):
                             DROP TRIGGER IF EXISTS tr_keep_row_number_steady on %s;
                             CREATE TRIGGER tr_keep_row_number_steady
                             AFTER INSERT ON %s
-                            FOR EACH ROW EXECUTE PROCEDURE trf_keep_row_number_steady();''' % (table, 1000, table, table, table, table))
+                            FOR EACH ROW EXECUTE PROCEDURE trf_keep_row_number_steady();''' % (
+            table, 1000, table, table, table, table))
             self.db.commit()
             print table + " created"
             cur.close()
@@ -133,7 +152,8 @@ class DbList(object):
         self.storage_ref = storage_ref
 
     def get(self, key=None, limit=None):
-        return self.storage_ref.ask({"command": "get", "table": "%s_%s" % (self.name, self.suffix), "key": key, "limit":limit})
+        return self.storage_ref.ask(
+            {"command": "get", "table": "%s_%s" % (self.name, self.suffix), "key": key, "limit": limit})
 
     def remove(self, key):
         return self.storage_ref.ask({"command": "remove", "table": "%s_%s" % (self.name, self.suffix), "key": key})
@@ -141,6 +161,7 @@ class DbList(object):
     def put(self, key, val):
         return self.storage_ref.ask(
             {"command": "put", "table": "%s_%s" % (self.name, self.suffix), "key": key, "val": val})
+
 
 def clean_suffix(suffix):
     return str(suffix).replace("-", "")

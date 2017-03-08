@@ -1,7 +1,8 @@
 import os
 
 import pykka, shelve
-import StorageActor
+import Storage
+from Storage import StorageProvider
 
 def get_name(token):
     split = token.split(':')
@@ -9,7 +10,7 @@ def get_name(token):
 
 
 class DeviceActor(pykka.ThreadingActor):
-    def __init__(self, token, manager, mqtt, bot, db):
+    def __init__(self, token, manager, mqtt, bot):
         super(DeviceActor, self).__init__()
         self.token = token
         self.mqtt = mqtt
@@ -18,13 +19,13 @@ class DeviceActor(pykka.ThreadingActor):
         self.bot = bot
         self.chat = None
         self.placeholder = None
-        self.db = db
+        self.db = StorageProvider.get_storage()
         self.storage = None
 
 
     def on_start(self):
         self.storage = self.db.ask(
-            {'command': 'get_list', 'name': StorageActor.DEVICE_STORAGE, 'suffix': self.token.split(':')[1]})
+            {'command': 'get_list', 'name': Storage.DEVICE_STORAGE, 'suffix': self.token.split(':')[1]})
         for placeholder in self.storage.get('placeholder'):
             self.placeholder = placeholder
             self.chat = self.manager.ask({'command': 'get_chat', 'chat_id': self.placeholder.chat_id})

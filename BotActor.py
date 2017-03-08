@@ -11,6 +11,12 @@ import pykka
 import urllib
 import json
 import os
+
+from telegram.ext import CallbackQueryHandler
+from telegram.ext import Filters
+from telegram.ext import MessageHandler
+from telegram.ext import Updater
+
 import ManagerActor
 from telegram import InlineKeyboardButton, CallbackQuery
 
@@ -29,24 +35,22 @@ class UpdatesFetcher(pykka.ThreadingActor):
         if message.get('command') == 'loop':
             self.loop()
 
+    def post(self, bot, update):
+        self.manager.tell({'command': 'update', 'update': update})
+
     def loop(self):
-        try:
-            self.apply(self.bot)
-        except NetworkError:
-            sleep(1)
-        except Unauthorized:
-            # The user has removed or blocked the bot.
-            self.update_id += 1
-        finally:
-            self.actor_ref.tell({'command': 'loop'})
+        updater = Updater("TOKEN")
 
-    def apply(self, bot):
+        # Get the dispatcher to register handlers
+        dp = updater.dispatcher
 
-        # Request updates after the last update_id
-        for update in bot.getUpdates(offset=self.update_id, timeout=10):
-            self.update_id = update.update_id + 1
-            self.manager.tell({'command': 'update', 'update': update})
-            # pprint(vars(update.message.document))
+        # on noncommand i.e message - echo the message on Telegram
+        dp.add_handler(MessageHandler(Filters.all, self.post))
+        dp.add_handler(CallbackQueryHandler(self.post))
+
+        # Start the Bot
+        updater.start_polling()
+
 
 
 class BotActor(pykka.ThreadingActor):

@@ -9,7 +9,8 @@ import random
 import pykka, os, urllib, json
 from telegram import InlineKeyboardButton
 import base64
-import StorageActor
+from Storage import StorageProvider
+import Storage
 import DeviceActor
 from collections import OrderedDict
 from operator import itemgetter
@@ -38,11 +39,11 @@ votes_to_skip = 2
 
 
 class ChatActor(pykka.ThreadingActor):
-    def __init__(self, chat_id, manager, bot, db):
+    def __init__(self, chat_id, manager, bot):
         super(ChatActor, self).__init__()
         self.chat_id = chat_id
         self.manager = manager
-        self.db = db
+        self.db = StorageProvider.get_storage()
         self.bot = bot
         self.token = os.getenv('token')
         self.secret = os.getenv('secret')
@@ -59,15 +60,14 @@ class ChatActor(pykka.ThreadingActor):
         self.promote_gifs = ["CgADBAADWSMAAjUeZAeEqT810zl7IgI", "CgADBAADUEkAAhEXZAfN5P28QjO3KQI", "CgADBAADpAMAAvkcZAfm332885NH7AI", "CgADBAADyQMAAsUZZAe4b-POmx-A8AI"]
 
     def on_start(self):
-        print self.chat_id
         self.latest_tracks = self.db.ask(
-            {'command': 'get_list', 'name': StorageActor.TRACK_TABLE, 'suffix': self.chat_id})
+            {'command': 'get_list', 'name': Storage.TRACK_TABLE, 'suffix': self.chat_id})
         self.devices_tokens = self.db.ask(
-            {'command': 'get_list', 'name': StorageActor.CHAT_DEVICES_TABLE, 'suffix': self.chat_id})
+            {'command': 'get_list', 'name': Storage.CHAT_DEVICES_TABLE, 'suffix': self.chat_id})
 
         self.devices = set()
 
-        self.users = self.db.ask({'command': 'get_list', 'name': StorageActor.USER_TABLE, 'suffix': self.chat_id})
+        self.users = self.db.ask({'command': 'get_list', 'name': Storage.USER_TABLE, 'suffix': self.chat_id})
 
         for t in self.devices_tokens.get():
             self.devices.add(self.manager.ask({'command': 'get_device', 'token': t}))
