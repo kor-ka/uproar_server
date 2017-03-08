@@ -52,7 +52,7 @@ class MqttACtor(pykka.ThreadingActor):
             if message.get('command') == "publish":
                 print "MQTT --> topic: %s | msg: %s" % (message.get('topic'), message.get('payload'))
 
-                self.client.publish(message.get('topic'), message.get('payload'))
+                self.client.publish(message.get('topic'), str(message.get('payload')).encode('ascii', 'ignore').decode('ascii'))
             if message.get('command') == "subscribe":
                 self.client.subscribe('device_out_' + message.get('token'), 2)
         except Exception as ex:
