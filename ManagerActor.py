@@ -47,7 +47,7 @@ class ManagerActor(pykka.ThreadingActor):
                 elif update.callback_query:
                     self.on_callback_query(update.callback_query)
             elif message.get('command') == 'device_out':
-                self.on_device_out_update(message.get('token'), message.get('message'))
+                self.on_device_out_update(message.get('token'), message.get('update'))
             elif message.get('command') == 'get_device':
                 return self.get_device(message.get('token'))
             elif message.get('command') == 'get_chat':
