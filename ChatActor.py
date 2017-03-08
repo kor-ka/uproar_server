@@ -189,7 +189,8 @@ class ChatActor(pykka.ThreadingActor):
                      InlineKeyboardButton(thumb_down + " 0", callback_data='like:0')],
                 ]
 
-                title = str(message.audio.performer + " - " + message.audio.title).encode('utf8', 'ignore').decode('utf8')
+                title = message.audio.performer + " - " + message.audio.title
+                title = title.decode('utf-8','ignore').encode("utf-8")
                 reply = self.bot.ask(
                     {'command': 'reply', 'base': message,
                      'message': title,
