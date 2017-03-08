@@ -1,4 +1,6 @@
 import os
+
+import logging
 import psycopg2
 import urlparse
 import pykka
@@ -47,101 +49,103 @@ class StorageActor(pykka.ThreadingActor):
         )
 
     def on_receive(self, message):
+        try:
+            key = message.get('key')
+            if message.get('command') == "get":
+                res = []
+                cur = self.db.cursor()
+                try:
 
-        key = message.get('key')
-        if message.get('command') == "get":
-            res = []
-            cur = self.db.cursor()
-            try:
+                    limit = message.get("limit")
 
-                limit = message.get("limit")
+                    where = '' if key is None else ("WHERE key = '%s'" % key)
+                    if limit is None:
+                        cur.execute("SELECT val from %s %s" % (message.get("table"), where))
 
-                where = '' if key is None else ("WHERE key = '%s'" % key)
-                if limit is None:
-                    cur.execute("SELECT val from %s %s" % (message.get("table"), where))
+                    else:
+                        cur.execute('''SELECT *
+                                        FROM (SELECT val FROM %s ORDER BY id DESC LIMIT %s)
+                                        %s
+                                        ORDER BY id ASC;''' % (message.get("table"), limit, where))
 
-                else:
-                    cur.execute('''SELECT *
-                                    FROM (SELECT val FROM %s ORDER BY id DESC LIMIT %s)
-                                    %s
-                                    ORDER BY id ASC;''' % (message.get("table"), limit, where))
-
-                vals = cur.fetchall()
-                for v in vals:
-                    res.append(pickle.loads(str(v[0])))
+                    vals = cur.fetchall()
+                    for v in vals:
+                        res.append(pickle.loads(str(v[0])))
+                    cur.close()
+                except Exception as ex:
+                    print 'on get:' + str(ex)
+                    self.db.rollback()
                 cur.close()
-            except Exception as ex:
-                print 'on get:' + str(ex)
-                self.db.rollback()
-            cur.close()
-            return res
+                return res
 
-        elif message.get('command') == "put":
-            cur = self.db.cursor()
-            try:
+            elif message.get('command') == "put":
+                cur = self.db.cursor()
+                try:
 
-                cur.execute('''INSERT INTO ${table} (key, val)
-                    VALUES (%s, %s)
-                    ON CONFLICT (key) DO UPDATE SET
-                        key = excluded.key,
-                        val = excluded.val;'''.replace('${table}',
-                                                       message.get('table')), (key, pickle.dumps(message.get('val')))
-                            )
-                self.db.commit()
-                return True
-            except Exception as ex:
-                print 'on put:' + str(ex)
-                self.db.rollback()
-                return False
-            finally:
-                cur.close()
+                    cur.execute('''INSERT INTO ${table} (key, val)
+                        VALUES (%s, %s)
+                        ON CONFLICT (key) DO UPDATE SET
+                            key = excluded.key,
+                            val = excluded.val;'''.replace('${table}',
+                                                           message.get('table')), (key, pickle.dumps(message.get('val')))
+                                )
+                    self.db.commit()
+                    return True
+                except Exception as ex:
+                    print 'on put:' + str(ex)
+                    self.db.rollback()
+                    return False
+                finally:
+                    cur.close()
 
-        elif message.get('command') == "remove":
-            cur = self.db.cursor()
-            try:
+            elif message.get('command') == "remove":
+                cur = self.db.cursor()
+                try:
 
-                cur.execute('''DELETE FROM ${table}
-                                WHERE key = %s;'''.replace('${table}',
-                                                           message.get('table')), (key))
-                self.db.commit()
-                return True
-            except Exception as ex:
-                print 'on remove:' + str(ex)
-                self.db.rollback()
-                return False
-            finally:
-                cur.close()
+                    cur.execute('''DELETE FROM ${table}
+                                    WHERE key = %s;'''.replace('${table}',
+                                                               message.get('table')), (key))
+                    self.db.commit()
+                    return True
+                except Exception as ex:
+                    print 'on remove:' + str(ex)
+                    self.db.rollback()
+                    return False
+                finally:
+                    cur.close()
 
-        elif message.get('command') == "get_list":
-            cur = self.db.cursor()
-            table = "%s_%s" % (message.get('name'), clean_suffix(message.get('suffix')))
-            cur.execute('''CREATE TABLE IF NOT EXISTS %s (id SERIAL, val varchar, key varchar PRIMARY KEY);''' % table)
-            cur.execute('''CREATE OR REPLACE FUNCTION trf_keep_row_number_steady()
-                            RETURNS TRIGGER AS
-                            $body$
-                            BEGIN
-                                -- delete only where are too many rows
-                                IF (SELECT count(id) FROM %s) > %s
-                                THEN
-                                    -- I assume here that id is an auto-incremented value in log_table
-                                    DELETE FROM %s
-                                    WHERE id = (SELECT min(id) FROM %s);
+            elif message.get('command') == "get_list":
+                cur = self.db.cursor()
+                table = "%s_%s" % (message.get('name'), clean_suffix(message.get('suffix')))
+                cur.execute('''CREATE TABLE IF NOT EXISTS %s (id SERIAL, val varchar, key varchar PRIMARY KEY);''' % table)
+                cur.execute('''CREATE OR REPLACE FUNCTION trf_keep_row_number_steady()
+                                RETURNS TRIGGER AS
+                                $body$
+                                BEGIN
+                                    -- delete only where are too many rows
+                                    IF (SELECT count(id) FROM %s) > %s
+                                    THEN
+                                        -- I assume here that id is an auto-incremented value in log_table
+                                        DELETE FROM %s
+                                        WHERE id = (SELECT min(id) FROM %s);
+                                        RETURN NULL;
+                                    END IF;
                                     RETURN NULL;
-                                END IF;
-                                RETURN NULL;
-                            END;
-                            $body$
-                            LANGUAGE plpgsql;
+                                END;
+                                $body$
+                                LANGUAGE plpgsql;
 
-                            DROP TRIGGER IF EXISTS tr_keep_row_number_steady on %s;
-                            CREATE TRIGGER tr_keep_row_number_steady
-                            AFTER INSERT ON %s
-                            FOR EACH ROW EXECUTE PROCEDURE trf_keep_row_number_steady();''' % (
-            table, 1000, table, table, table, table))
-            self.db.commit()
-            print table + " created"
-            cur.close()
-            return DbList(message.get('name'), message.get('suffix'), self.actor_ref)
+                                DROP TRIGGER IF EXISTS tr_keep_row_number_steady on %s;
+                                CREATE TRIGGER tr_keep_row_number_steady
+                                AFTER INSERT ON %s
+                                FOR EACH ROW EXECUTE PROCEDURE trf_keep_row_number_steady();''' % (
+                table, 1000, table, table, table, table))
+                self.db.commit()
+                print table + " created"
+                cur.close()
+                return DbList(message.get('name'), message.get('suffix'), self.actor_ref)
+        except Exception as ex:
+            logging.exception(ex)
 
 
 class DbList(object):

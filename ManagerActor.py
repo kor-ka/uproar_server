@@ -1,3 +1,4 @@
+import logging
 import pykka
 import BotActor, MqttActor, ChatActor, DeviceActor, Storage
 
@@ -54,5 +55,5 @@ class ManagerActor(pykka.ThreadingActor):
             elif message.get('command') == 'get_chat':
                 return self.get_chat(message.get('chat_id'))
         except Exception as ex:
-            print ex
+            logging.exception(ex)
 

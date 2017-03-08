@@ -6,6 +6,7 @@ import string
 from array import array
 import random
 
+import logging
 import pykka, os, urllib, json
 from telegram import InlineKeyboardButton
 import base64
@@ -377,7 +378,7 @@ class ChatActor(pykka.ThreadingActor):
                 if msg == "boring":
                     self.on_boring(message.get("token"), message.get("device"))
         except Exception as ex:
-            print ex
+            logging.exception(ex)
 
 
 class DeviceData(object):

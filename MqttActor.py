@@ -1,3 +1,4 @@
+import logging
 import paho.mqtt.client as mqtt, pykka, os, json
 from telegram import InlineKeyboardButton
 
@@ -52,4 +53,4 @@ class MqttACtor(pykka.ThreadingActor):
                 self.client.subscribe('update_' + message.get('token'), 1)
                 self.client.subscribe('message_' + message.get('token'), 1)
         except Exception as ex:
-            print ex
+            logging.exception(ex)

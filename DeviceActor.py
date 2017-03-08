@@ -1,5 +1,6 @@
 import os
 
+import logging
 import pykka, shelve
 import Storage
 from Storage import StorageProvider
@@ -92,7 +93,7 @@ class DeviceActor(pykka.ThreadingActor):
                                     'device': self.actor_ref, "message": message.get("message")})
 
         except Exception as ex:
-            print ex
+            logging.exception(ex)
 
     def publish(self, topic, payload):
         self.mqtt.tell({'command': 'publish', 'topic': topic + '_' + self.token, 'payload': payload})

@@ -28,13 +28,11 @@ class BotActor(pykka.ThreadingActor):
         super(BotActor, self).__init__()
         self.manager = manager
         self.token = os.getenv('token')
-        self.loop()
+        self.bot = None
 
-    def post(self, bot, update):
-        self.manager.tell({'command': 'update', 'update': update})
-
-    def loop(self):
+    def on_start(self):
         updater = Updater(self.token)
+        self.bot = updater.bot
 
         # Get the dispatcher to register handlers
         dp = updater.dispatcher
@@ -45,6 +43,8 @@ class BotActor(pykka.ThreadingActor):
 
         # Start the Bot
         updater.start_polling()
+    def post(self, bot, update):
+        self.manager.tell({'command': 'update', 'update': update})
 
     def update(self, update, reply_markup):
         self.bot.editMessageText(update.get("message"), chat_id=update.get("chat_id"),
