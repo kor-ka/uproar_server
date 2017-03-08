@@ -19,7 +19,8 @@ class DeviceActor(pykka.ThreadingActor):
         self.bot = bot
         self.chat = None
         self.placeholder = None
-        self.db = StorageProvider.get_storage()
+        storage_provider = StorageProvider()
+        self.db = storage_provider.get_storage()
         self.storage = None
 
 

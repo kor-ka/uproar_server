@@ -43,7 +43,8 @@ class ChatActor(pykka.ThreadingActor):
         super(ChatActor, self).__init__()
         self.chat_id = chat_id
         self.manager = manager
-        self.db = StorageProvider.get_storage()
+        storage_provider = StorageProvider()
+        self.db = storage_provider.get_storage()
         self.bot = bot
         self.token = os.getenv('token')
         self.secret = os.getenv('secret')
