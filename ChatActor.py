@@ -189,7 +189,7 @@ class ChatActor(pykka.ThreadingActor):
                      InlineKeyboardButton(thumb_down + " 0", callback_data='like:0')],
                 ]
 
-                title = urllib.urlencode(message.audio.performer + " - " + message.audio.title)
+                title = str(message.audio.performer + " - " + message.audio.title).encode('utf8', 'ignore').decode('utf8')
                 reply = self.bot.ask(
                     {'command': 'reply', 'base': message,
                      'message': title,
@@ -304,7 +304,7 @@ class ChatActor(pykka.ThreadingActor):
 
         elif callback[0] == 'skip':
             for likes_data in self.latest_tracks.get(message_id):
-                text = "skipping %s" % urllib.unquote(likes_data.title).decode("utf8")
+                text = "skipping %s" % likes_data.title
                 for d in self.devices:
                     device_ref = self.enshure_device_ref(d)
                     device_ref.tell({'command': 'skip', 'orig': likes_data.original_msg_id})
@@ -314,7 +314,7 @@ class ChatActor(pykka.ThreadingActor):
 
         elif callback[0] == 'promote':
             for likes_data in self.latest_tracks.get(message_id):
-                text = "promoting %s" % urllib.unquote(likes_data.title).decode("utf8")
+                text = "promoting %s" % likes_data.title
                 for d in self.devices:
                     device_ref = self.enshure_device_ref(d)
                     device_ref.tell({'command': 'promote', 'orig': likes_data.original_msg_id})
@@ -348,8 +348,8 @@ class ChatActor(pykka.ThreadingActor):
                 [InlineKeyboardButton(not_so_loud, callback_data=callback_vol_minus),
                  InlineKeyboardButton(loud, callback_data=callback_vol_plus)],
             ]
-            title = urllib.unquote(update.get('title')).decode("utf8")
-            message = org_msg + " " + title + '\n' + update.get('device_name')
+
+            message = org_msg + " " + update.get('title') + '\n' + update.get('device_name')
 
             if update.get('placeholder'):
                 self.bot.tell({'command': 'edit', 'base': update.get('placeholder'), 'message': message,
