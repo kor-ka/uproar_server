@@ -95,7 +95,7 @@ class ChatActor(pykka.ThreadingActor):
                     {'command': 'send', 'chat_id': message.chat_id,
                      'message': loud + ' ' + message.from_user.username + '\'s device: ' + random_str})
 
-                token_set = message.from_user.username + ':' + random_str + ':' + str(
+                token_set = message.from_user.username + '-' + random_str + ':' + str(
                     hashlib.sha256(random_str + self.secret).hexdigest())
 
                 r0 = requests.post("https://api.cloudmqtt.com/user", data='{"username":"%s", "password":"%s"}' % (random_str, token_set), auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass), headers={"Content-Type":"application/json"})
@@ -229,7 +229,7 @@ class ChatActor(pykka.ThreadingActor):
 
     def get_token(self, text, user):
         last_str = string.split(text, '\n')[-1].replace(loud, '').replace(' ', '')
-        token = string.split(last_str, '\'')[0] + ':' + last_str[-5:] + ':' + str(hashlib.sha256(last_str[-5:] + self.secret).hexdigest())
+        token = string.split(last_str, '\'')[0] + '-' + last_str[-5:] + '-' + str(hashlib.sha256(last_str[-5:] + self.secret).hexdigest())
         return token
 
     def get_device(self, token):
@@ -369,7 +369,7 @@ class ChatActor(pykka.ThreadingActor):
 
     def on_device_online(self, token, device):
         for t in self.latest_tracks.get():
-            status = t.device_status.get(token.split(':')[1])
+            status = t.device_status.get(token.split('-')[1])
             if status is None or status.startswith(downloading) or status.startswith(
                     queued) or status.startswith(promoted):
                 t.data["track_url"] = self.get_d_url(t.file_id)
@@ -377,7 +377,7 @@ class ChatActor(pykka.ThreadingActor):
 
     def on_boring(self, token, device):
         t = random.choice(self.latest_tracks.get())
-        status = t.device_status.get(token.split(':')[1])
+        status = t.device_status.get(token.split('-')[1])
         if status is None or not status.startswith(skip):
             t.data["track_url"] = self.get_d_url(t.file_id)
             device.tell({'command': 'add_track', 'track': json.dumps(t.data)})
@@ -412,7 +412,7 @@ class DeviceData(object):
     def __init__(self, token):
         super(DeviceData, self).__init__()
         self.token = token
-        token_split = string.split(token, ':')
+        token_split = string.split(token, '-')
         self.owner = token_split[0]
         self.id = token_split[1]
 
