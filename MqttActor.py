@@ -11,6 +11,9 @@ class MqttACtor(pykka.ThreadingActor):
         self.client = None
         self.manager = manager
         self.client = self.initMqtt()
+        self.mqtt_user = os.getenv("mqtt_user")
+        self.mqtt_pass = os.getenv("mqtt_pass")
+
 
 
     # The callback for when a PUBLISH message is received from the server.
@@ -40,7 +43,7 @@ class MqttACtor(pykka.ThreadingActor):
         client = mqtt.Client()
         client.on_connect = self.on_connect
         client.on_message = self.on_message
-        client.username_pw_set('eksepjal', 'UyPdNESZw5yo')
+        client.username_pw_set(self.mqtt_user, self.mqtt_pass)
         client.connect('m21.cloudmqtt.com', 18552)
         client.loop_start()
         return client

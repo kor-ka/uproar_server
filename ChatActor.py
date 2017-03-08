@@ -8,6 +8,8 @@ import random
 
 import logging
 import pykka, os, urllib, json
+import requests
+from requests.auth import HTTPBasicAuth
 from telegram import InlineKeyboardButton
 import base64
 from Storage import StorageProvider
@@ -49,6 +51,8 @@ class ChatActor(pykka.ThreadingActor):
         self.bot = bot
         self.token = os.getenv('token')
         self.secret = os.getenv('secret')
+        self.mqtt_user = os.getenv("mqtt_user")
+        self.mqtt_pass = os.getenv("mqtt_pass")
         # self.devices = set()
         # self.devices_tokens = set()
         # self.latest_tracks = OrderedDict()
@@ -92,12 +96,33 @@ class ChatActor(pykka.ThreadingActor):
                      'message': loud + ' ' + message.from_user.username + '\'s device: ' + random_str})
 
                 token_set = message.from_user.username + ':' + random_str + ':' + str(
-                    hashlib.sha256(random_str + self.secret + str(message.from_user.id)).hexdigest())
+                    hashlib.sha256(random_str + self.secret).hexdigest())
 
-                self.bot.tell({'command': 'send', 'chat_id': message.chat_id, 'message': token_set + '\n\nMessage '
+                r0 = requests.post("https://api.cloudmqtt.com/user", data='{"username":"%s", "password":"%s"}' % (random_str, token_set), auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass), headers={"Content-Type":"application/json"})
+                if r0.status_code == 200:
+                    r1 = requests.post("https://api.cloudmqtt.com/acl",
+                                       data='{"username":"%s", "topic":"%s", "read":false, "write":true}' % (random_str, "device_out_"+token_set),
+                                       auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass),
+                                       headers={"Content-Type": "application/json"})
+                    r2 = requests.post("https://api.cloudmqtt.com/acl",
+                                       data='{"username":"%s", "topic":"%s", "read":true, "write":false}' % (
+                                       random_str, "device_in_" + token_set),
+                                       auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass),
+                                       headers={"Content-Type": "application/json"})
+                    r3 = requests.post("https://api.cloudmqtt.com/acl",
+                                       data='{"username":"%s", "topic":"%s", "read":false, "write":true}' % (
+                                       random_str, "registry"),
+                                       auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass),
+                                       headers={"Content-Type": "application/json"})
+
+                    if r1.status_code == 200 and r2.status_code == 200 and r3.status_code == 200:
+                        self.bot.tell({'command': 'send', 'chat_id': message.chat_id, 'message': token_set + '\n\nMessage '
                                                                                                      'above is your device '
                                                                                                      'holder, forward it to '
                                                                                                      'chat to subscribe'})
+                    else:
+                        self.bot.tell(
+                            {'command': 'send', 'chat_id': message.chat_id, 'message': "sorry, can't create token, try again later"})
 
             elif text.startswith(loud):
                 if message.from_user.username and message.text.replace(loud + ' ', '').startswith(
@@ -197,7 +222,7 @@ class ChatActor(pykka.ThreadingActor):
 
     def get_token(self, text, user):
         last_str = string.split(text, '\n')[-1].replace(loud, '').replace(' ', '')
-        token = string.split(last_str, '\'')[0] + ':' + last_str[-5:] + ':' + str(last_str[-5:] + hashlib.sha256(self.secret + str(user.id)).hexdigest())
+        token = string.split(last_str, '\'')[0] + ':' + last_str[-5:] + ':' + str(hashlib.sha256(last_str[-5:] + self.secret).hexdigest())
         return token
 
     def get_device(self, token):
