@@ -121,7 +121,7 @@ class ChatActor(pykka.ThreadingActor):
                                    headers={"Content-Type": "application/json"})
                 print r3.status_code
                 print r3.status_code/100 == 2
-
+                print r0.status_code / 100 == 2 and r1.status_code / 100 == 2 and r2.status_code / 2 == 2 and r3.status_code / 100 == 2
                 if r0.status_code/100 == 2 and r1.status_code/100 == 2 and r2.status_code/2 == 2 and r3.status_code/100 == 2:
                     token_message = self.bot.ask(
                         {'command': 'send', 'chat_id': message.chat_id,
