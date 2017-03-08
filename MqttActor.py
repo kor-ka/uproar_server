@@ -27,7 +27,7 @@ class MqttACtor(pykka.ThreadingActor):
                 device.tell({'command':'online'})
             elif str(msg.topic).startswith("device_out_"):
                 token = msg.topic.replace("device_out_", "")
-                self.manager.tell({'command':'device_out', 'token':token, 'update': str(msg.payload)})
+                self.manager.tell({'command':'device_out', 'token':token, 'update': json.loads(str(msg.payload))})
             
         except Exception as ex:
             logging.exception(ex)
