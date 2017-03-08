@@ -36,8 +36,7 @@ class MqttACtor(pykka.ThreadingActor):
         print("Connected with result code " + str(rc))
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
-        client.subscribe("server_" + "test", 2)
-        client.subscribe("update_test", 2)
+        client.subscribe("registry", 2)
 
     def initMqtt(self):
         client = mqtt.Client()
