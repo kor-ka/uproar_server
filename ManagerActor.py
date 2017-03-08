@@ -22,7 +22,7 @@ class ManagerActor(pykka.ThreadingActor):
         self.get_device(token).tell({'command':'update', 'update':update})
 
     def on_device_out_update(self, token, message):
-        self.get_device(token).tell({'command':'device_out', 'message':message})
+        self.get_device(token).tell({'command':'device_out', 'update':message})
 
     def get_chat(self, chat_id):
         chat = self.chats.get(chat_id)
