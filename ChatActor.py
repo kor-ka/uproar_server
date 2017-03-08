@@ -99,28 +99,28 @@ class ChatActor(pykka.ThreadingActor):
                     hashlib.sha256(random_str + self.secret).hexdigest())
 
                 r0 = requests.post("https://api.cloudmqtt.com/user", data='{"username":"%s", "password":"%s"}' % (random_str, token_set), auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass), headers={"Content-Type":"application/json"})
-                print r0.text
+                print r0.status_code
 
                 r1 = requests.post("https://api.cloudmqtt.com/acl",
                                    data='{"username":"%s", "topic":"%s", "read":false, "write":true}' % (random_str, "device_out_"+token_set),
                                    auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass),
                                    headers={"Content-Type": "application/json"})
 
-                print r1.text
+                print r1.status_code
 
                 r2 = requests.post("https://api.cloudmqtt.com/acl",
                                    data='{"username":"%s", "topic":"%s", "read":true, "write":false}' % (
                                    random_str, "device_in_" + token_set),
                                    auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass),
                                    headers={"Content-Type": "application/json"})
-                print r2.text
+                print r2.status_code
 
                 r3 = requests.post("https://api.cloudmqtt.com/acl",
                                    data='{"username":"%s", "topic":"%s", "read":false, "write":true}' % (
                                    random_str, "registry"),
                                    auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass),
                                    headers={"Content-Type": "application/json"})
-                print r3.text
+                print r3.status_code
 
                 if r0.status_code == 200 and r1.status_code == 200 and r2.status_code == 200 and r3.status_code == 200:
                     self.bot.tell({'command': 'send', 'chat_id': message.chat_id, 'message': token_set + '\n\nMessage '
