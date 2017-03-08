@@ -98,4 +98,4 @@ class DeviceActor(pykka.ThreadingActor):
 
     def publish(self, topic, data):
         payload = {"update": topic, "data": data}
-        self.mqtt.tell({'command': 'publish', 'topic': "device_out_" + self.token, 'payload': str(json.dumps(payload))})
+        self.mqtt.tell({'command': 'publish', 'topic': "device_in_" + self.token, 'payload': str(json.dumps(payload))})
