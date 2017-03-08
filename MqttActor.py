@@ -16,9 +16,7 @@ class MqttACtor(pykka.ThreadingActor):
     # The callback for when a PUBLISH message is received from the server.
     def on_message(self, client, userdata, msg):
         try:
-            print "MQTT <---"
-            pprint(msg)
-            print "MQTT <---"
+            print "MQTT <--- topic: %s | msg: %s" % (msg.topic, str(msg.payload))
 
             if msg.topic == 'server_test':
                 self.client.subscribe("update_" + str(msg.payload), 1)
@@ -54,9 +52,8 @@ class MqttACtor(pykka.ThreadingActor):
     def on_receive(self, message):
         try:
             if message.get('command') == "publish":
-                print "MQTT --->"
-                print message
-                print "MQTT --->"
+                print "MQTT <--- topic: %s | msg: %s" % (message.get('topic'), message.get('payload'))
+
                 self.client.publish(message.get('topic'), message.get('payload'))
             if message.get('command') == "subscribe":
                 self.client.subscribe('update_' + message.get('token'), 1)
