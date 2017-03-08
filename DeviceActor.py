@@ -28,7 +28,7 @@ class DeviceActor(pykka.ThreadingActor):
 
     def on_start(self):
         self.storage = self.db.ask(
-            {'command': 'get_list', 'name': Storage.DEVICE_STORAGE, 'suffix': self.token})
+            {'command': 'get_list', 'name': Storage.DEVICE_STORAGE, 'suffix': str(self.token).replace(":","")})
         for placeholder in self.storage.get('placeholder'):
             self.placeholder = placeholder
             self.chat = self.manager.ask({'command': 'get_chat', 'chat_id': self.placeholder.chat_id})
