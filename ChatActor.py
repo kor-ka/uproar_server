@@ -91,10 +91,6 @@ class ChatActor(pykka.ThreadingActor):
 
                 random_str = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(5))
 
-                token_message = self.bot.ask(
-                    {'command': 'send', 'chat_id': message.chat_id,
-                     'message': loud + ' ' + message.from_user.username + '\'s device: ' + random_str})
-
                 token_set = message.from_user.username + '-' + random_str + '-' + str(
                     hashlib.sha256(random_str + self.secret).hexdigest())
 
@@ -122,7 +118,11 @@ class ChatActor(pykka.ThreadingActor):
                                    headers={"Content-Type": "application/json"})
                 print r3.status_code
 
-                if r0.status_code == 200 and r1.status_code == 200 and r2.status_code == 200 and r3.status_code == 200:
+                if r0.status_code/100 == 2 and r1.status_code/100 == 2 and r2.status_code/2 == 2 and r3.status_code/100 == 2:
+                    token_message = self.bot.ask(
+                        {'command': 'send', 'chat_id': message.chat_id,
+                         'message': loud + ' ' + message.from_user.username + '\'s device: ' + random_str})
+
                     self.bot.tell({'command': 'send', 'chat_id': message.chat_id, 'message': token_set + '\n\nMessage '
                                                                                                  'above is your device '
                                                                                                  'holder, forward it to '
