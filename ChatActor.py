@@ -17,6 +17,7 @@ import Storage
 import DeviceActor
 from collections import OrderedDict
 from operator import itemgetter
+from time import time
 import hashlib
 
 from pprint import pprint
@@ -196,7 +197,7 @@ class ChatActor(pykka.ThreadingActor):
 
                 data = {"track_url": durl, "chat_id": reply.chat_id, "message_id": reply.message_id,
                         "orig": message.message_id, 'title': title}
-                self.latest_tracks.put(message.message_id, TrackStatus(message.message_id, title, data, file_id, message.from_user.id))
+                self.latest_tracks.put(message.message_id, TrackStatus(message.message_id, title, data, file_id, message.from_user.id, time()))
 
                 for device in self.devices:
                     try:
@@ -365,11 +366,12 @@ class ChatActor(pykka.ThreadingActor):
 
     def on_device_online(self, token, device):
         for t in self.latest_tracks.get():
-            status = t.device_status.get(token.split('-')[1])
-            if status is None or status.startswith(downloading) or status.startswith(
-                    queued) or status.startswith(promoted):
-                t.data["track_url"] = self.get_d_url(t.file_id)
-                device.tell({'command': 'add_track', 'track': json.dumps(t.data)})
+            if time() - t.time < 60 * 5:
+                status = t.device_status.get(token.split('-')[1])
+                if status is None or status.startswith(downloading) or status.startswith(
+                        queued) or status.startswith(promoted):
+                    t.data["track_url"] = self.get_d_url(t.file_id)
+                    device.tell({'command': 'add_track', 'track': t.data})
 
     def on_boring(self, token, device):
         t = random.choice(self.latest_tracks.get())
@@ -414,7 +416,7 @@ class DeviceData(object):
 
 
 class TrackStatus(object):
-    def __init__(self, orig, title, data, file_id, owner):
+    def __init__(self, orig, title, data, file_id, owner, time):
         super(TrackStatus, self).__init__()
         self.original_msg_id = orig
         self.file_id = file_id
@@ -427,3 +429,4 @@ class TrackStatus(object):
         self.title = title
         self.data = data
         self.owner = owner
+        self.time = time
