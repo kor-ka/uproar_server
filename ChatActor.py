@@ -95,34 +95,26 @@ class ChatActor(pykka.ThreadingActor):
                     hashlib.sha256(random_str + self.secret).hexdigest())
 
                 r0 = requests.post("https://api.cloudmqtt.com/user", data='{"username":"%s", "password":"%s"}' % (random_str, token_set), auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass), headers={"Content-Type":"application/json"})
-                print r0.status_code
-                print r0.status_code/100 == 2
 
                 r1 = requests.post("https://api.cloudmqtt.com/acl",
                                    data='{"username":"%s", "topic":"%s", "read":false, "write":true}' % (random_str, "device_out_"+token_set),
                                    auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass),
                                    headers={"Content-Type": "application/json"})
 
-                print r1.status_code
-                print r1.status_code/100 == 2
 
                 r2 = requests.post("https://api.cloudmqtt.com/acl",
                                    data='{"username":"%s", "topic":"%s", "read":true, "write":false}' % (
                                    random_str, "device_in_" + token_set),
                                    auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass),
                                    headers={"Content-Type": "application/json"})
-                print r2.status_code
-                print r2.status_code/100 == 2
 
                 r3 = requests.post("https://api.cloudmqtt.com/acl",
                                    data='{"username":"%s", "topic":"%s", "read":false, "write":true}' % (
                                    random_str, "registry"),
                                    auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass),
                                    headers={"Content-Type": "application/json"})
-                print r3.status_code
-                print r3.status_code/100 == 2
-                print r0.status_code / 100 == 2 and r1.status_code / 100 == 2 and r2.status_code / 2 == 2 and r3.status_code / 100 == 2
-                if r0.status_code/100 == 2 and r1.status_code/100 == 2 and r2.status_code/2 == 2 and r3.status_code/100 == 2:
+
+                if r0.status_code/100 == 2 and r1.status_code/100 == 2 and r2.status_code/100 == 2 and r3.status_code/100 == 2:
                     token_message = self.bot.ask(
                         {'command': 'send', 'chat_id': message.chat_id,
                          'message': loud + ' ' + message.from_user.username + '\'s device: ' + random_str})
