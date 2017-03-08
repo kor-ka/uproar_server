@@ -1,4 +1,6 @@
 import logging
+from pprint import pprint
+
 import paho.mqtt.client as mqtt, pykka, os, json
 from telegram import InlineKeyboardButton
 
@@ -14,6 +16,10 @@ class MqttACtor(pykka.ThreadingActor):
     # The callback for when a PUBLISH message is received from the server.
     def on_message(self, client, userdata, msg):
         try:
+            print "MQTT <---"
+            pprint(msg)
+            print "MQTT <---"
+
             if msg.topic == 'server_test':
                 self.client.subscribe("update_" + str(msg.payload), 1)
                 self.client.subscribe("message_" + str(msg.payload), 1)
@@ -27,7 +33,7 @@ class MqttACtor(pykka.ThreadingActor):
                 self.manager.tell({'command':'device_message', 'token':token, 'message': str(msg.payload)})
             
         except Exception as ex:
-            print ex
+            logging.exception(ex)
     # The callback for when the client receives a CONNACK response from the server.
     def on_connect(self, client, userdata, flags, rc):
         print("Connected with result code " + str(rc))
@@ -48,6 +54,9 @@ class MqttACtor(pykka.ThreadingActor):
     def on_receive(self, message):
         try:
             if message.get('command') == "publish":
+                print "MQTT --->"
+                print message
+                print "MQTT --->"
                 self.client.publish(message.get('topic'), message.get('payload'))
             if message.get('command') == "subscribe":
                 self.client.subscribe('update_' + message.get('token'), 1)
