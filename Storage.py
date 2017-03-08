@@ -6,10 +6,10 @@ import urlparse
 import pykka
 import pickle
 
-USER_TABLE = 'user_table'
-TRACK_TABLE = 'track_table'
-CHAT_DEVICES_TABLE = 'chat_devices_table'
-DEVICE_STORAGE = 'devices_storage'
+USER_TABLE = 'users_table'
+TRACK_TABLE = 'tracks_table'
+CHAT_DEVICES_TABLE = 'chats_devices_table'
+DEVICE_STORAGE = 'device_storage'
 
 
 class StorageProvider(object):
@@ -118,28 +118,6 @@ class StorageActor(pykka.ThreadingActor):
                 cur = self.db.cursor()
                 table = "%s_%s" % (message.get('name'), clean_suffix(message.get('suffix')))
                 cur.execute('''CREATE TABLE IF NOT EXISTS %s (id SERIAL, val varchar, key varchar PRIMARY KEY);''' % table)
-                cur.execute('''CREATE OR REPLACE FUNCTION trf_keep_row_number_steady()
-                                RETURNS TRIGGER AS
-                                $body$
-                                BEGIN
-                                    -- delete only where are too many rows
-                                    IF (SELECT count(id) FROM %s) > %s
-                                    THEN
-                                        -- I assume here that id is an auto-incremented value in log_table
-                                        DELETE FROM %s
-                                        WHERE id = (SELECT min(id) FROM %s);
-                                        RETURN NULL;
-                                    END IF;
-                                    RETURN NULL;
-                                END;
-                                $body$
-                                LANGUAGE plpgsql;
-
-                                DROP TRIGGER IF EXISTS tr_keep_row_number_steady on %s;
-                                CREATE TRIGGER tr_keep_row_number_steady
-                                AFTER INSERT ON %s
-                                FOR EACH ROW EXECUTE PROCEDURE trf_keep_row_number_steady();''' % (
-                table, 1000, table, table, table, table))
                 self.db.commit()
                 print table + " created"
                 cur.close()
