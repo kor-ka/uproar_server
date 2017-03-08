@@ -9,6 +9,7 @@ from time import sleep
 import paho.mqtt.client as mqtt
 import pykka
 import urllib
+import logging
 import json
 import os
 
@@ -66,7 +67,6 @@ class BotActor(pykka.ThreadingActor):
 
     def on_receive(self, message):
         try:
-
             if message.get('command') == 'update':
                 self.update(message.get('update'), message.get('reply_markup'))
             elif message.get('command') == 'reply':
@@ -80,4 +80,4 @@ class BotActor(pykka.ThreadingActor):
             elif message.get('command') == 'sendDoc':
                 return self.sendDoc(message.get('caption'), message.get('chat_id'), message.get('file_id'))
         except Exception as ex:
-            print ex
+            logging.exception(ex)
