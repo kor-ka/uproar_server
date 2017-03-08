@@ -47,7 +47,7 @@ class DeviceActor(pykka.ThreadingActor):
             msg = u'\U000023E9 skipped'
         elif msg == 'promote':
             msg = u'\U00002B06 promoted'
-        device_id = self.token.split(':')[1]
+        device_id = self.token.split('-')[1]
         update['device'] = device_id
         update['placeholder'] = self.placeholder
         update['device_name'] = get_name(self.token)
