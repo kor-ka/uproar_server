@@ -10,11 +10,11 @@ class MqttACtor(pykka.ThreadingActor):
         super(MqttACtor, self).__init__()
         self.client = None
         self.manager = manager
-        self.client = self.initMqtt()
         self.mqtt_user = os.getenv("mqtt_user")
         self.mqtt_pass = os.getenv("mqtt_pass")
 
-
+    def on_start(self):
+        self.client = self.initMqtt()
 
     # The callback for when a PUBLISH message is received from the server.
     def on_message(self, client, userdata, msg):
