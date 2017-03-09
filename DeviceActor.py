@@ -17,7 +17,6 @@ class DeviceActor(pykka.ThreadingActor):
         super(DeviceActor, self).__init__()
         self.token = token
         self.mqtt = mqtt
-        self.mqtt.tell({'command': 'subscribe', 'token': self.token})
         self.manager = manager
         self.bot = bot
         self.chat = None

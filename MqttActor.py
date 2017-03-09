@@ -22,12 +22,13 @@ class MqttACtor(pykka.ThreadingActor):
             print "MQTT <-- topic: %s | msg: %s" % (msg.topic, str(msg.payload))
 
             if msg.topic == 'registry':
-                self.client.subscribe("device_out_" + str(msg.payload), 2)
                 device = self.manager.ask({'command': 'get_device', 'token': str(msg.payload)})
                 device.tell({'command':'online'})
-            elif str(msg.topic).startswith("device_out_"):
-                token = msg.topic.replace("device_out_", "")
-                self.manager.tell({'command':'device_out', 'token':token, 'update': json.loads(str(msg.payload))})
+            elif str(msg.topic).startswith("device_out"):
+                update = json.loads(str(msg.payload))
+                token = update.get("token")
+                if token:
+                    self.manager.tell({'command':'device_out', 'token':token, 'update': update})
             
         except Exception as ex:
             logging.exception(ex)
@@ -37,6 +38,7 @@ class MqttACtor(pykka.ThreadingActor):
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
         client.subscribe("registry", 2)
+        client.subscribe("device_out", 2)
 
     def initMqtt(self):
         client = mqtt.Client()
@@ -53,7 +55,5 @@ class MqttACtor(pykka.ThreadingActor):
                 print "MQTT --> topic: %s | msg: %s" % (message.get('topic'), message.get('payload'))
 
                 self.client.publish(message.get('topic'), str(message.get('payload')).encode('ascii', 'ignore').decode('ascii'))
-            if message.get('command') == "subscribe":
-                self.client.subscribe('device_out_' + message.get('token'), 2)
         except Exception as ex:
             logging.exception(ex)

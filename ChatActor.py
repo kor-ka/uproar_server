@@ -98,7 +98,7 @@ class ChatActor(pykka.ThreadingActor):
                 r0 = requests.post("https://api.cloudmqtt.com/user", data='{"username":"%s", "password":"%s"}' % (random_str, token_set), auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass), headers={"Content-Type":"application/json"})
 
                 r1 = requests.post("https://api.cloudmqtt.com/acl",
-                                   data='{"username":"%s", "topic":"%s", "read":false, "write":true}' % (random_str, "device_out_"+token_set),
+                                   data='{"username":"%s", "topic":"%s", "read":false, "write":true}' % (random_str, "device_out"),
                                    auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass),
                                    headers={"Content-Type": "application/json"})
 
