@@ -95,23 +95,25 @@ class ChatActor(pykka.ThreadingActor):
                 token_set = message.from_user.username + '-' + random_str + '-' + str(
                     hashlib.sha256(random_str + self.secret).hexdigest())
 
-                r0 = requests.post("https://api.cloudmqtt.com/user", data='{"username":"%s", "password":"%s"}' % (random_str, token_set), auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass), headers={"Content-Type":"application/json"})
+                device_mqtt_user = message.from_user.username + '-' + random_str
+
+                r0 = requests.post("https://api.cloudmqtt.com/user", data='{"username":"%s", "password":"%s"}' % (device_mqtt_user, token_set), auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass), headers={"Content-Type":"application/json"})
 
                 r1 = requests.post("https://api.cloudmqtt.com/acl",
-                                   data='{"username":"%s", "topic":"%s", "read":false, "write":true}' % (random_str, "device_out"),
+                                   data='{"username":"%s", "topic":"%s", "read":false, "write":true}' % (device_mqtt_user, "device_out"),
                                    auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass),
                                    headers={"Content-Type": "application/json"})
 
 
                 r2 = requests.post("https://api.cloudmqtt.com/acl",
                                    data='{"username":"%s", "topic":"%s", "read":true, "write":false}' % (
-                                   random_str, "device_in_" + token_set),
+                                       device_mqtt_user, "device_in_" + token_set),
                                    auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass),
                                    headers={"Content-Type": "application/json"})
 
                 r3 = requests.post("https://api.cloudmqtt.com/acl",
                                    data='{"username":"%s", "topic":"%s", "read":false, "write":true}' % (
-                                   random_str, "registry"),
+                                       device_mqtt_user, "registry"),
                                    auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass),
                                    headers={"Content-Type": "application/json"})
 
