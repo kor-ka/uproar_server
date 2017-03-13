@@ -5,7 +5,7 @@ import shelve
 import string
 from array import array
 import random
-
+import re
 import logging
 import pykka, os, urllib, json
 import requests
@@ -174,6 +174,30 @@ class ChatActor(pykka.ThreadingActor):
                     score = 'no one have likes for now'
                 self.bot.tell({'command': 'reply', 'base': message, 'message': score})
 
+            elif re.match("^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$", text):
+                if len(self.devices) > 0:
+                    resp = urllib.urlopen(text)
+                    if resp.getcode()/100 == 2:
+                        page = resp.read()
+                        regex = re.compile('<title>(.*?)</title>', re.IGNORECASE|re.DOTALL)
+                        title = regex.search(page).group(1)
+                        reply = self.reply_to_content(message, title)
+                        status = YoutubeVidStatus(message.message_id, reply.message_id, message.chat_id, title, text,
+                                             message.from_user.id, time())
+                        data = status.data
+                        data['url'] = text
+
+                        self.latest_tracks.put(message.message_id, status)
+
+                        for device in self.devices:
+                            device_ref = self.enshure_device_ref(device)
+                            device_ref.tell({'command': 'add_youtube_link', 'youtube_link': data})
+
+                else:
+                    self.bot.tell(
+                        {'command': 'reply', 'base': message,
+                         'message': 'no devices, please forward one from @uproarbot'})
+
         if message.audio:
             # TODO try catch, move to func - regenerate url before send todevice
             durl = None
@@ -185,22 +209,13 @@ class ChatActor(pykka.ThreadingActor):
                 return
 
             if len(self.devices) > 0:
-
-                keyboard = [
-                    [InlineKeyboardButton(thumb_up + " 0", callback_data='like:1'),
-                     InlineKeyboardButton(thumb_down + " 0", callback_data='like:0')],
-                ]
-
                 title = message.audio.performer + " - " + message.audio.title
-                title = title.encode("utf-8")
-                reply = self.bot.ask(
-                    {'command': 'reply', 'base': message,
-                     'message': title,
-                     'reply_markup': InlineKeyboardMarkup(keyboard)})
+                reply = self.reply_to_content(message, title)
 
-                data = {"track_url": durl, "chat_id": reply.chat_id, "message_id": reply.message_id,
-                        "orig": message.message_id, 'title': title}
-                self.latest_tracks.put(message.message_id, TrackStatus(message.message_id, title, data, file_id, message.from_user.id, time()))
+                status = TrackStatus(message.message_id, reply.message_id, message.chat_id, title, file_id, message.from_user.id, time())
+                data = status.data
+                data['track_url'] = durl
+                self.latest_tracks.put(message.message_id, status)
 
                 for device in self.devices:
                     device_ref = self.enshure_device_ref(device)
@@ -209,6 +224,18 @@ class ChatActor(pykka.ThreadingActor):
             else:
                 self.bot.tell(
                     {'command': 'reply', 'base': message, 'message': 'no devices, please forward one from @uproarbot'})
+
+    def reply_to_content(self, message, title):
+        keyboard = [
+            [InlineKeyboardButton(thumb_up + " 0", callback_data='like:1'),
+             InlineKeyboardButton(thumb_down + " 0", callback_data='like:0')],
+        ]
+        title = title.encode("utf-8")
+        reply = self.bot.ask(
+            {'command': 'reply', 'base': message,
+             'message': title,
+             'reply_markup': InlineKeyboardMarkup(keyboard)})
+        return reply
 
     def enshure_device_ref(self, device):
         device_ref = device[1]
@@ -429,11 +456,10 @@ class DeviceData(object):
         self.id = token_split[1]
 
 
-class TrackStatus(object):
-    def __init__(self, orig, title, data, file_id, owner, time):
-        super(TrackStatus, self).__init__()
+class ContentStatus(object):
+    def __init__(self, orig, msg_id, chat_id, title, owner, time):
+        super(ContentStatus, self).__init__()
         self.original_msg_id = orig
-        self.file_id = file_id
         self.likes = 0
         self.dislikes = 0
         self.likes_owners = set()
@@ -441,6 +467,18 @@ class TrackStatus(object):
         self.device_status = OrderedDict()
         self.played_once = False
         self.title = title
-        self.data = data
         self.owner = owner
         self.time = time
+        self.data = {"chat_id": chat_id, "message_id": msg_id,
+                        "orig": orig, 'title': title}
+
+
+class TrackStatus(ContentStatus):
+    def __init__(self, orig, msg_id, chat_id, title, file_id, owner, time):
+        super(TrackStatus, self).__init__(orig, msg_id, chat_id, title, owner, time)
+        self.file_id = file_id
+
+class YoutubeVidStatus(ContentStatus):
+    def __init__(self, orig, msg_id, chat_id, title, link, owner, time):
+        super(YoutubeVidStatus, self).__init__(orig, msg_id, chat_id, title, owner, time)
+        self.link = link

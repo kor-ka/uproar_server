@@ -59,6 +59,9 @@ class DeviceActor(pykka.ThreadingActor):
             if message.get('command') == "add_track":
                 self.publish("add_content", {"audio": message.get('track')})
 
+            if message.get('command') == "add_youtube_link":
+                self.publish("add_content", {"youtube_link": message.get('youtube_link')})
+
             elif message.get('command') == "move_to":
                 if self.chat is not None and self.chat != message.get('chat'):
                     self.chat.tell({'command': 'remove_device', 'device': self.actor_ref, 'token': self.token})
