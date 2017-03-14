@@ -407,7 +407,8 @@ class ChatActor(pykka.ThreadingActor):
                     status = t.device_status.get(token.split('-')[1])
                     if status is None or status.startswith(downloading) or status.startswith(
                             queued) or status.startswith(promoted):
-                        t.data["track_url"] = self.get_d_url(t.file_id)
+                        if hasattr(t, "file_id"):
+                            t.data["track_url"] = self.get_d_url(t.file_id)
                         device.tell({'command': 'add_track', 'track': t.data})
             except AttributeError:
                 pass
@@ -416,7 +417,8 @@ class ChatActor(pykka.ThreadingActor):
         t = random.choice(self.latest_tracks.get())
         status = t.device_status.get(token.split('-')[1])
         if status is None or not status.startswith(skip):
-            t.data["track_url"] = self.get_d_url(t.file_id)
+            if hasattr(t, "file_id"):
+                t.data["track_url"] = self.get_d_url(t.file_id)
             device.tell({'command': 'add_track', 'track': t.data})
 
     def on_receive(self, message):
