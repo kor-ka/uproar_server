@@ -409,7 +409,10 @@ class ChatActor(pykka.ThreadingActor):
                             queued) or status.startswith(promoted):
                         if hasattr(t, "file_id"):
                             t.data["track_url"] = self.get_d_url(t.file_id)
-                        device.tell({'command': 'add_track', 'track': t.data})
+                        if isinstance(t, TrackStatus):
+                            device.tell({'command': 'add_track', 'track': t.data})
+                        elif isinstance(t, YoutubeVidStatus):
+                            device.tell({'command': 'add_youtube_link', 'youtube_link': t.data})
             except AttributeError:
                 pass
 
@@ -419,7 +422,10 @@ class ChatActor(pykka.ThreadingActor):
         if status is None or not status.startswith(skip):
             if hasattr(t, "file_id"):
                 t.data["track_url"] = self.get_d_url(t.file_id)
-            device.tell({'command': 'add_track', 'track': t.data})
+            if isinstance(t, TrackStatus):
+                device.tell({'command': 'add_track', 'track': t.data})
+            elif isinstance(t, YoutubeVidStatus):
+                device.tell({'command': 'add_youtube_link', 'youtube_link': t.data})
 
     def on_receive(self, message):
         try:
