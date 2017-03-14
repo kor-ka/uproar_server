@@ -402,7 +402,9 @@ class ChatActor(pykka.ThreadingActor):
 
     def on_device_online(self, token, device):
         for t in self.latest_tracks.get():
+            pprint(vars(t))
             try:
+                print "time dif:" + time() - t.time < 60 * 15 + " time:" + time() + " t.time:" + t.time
                 if time() - t.time < 60 * 15:
                     status = t.device_status.get(token.split('-')[1])
                     if status is None or status.startswith(downloading) or status.startswith(
