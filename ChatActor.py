@@ -404,7 +404,9 @@ class ChatActor(pykka.ThreadingActor):
         for t in self.latest_tracks.get():
             pprint(vars(t))
             try:
-                print "time dif:" + time() - t.time < 60 * 15 + " time:" + time() + " t.time:" + t.time
+                print "time dif: %s" % (time() - t.time < 60 * 15)
+                print "time: %s" % (time())
+                print "track time: %s" % (t.time)
                 if time() - t.time < 60 * 15:
                     status = t.device_status.get(token.split('-')[1])
                     if status is None or status.startswith(downloading) or status.startswith(
