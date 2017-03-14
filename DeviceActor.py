@@ -5,6 +5,7 @@ import logging
 import pykka, shelve
 import Storage
 from Storage import StorageProvider
+from pprint import pprint
 
 
 def get_name(token):
@@ -56,6 +57,10 @@ class DeviceActor(pykka.ThreadingActor):
 
     def on_receive(self, message):
         try:
+            print "Device Actor msg <--"
+            pprint(vars(message))
+            print "Device Actor msg end"
+
             if message.get('command') == "add_track":
                 self.publish("add_content", {"audio": message.get('track')})
 

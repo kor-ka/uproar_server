@@ -1,6 +1,8 @@
 import os
 
 import logging
+from pprint import pprint
+
 import psycopg2
 import urlparse
 import pykka
@@ -50,6 +52,9 @@ class StorageActor(pykka.ThreadingActor):
 
     def on_receive(self, message):
         try:
+            print "Storage Actor msg <--"
+            pprint(vars(message))
+            print "Storage Actor msg end"
             key = message.get('key')
             if message.get('command') == "get":
                 res = []

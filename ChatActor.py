@@ -403,7 +403,7 @@ class ChatActor(pykka.ThreadingActor):
     def on_device_online(self, token, device):
         for t in self.latest_tracks.get():
             try:
-                if time() - t.time < 60 * 5:
+                if time() - t.time < 60 * 15:
                     status = t.device_status.get(token.split('-')[1])
                     if status is None or status.startswith(downloading) or status.startswith(
                             queued) or status.startswith(promoted):
@@ -429,6 +429,9 @@ class ChatActor(pykka.ThreadingActor):
 
     def on_receive(self, message):
         try:
+            print "Chat Actor msg <--"
+            pprint(vars(message))
+            print "Chat Actor msg end"
             if message.get('command') == 'message':
                 self.on_message(message.get('message'))
             if message.get('command') == 'callback_query':

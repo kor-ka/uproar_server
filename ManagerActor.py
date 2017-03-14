@@ -1,4 +1,6 @@
 import logging
+from pprint import pprint
+
 import pykka
 import BotActor, MqttActor, ChatActor, DeviceActor, Storage
 
@@ -40,6 +42,9 @@ class ManagerActor(pykka.ThreadingActor):
 
     def on_receive(self, message):
         try:
+            print "Manager Actor msg <--"
+            pprint(vars(message))
+            print "Manager Actor msg end"
             if message.get('command') == 'update':
                 update = message.get('update')
                 if update.message:
