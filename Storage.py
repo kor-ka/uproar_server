@@ -52,7 +52,7 @@ class StorageActor(pykka.ThreadingActor):
 
     def on_receive(self, message):
         try:
-            print "Storage Actor msg " + message
+            print "Storage Actor msg " + str(message)
             key = message.get('key')
             if message.get('command') == "get":
                 res = []

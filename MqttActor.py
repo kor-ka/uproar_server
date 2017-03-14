@@ -51,7 +51,7 @@ class MqttACtor(pykka.ThreadingActor):
 
     def on_receive(self, message):
         try:
-            print "Mqtt Actor msg " + message
+            print "Mqtt Actor msg " + str(message)
             if message.get('command') == "publish":
                 print "MQTT --> topic: %s | msg: %s" % (message.get('topic'), message.get('payload'))
 

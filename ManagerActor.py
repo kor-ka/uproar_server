@@ -42,7 +42,7 @@ class ManagerActor(pykka.ThreadingActor):
 
     def on_receive(self, message):
         try:
-            print "Manager Actor msg " + message
+            print "Manager Actor msg " + str(message)
             if message.get('command') == 'update':
                 update = message.get('update')
                 if update.message:

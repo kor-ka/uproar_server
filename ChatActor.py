@@ -429,7 +429,7 @@ class ChatActor(pykka.ThreadingActor):
 
     def on_receive(self, message):
         try:
-            print "Chat Actor msg " + message
+            print "Chat Actor msg " + str(message)
             if message.get('command') == 'message':
                 self.on_message(message.get('message'))
             if message.get('command') == 'callback_query':
