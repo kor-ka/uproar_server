@@ -57,9 +57,7 @@ class DeviceActor(pykka.ThreadingActor):
 
     def on_receive(self, message):
         try:
-            print "Device Actor msg <--"
-            pprint(dir(message))
-            print "Device Actor msg end"
+            print "Device Actor msg " + message
 
             if message.get('command') == "add_track":
                 self.publish("add_content", {"audio": message.get('track')})
