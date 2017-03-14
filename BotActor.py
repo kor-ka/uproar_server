@@ -68,7 +68,7 @@ class BotActor(pykka.ThreadingActor):
     def on_receive(self, message):
         try:
             print "Bot Actor msg <--"
-            pprint(vars(message))
+            pprint(dir(message))
             print "Bot Actor msg end"
             if message.get('command') == 'update':
                 self.update(message.get('update'), message.get('reply_markup'))

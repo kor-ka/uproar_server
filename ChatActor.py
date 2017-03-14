@@ -430,7 +430,7 @@ class ChatActor(pykka.ThreadingActor):
     def on_receive(self, message):
         try:
             print "Chat Actor msg <--"
-            pprint(vars(message))
+            pprint(dir(message))
             print "Chat Actor msg end"
             if message.get('command') == 'message':
                 self.on_message(message.get('message'))

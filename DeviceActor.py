@@ -58,7 +58,7 @@ class DeviceActor(pykka.ThreadingActor):
     def on_receive(self, message):
         try:
             print "Device Actor msg <--"
-            pprint(vars(message))
+            pprint(dir(message))
             print "Device Actor msg end"
 
             if message.get('command') == "add_track":

@@ -53,7 +53,7 @@ class StorageActor(pykka.ThreadingActor):
     def on_receive(self, message):
         try:
             print "Storage Actor msg <--"
-            pprint(vars(message))
+            pprint(dir(message))
             print "Storage Actor msg end"
             key = message.get('key')
             if message.get('command') == "get":
