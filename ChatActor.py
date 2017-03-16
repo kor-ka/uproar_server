@@ -213,7 +213,7 @@ class ChatActor(pykka.ThreadingActor):
                 title = title.encode("utf-8")
                 reply = self.reply_to_content(message, title)
 
-                status = TrackStatus(message.message_id, reply.message_id, message.chat_id, title., file_id, message.from_user.id, time())
+                status = TrackStatus(message.message_id, reply.message_id, message.chat_id, title, file_id, message.from_user.id, time())
                 data = status.data
                 data['track_url'] = durl
                 self.latest_tracks.put(message.message_id, status)
