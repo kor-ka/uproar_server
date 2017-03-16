@@ -210,9 +210,10 @@ class ChatActor(pykka.ThreadingActor):
 
             if len(self.devices) > 0:
                 title = message.audio.performer + " - " + message.audio.title
-                reply = self.reply_to_content(message, title.encode("utf-8"))
+                title = title.encode("utf-8")
+                reply = self.reply_to_content(message, title)
 
-                status = TrackStatus(message.message_id, reply.message_id, message.chat_id, title, file_id, message.from_user.id, time())
+                status = TrackStatus(message.message_id, reply.message_id, message.chat_id, title., file_id, message.from_user.id, time())
                 data = status.data
                 data['track_url'] = durl
                 self.latest_tracks.put(message.message_id, status)
@@ -230,7 +231,7 @@ class ChatActor(pykka.ThreadingActor):
             [InlineKeyboardButton(thumb_up + " 0", callback_data='like:1'),
              InlineKeyboardButton(thumb_down + " 0", callback_data='like:0')],
         ]
-        title = title.decode("utf-8").encode("utf-8")
+        title = title.decode("utf-8")
         reply = self.bot.ask(
             {'command': 'reply', 'base': message,
              'message': title,
