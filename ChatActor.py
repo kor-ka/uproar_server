@@ -210,7 +210,7 @@ class ChatActor(pykka.ThreadingActor):
 
             if len(self.devices) > 0:
                 title = message.audio.performer + " - " + message.audio.title
-                reply = self.reply_to_content(message, title)
+                reply = self.reply_to_content(message, title.encode("utf-8"))
 
                 status = TrackStatus(message.message_id, reply.message_id, message.chat_id, title, file_id, message.from_user.id, time())
                 data = status.data
