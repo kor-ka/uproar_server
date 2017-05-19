@@ -254,9 +254,9 @@ class ChatActor(pykka.ThreadingActor):
             result = load.get('result')
             if result is not None:
                 file_path = result.get('file_path')
-                durl = 'https://api.telegram.org/file/bot' + self.token + '/' + file_path
-        except:
-            pass
+                durl = 'https://api.telegram.org/file/bot' + self.token + '/' + urllib.urlencode(file_path)
+        except Exception as e:
+            print (e)
         return durl
 
     def get_token(self, text, user):
