@@ -38,6 +38,7 @@ playing = u'\U0001F3B6'
 stopped = u'\U00002B1B'
 promoted = u'\U00002B06'
 poo = u'\U0001F4A9'
+crown = u'\U0001F451'
 
 votes_to_skip = 2
 
@@ -287,6 +288,7 @@ class ChatActor(pykka.ThreadingActor):
             for likes_data in self.latest_tracks.get(key=message_id):
 
                 user_id = callback_query.from_user.id
+                user_nick = callback_query.from_user.username
                 if callback[1] == "1":
                     if user_id in likes_data.likes_owners:
                         likes_data.likes -= 1
@@ -300,7 +302,11 @@ class ChatActor(pykka.ThreadingActor):
                         text = "take your dislike back first"
                     else:
                         try:
-                            if user_id == likes_data.owner:
+                            if user_nick and user_nick == "gossiks":
+                                self.bot.tell(
+                                    {'command': 'send', 'chat_id': self.chat_id,
+                                     'message': '%s SELFLIKE by %s' % (crown, callback_query.from_user.first_name)})
+                            elif user_id == likes_data.owner:
                                 self.bot.tell(
                                     {'command': 'send', 'chat_id': self.chat_id,
                                      'message': '%s SELFLIKE by %s' % (poo, callback_query.from_user.first_name)})
