@@ -409,7 +409,7 @@ class ChatActor(pykka.ThreadingActor):
             ]
 
             if track_keyboard is not None:
-                keyboard.append(keyboard[0])
+                keyboard.append(track_keyboard[0])
 
             message = org_msg + " " + update.get('title') + '\n' + update.get('device_name')
 
