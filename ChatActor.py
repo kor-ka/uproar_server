@@ -376,22 +376,10 @@ class ChatActor(pykka.ThreadingActor):
 
     def on_device_update(self, update):
 
+        track_keyboard = None
+
         org_msg = update.get('message')
-        if org_msg.startswith(u'\U0001F3B6') or org_msg.startswith(u'\U00002B1B'):
 
-            callback_vol_plus = 'vol' + ':' + '1'
-            callback_vol_minus = 'vol' + ':' + '0'
-
-            keyboard = [
-                [InlineKeyboardButton(not_so_loud, callback_data=callback_vol_minus),
-                 InlineKeyboardButton(loud, callback_data=callback_vol_plus)],
-            ]
-
-            message = org_msg + " " + update.get('title') + '\n' + update.get('device_name')
-
-            if update.get('placeholder'):
-                self.bot.tell({'command': 'edit', 'base': update.get('placeholder'), 'message': message,
-                               'reply_markup': InlineKeyboardMarkup(keyboard)})
 
         org_message_id = update.get('orig')
         for track_status in self.latest_tracks.get(org_message_id):
@@ -404,9 +392,31 @@ class ChatActor(pykka.ThreadingActor):
 
             update['message'] = message
 
-            keyboard = self.get_keyboard(track_status)
-            self.bot.tell({'command': 'update', 'update': update, 'reply_markup': InlineKeyboardMarkup(keyboard)})
+            self.get_keyboard(track_status)
+
+            self.bot.tell({'command': 'update', 'update': update, 'reply_markup': InlineKeyboardMarkup(track_keyboard)})
             self.latest_tracks.put(org_message_id, track_status)
+
+
+        if org_msg.startswith(u'\U0001F3B6') or org_msg.startswith(u'\U00002B1B'):
+
+            callback_vol_plus = 'vol' + ':' + '1'
+            callback_vol_minus = 'vol' + ':' + '0'
+
+            keyboard = [
+                [InlineKeyboardButton(not_so_loud, callback_data=callback_vol_minus),
+                 InlineKeyboardButton(loud, callback_data=callback_vol_plus)],
+            ]
+
+            if track_keyboard is not None:
+                keyboard.append(keyboard[0])
+
+            message = org_msg + " " + update.get('title') + '\n' + update.get('device_name')
+
+            if update.get('placeholder'):
+                self.bot.tell({'command': 'edit', 'base': update.get('placeholder'), 'message': message,
+                               'reply_markup': InlineKeyboardMarkup(keyboard)})
+
 
     def on_device_online(self, token, device):
         for t in self.latest_tracks.get():
