@@ -302,14 +302,15 @@ class ChatActor(pykka.ThreadingActor):
                         text = "take your dislike back first"
                     else:
                         try:
-                            if user_nick and user_nick == "gossiks":
-                                self.bot.tell(
-                                    {'command': 'send', 'chat_id': self.chat_id,
-                                     'message': '%s SELFLIKE by %s' % (crown, callback_query.from_user.first_name)})
-                            elif user_id == likes_data.owner:
-                                self.bot.tell(
-                                    {'command': 'send', 'chat_id': self.chat_id,
-                                     'message': '%s SELFLIKE by %s' % (poo, callback_query.from_user.first_name)})
+                            if user_id == likes_data.owner:
+                                if user_nick and user_nick == "asiazaytseva":
+                                    self.bot.tell(
+                                        {'command': 'send', 'chat_id': self.chat_id,
+                                         'message': '%s SELFLIKE by %s' % (crown, callback_query.from_user.first_name)})
+                                else:
+                                    self.bot.tell(
+                                        {'command': 'send', 'chat_id': self.chat_id,
+                                         'message': '%s SELFLIKE by %s' % (poo, callback_query.from_user.first_name)})
                         except Exception as e:
                             print  "selflike: %s" % str(e)
                         likes_data.likes += 1
