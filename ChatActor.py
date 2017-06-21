@@ -277,9 +277,19 @@ class ChatActor(pykka.ThreadingActor):
         text = None
         show_alert = False
 
-        message_id = None if not callback_query.message.reply_to_message else callback_query.message.reply_to_message.message_id
+        message = callback_query.message
+
+        orig_with_track_msg = message.reply_to_message
+
+        message_id = None if not orig_with_track_msg else orig_with_track_msg.message_id
+
+        if self.current_placeholder:
+            if message.message_id == self.current_placeholder.message_id:
+                skip
+
+
         if callback[0] == 'vol':
-            dev = DeviceData(self.get_token(callback_query.message.text, callback_query.from_user))
+            dev = DeviceData(self.get_token(message.text, callback_query.from_user))
             if dev.owner == callback_query.from_user.username:
                 self.get_device(dev.token).tell({'command': 'vol', 'param': callback[1]})
             else:
@@ -293,10 +303,10 @@ class ChatActor(pykka.ThreadingActor):
                     if user_id in likes_data.likes_owners:
                         likes_data.likes -= 1
                         likes_data.likes_owners.remove(user_id)
-                        user_likes = (callback_query.message.reply_to_message.from_user, 0)
-                        for user_likes_raw in self.users.get(callback_query.message.reply_to_message.from_user.id):
+                        user_likes = (orig_with_track_msg.from_user, 0)
+                        for user_likes_raw in self.users.get(orig_with_track_msg.from_user.id):
                             user_likes = (user_likes_raw[0], user_likes_raw[1] - 1)
-                        self.users.put(callback_query.message.reply_to_message.from_user.id, user_likes)
+                        self.users.put(orig_with_track_msg.from_user.id, user_likes)
                         text = "you took your like back"
                     elif user_id in likes_data.dislikes_owners:
                         text = "take your dislike back first"
@@ -316,10 +326,10 @@ class ChatActor(pykka.ThreadingActor):
                         likes_data.likes += 1
                         likes_data.likes_owners.add(user_id)
                         text = "+1"
-                        user_likes = (callback_query.message.reply_to_message.from_user, 0)
-                        for user_likes_raw in self.users.get(callback_query.message.reply_to_message.from_user.id):
+                        user_likes = (orig_with_track_msg.from_user, 0)
+                        for user_likes_raw in self.users.get(orig_with_track_msg.from_user.id):
                             user_likes = (user_likes_raw[0], user_likes_raw[1] + 1)
-                        self.users.put(callback_query.message.reply_to_message.from_user.id, user_likes)
+                        self.users.put(orig_with_track_msg.from_user.id, user_likes)
 
                 elif callback[1] == "0":
                     if user_id in likes_data.dislikes_owners:
@@ -380,9 +390,8 @@ class ChatActor(pykka.ThreadingActor):
 
         org_msg = update.get('message')
 
-
-        org_message_id = update.get('orig')
-        for track_status in self.latest_tracks.get(org_message_id):
+        self.current_orig_message_id = update.get('orig')
+        for track_status in self.latest_tracks.get(self.current_orig_message_id):
             message = update.get('title')
 
             track_status.device_status[update.get('device')] = org_msg
@@ -395,7 +404,7 @@ class ChatActor(pykka.ThreadingActor):
             track_keyboard = self.get_keyboard(track_status)
 
             self.bot.tell({'command': 'update', 'update': update, 'reply_markup': InlineKeyboardMarkup(track_keyboard)})
-            self.latest_tracks.put(org_message_id, track_status)
+            self.latest_tracks.put(self.current_orig_message_id, track_status)
 
 
         if org_msg.startswith(u'\U0001F3B6') or org_msg.startswith(u'\U00002B1B'):
@@ -408,13 +417,14 @@ class ChatActor(pykka.ThreadingActor):
                  InlineKeyboardButton(loud, callback_data=callback_vol_plus)],
             ]
 
-            if track_keyboard is not None:
-                keyboard.append(track_keyboard[0])
+            # if track_keyboard is not None:
+            #     keyboard.append(track_keyboard[0])
 
             message = org_msg + " " + update.get('title') + '\n' + update.get('device_name')
 
-            if update.get('placeholder'):
-                self.bot.tell({'command': 'edit', 'base': update.get('placeholder'), 'message': message,
+            self.current_placeholder = update.get('placeholder')
+            if self.current_placeholder:
+                self.bot.tell({'command': 'edit', 'base': self.current_placeholder, 'message': message,
                                'reply_markup': InlineKeyboardMarkup(keyboard)})
 
 
