@@ -24,7 +24,7 @@ class ManagerActor(pykka.ThreadingActor):
             self.get_chat(callback_query.message.chat_id).tell({'command':'callback_query', 'callback_query':callback_query})
 
     def on_inline_query(self, inline_query):
-        self.get_inline_actor(inline_query.user.id).tell({"command": "q", "q":inline_query})
+        self.get_inline_actor(inline_query.from_user.id).tell({"command": "q", "q":inline_query})
 
     def on_device_update(self, token, update):
         self.get_device(token).tell({'command':'update', 'update':update})
