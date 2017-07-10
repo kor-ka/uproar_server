@@ -30,6 +30,7 @@ class InlineActor(pykka.ThreadingActor):
             self.browser.fill("email", os.getenv("vk_login", ""))
             self.browser.fill("pass", os.getenv("vk_pass", ""))
             self.browser.find_by_value("Log in").first.click()
+            self.browser.visit('http://m.vk.com/audio')
         except Exception as ex:
             logging.exception(ex)
 
