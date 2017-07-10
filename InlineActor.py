@@ -14,7 +14,7 @@ class InlineActor(pykka.ThreadingActor):
     def on_start(self):
         try:
             # GOOGLE_CHROME_BIN
-            executable_path = {'executable_path': os.getenv("GOOGLE_CHROME_BIN", "")}
+            executable_path = {'executable_path': os.getenv("GOOGLE_CHROME_SHIM", "")}
 
             self.browser = Browser('chrome', **executable_path)
             self.browser.visit('http://m.vk.com')
