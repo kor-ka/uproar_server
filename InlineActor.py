@@ -11,6 +11,7 @@ class InlineActor(pykka.ThreadingActor):
         super(InlineActor, self).__init__()
         self.bot = bot
         self.browser = None
+        self.count = 0
 
     def on_start(self):
         try:
@@ -43,12 +44,21 @@ class InlineActor(pykka.ThreadingActor):
 
         except Exception as ex:
             logging.exception(ex)
+            
+    def wait_load(self):
+        if len(self.browser.find_by_css('.ai_body')) > 0 or self.count > 10
+        self.count = 0
+            return
+        else:
+            sleep(1)
+            self.count += 0
+            self.wait_load()
 
     def on_query(self, query):
         if len(query.query) > 0:
             res = []
             self.browser.visit('http://m.vk.com/audio?q=' + query.query)
-            sleep(1)
+            self.wait_load()
             print self.browser.html.encode('ascii', 'xmlcharrefreplace')
             #self.browser.find_by_id('au_search_field').first.fill(query.query)
             for body in self.browser.find_by_css(".ai_body"):
