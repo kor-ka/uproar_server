@@ -49,7 +49,7 @@ class InlineActor(pykka.ThreadingActor):
             res = []
             self.browser.visit('http://m.vk.com/audio?q=' + query.query)
             sleep(1)
-            print self.browser.html
+            print self.browser.html.encode('ascii', 'xmlcharrefreplace')
             #self.browser.find_by_id('au_search_field').first.fill(query.query)
             for body in self.browser.find_by_css(".ai_body"):
 
