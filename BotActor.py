@@ -17,6 +17,7 @@ import os
 
 from telegram.ext import CallbackQueryHandler
 from telegram.ext import Filters
+from telegram.ext import InlineQueryHandler
 from telegram.ext import MessageHandler
 from telegram.ext import Updater
 
@@ -42,6 +43,7 @@ class BotActor(pykka.ThreadingActor):
         # on noncommand i.e message - echo the message on Telegram
         dp.add_handler(MessageHandler(Filters.all, self.post))
         dp.add_handler(CallbackQueryHandler(self.post))
+        dp.add_handler(InlineQueryHandler(self.post))
 
         # Start the Bot
         updater.start_polling()
