@@ -18,7 +18,7 @@ class InlineActor(pykka.ThreadingActor):
             chrome_path = os.getenv("GOOGLE_CHROME_SHIM", "")
             prefix = chrome_path[:-len(suffix)]
             os.environ['PATH'] = os.getenv("PATH", "")  + ":" + prefix + ".chromedriver/bin:" + chrome_path
-            executable_path = {'executable_path': prefix + '.chromedriver/bin/chromedriver', 'binary_location': chrome_path}
+            executable_path = {'executable_path': prefix + ".chromedriver/bin:"}
 
             #  executable_path = {'executable_path': '/tmp/build_3eb58544f5f97e761b0afd5314624668/kor-ka-uproar_server-bcbb420/.chromedriver/bin/chromedriver'}
 
