@@ -4,5 +4,8 @@
   "image": "heroku/python",
   "repository": "https://github.com/kor-ka/uproar_server",
   "keywords": ["python", "telegram", "bot" ],
-  "addons": []
+  "addons": [],
+   "env": {
+     "GOOGLE_CHROME_CHANNEL":"stable"
+   }
 }
