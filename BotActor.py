@@ -4,6 +4,8 @@ from pprint import pprint
 import telegram
 from telegram import Bot
 from telegram import InlineKeyboardMarkup
+from telegram import InlineQueryResult
+from telegram import InlineQueryResultAudio
 from telegram.error import NetworkError, Unauthorized
 from time import sleep
 import paho.mqtt.client as mqtt
@@ -65,6 +67,13 @@ class BotActor(pykka.ThreadingActor):
     def sendDoc(self, caption, chat_id, file_id):
         return self.bot.sendDocument(chat_id, file_id, caption=caption)
 
+    def reply_inline(self, q, res):
+        results = []
+        i = 0
+        for r in res:
+            results.append(InlineQueryResultAudio(++i, r.url, r.title))
+        return self.bot.answerInlineQuery(q.id, results=results)
+
     def on_receive(self, message):
         try:
             print "Bot Actor msg" + str(message)
@@ -80,5 +89,7 @@ class BotActor(pykka.ThreadingActor):
                 return self.send(message.get('message'), message.get('chat_id'), message.get('reply_markup'))
             elif message.get('command') == 'sendDoc':
                 return self.sendDoc(message.get('caption'), message.get('chat_id'), message.get('file_id'))
+            elif message.get('command') == 'inline_res':
+                return self.reply_inline(message.get('q'), message.get('res'))
         except Exception as ex:
             logging.exception(ex)

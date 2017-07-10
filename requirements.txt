@@ -3,3 +3,5 @@ pykka
 python-telegram-bot
 psycopg2
 requests
+splinter
+selenium
