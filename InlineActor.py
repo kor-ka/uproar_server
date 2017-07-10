@@ -1,5 +1,6 @@
 import logging
 import os
+from time import sleep
 
 import pykka
 from splinter import Browser
@@ -47,6 +48,7 @@ class InlineActor(pykka.ThreadingActor):
         if len(query.query) > 0:
             res = []
             self.browser.visit('http://m.vk.com/audio?q=' + query.query)
+            sleep(2)
             #self.browser.find_by_id('au_search_field').first.fill(query.query)
             for body in self.browser.find_by_css(".ai_body"):
 
