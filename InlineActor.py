@@ -25,7 +25,7 @@ class InlineActor(pykka.ThreadingActor):
             print executable_path
             
            #self.browser = Browser('chrome', **executable_path)
-            self.browser = Browser()
+            self.browser = Browser('phantomjs')
             self.browser.visit('http://m.vk.com')
             self.browser.fill("email", os.getenv("vk_login", ""))
             self.browser.fill("pass", os.getenv("vk_pass", ""))
