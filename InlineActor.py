@@ -32,6 +32,8 @@ class InlineActor(pykka.ThreadingActor):
             
            #self.browser = Browser('chrome', **executable_path)
             self.browser = Browser('phantomjs')
+            self.browser.driver.set_window_size(640, 480)
+
             self.browser.visit('http://m.vk.com')
             self.browser.fill("email", os.getenv("vk_login", ""))
             self.browser.fill("pass", os.getenv("vk_pass", ""))
@@ -61,17 +63,17 @@ class InlineActor(pykka.ThreadingActor):
     def on_query(self, query):
         if len(query.query) > 0:
             res = []
-            search_path = 'http://m.vk.com/audio?q=' + query.query
-            print(search_path)
-            self.browser.visit(search_path)
+            self.browser.visit('http://m.vk.com/audio')
+
+            sleep(1)
+
+            self.browser.find_by_id('au_search_field').first.fill(query.query)
 
             driver = self.browser.driver
-            driver.set_window_size(640, 480)
             wait = WebDriverWait(driver, 10)
             wait.until(EC.invisibility_of_element_located((By.CSS_SELECTOR, '.al_loading .qs_loading')))
 
             # print self.browser.html.encode('ascii', 'xmlcharrefreplace')
-            #self.browser.find_by_id('au_search_field').first.fill(query.query)
             for body in self.browser.find_by_css(".ai_body"):
 
                 try:
