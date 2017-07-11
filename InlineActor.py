@@ -16,6 +16,8 @@ class InlineActor(pykka.ThreadingActor):
         self.bot = bot
         self.browser = None
 
+        self.current_q = None
+
     def on_start(self):
         try:
             # GOOGLE_CHROME_BIN
@@ -62,8 +64,11 @@ class InlineActor(pykka.ThreadingActor):
             print ('start search: ' + query.query.encode('utf-8'))
             self.browser.visit('http://m.vk.com/audio?act=search&q=' + quote + "&offset=" + (0 if query.offset is None else query.offset))
 
-            for body in self.browser.find_by_css(".ai_body"):
+            limit = 0
 
+            for body in self.browser.find_by_css(".ai_body"):
+                if limit == 5:
+                    break
                 try:
 
                     inpt = body.find_by_tag('input').first
@@ -75,6 +80,7 @@ class InlineActor(pykka.ThreadingActor):
                     r = AudioResult(inpt.value, label.text, artist.text)
 
                     res.append(r)
+                    limit += 1
 
                 except Exception as ex:
                     logging.exception(ex)
