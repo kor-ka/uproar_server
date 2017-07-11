@@ -27,7 +27,7 @@ class InlineActor(pykka.ThreadingActor):
             chrome_options = Options()
             chrome_options.binary_location = chrome_path
 
-            driver_options = {'executable_path': "/app/.chromedriver/bin/chromedriver", 'chrome_options':chrome_options}
+            driver_options = {'executable_path': "/app/.chromedriver/bin/chromedriver", 'options':chrome_options}
 
             #  executable_path = {'executable_path': '/tmp/build_3eb58544f5f97e761b0afd5314624668/kor-ka-uproar_server-bcbb420/.chromedriver/bin/chromedriver'}
 
