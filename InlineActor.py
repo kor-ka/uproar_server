@@ -21,13 +21,17 @@ class InlineActor(pykka.ThreadingActor):
         self.current_q = None
         self.q_debounce_s = Subject()
         self.scheduler = ThreadPoolScheduler()
-        self.q_debounce_s.debounce(
-            0.750,  # Pause for 750ms
-            scheduler=self.scheduler
-        ).subscribe(lambda m: self.on_query(m))
+
 
     def on_start(self):
         try:
+
+            searcher = self.q_debounce_s.debounce(
+                0.750,  # Pause for 750ms
+                scheduler=self.scheduler
+            ).flat_map_latest(self.actor_ref.tell)
+            searcher.subscribe()
+
             # GOOGLE_CHROME_BIN
             suffix = ".apt/usr/bin/google-chrome-stable"
             chrome_path = os.getenv("GOOGLE_CHROME_SHIM", "")
@@ -68,7 +72,10 @@ class InlineActor(pykka.ThreadingActor):
         try:
             print "Inline Actor msg" + str(message)
             if message.get('command') == 'q':
-                self.q_debounce_s.on_next(message)
+                if message.get('debounced', False) == True:
+                    self.on_query(message.get('q'))
+                else:
+                    self.q_debounce_s.on_next(message)
 
         except Exception as ex:
             logging.exception(ex)
