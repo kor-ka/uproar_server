@@ -41,7 +41,7 @@ class InlineActor(pykka.ThreadingActor):
             self.browser.fill("email", os.getenv("vk_login", ""))
             self.browser.fill("pass", os.getenv("vk_pass", ""))
             self.browser.find_by_value("Log in").first.click()
-            self.browser.visit('http://m.vk.com/audio')
+            self.browser.visit('http://m.vk.com/audio?act=search&q=mozart')
         except Exception as ex:
             logging.exception(ex)
 
@@ -55,7 +55,7 @@ class InlineActor(pykka.ThreadingActor):
             logging.exception(ex)
 
     def on_query(self, query):
-        if len(query.query) > 0:
+        if len(query.query) >= 3:
             res = []
 
             quote = urllib.quote(query.query.encode('utf-8'))
