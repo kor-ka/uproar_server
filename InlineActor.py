@@ -51,10 +51,11 @@ class InlineActor(pykka.ThreadingActor):
             #  executable_path = {'executable_path': '/tmp/build_3eb58544f5f97e761b0afd5314624668/kor-ka-uproar_server-bcbb420/.chromedriver/bin/chromedriver'}
 
             cap = webdriver.DesiredCapabilities.PHANTOMJS
-            cap["phantomjs.page.settings.loadImages"] = False
+            cap["phantomjs.page.settings.loadImages"] = True
 
             cap["phantomjs.page.settings.resourceTimeout"] = 0
             cap["phantomjs.page.settings.webSecurityEnabled"] = False
+            cap["phantomjs.page.settings.clearMemoryCaches"] = True
             driver_options = {'desired_capabilities': cap}
 
             self.browser = Browser('phantomjs', **driver_options)
@@ -87,6 +88,7 @@ class InlineActor(pykka.ThreadingActor):
             logging.exception(ex)
 
     def on_query(self, query):
+        self.browser.windows[0].close_others()
         if len(query.query) >= 3:
             res = []
 
