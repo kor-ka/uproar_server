@@ -9,6 +9,8 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.phantomjs import webdriver
 from splinter import Browser
 import urllib
+from rx.concurrency import IOLoopScheduler
+from rx.subjects import Subject
 
 
 class InlineActor(pykka.ThreadingActor):
@@ -16,8 +18,13 @@ class InlineActor(pykka.ThreadingActor):
         super(InlineActor, self).__init__()
         self.bot = bot
         self.browser = None
-
         self.current_q = None
+        self.q_debounce_s = Subject()
+        self.scheduler = IOLoopScheduler()
+        self.q_debounce_s.debounce(
+            0.750,  # Pause for 750ms
+            scheduler=self.scheduler
+        ).map(lambda m: m.update({'debounced':True})).flat_map_latest(self.actor_ref.tell)
 
     def on_start(self):
         try:
@@ -53,7 +60,6 @@ class InlineActor(pykka.ThreadingActor):
             # dont know is it working
             cap["phantomjs.page.settings.javascriptEnabled"] = False
 
-
             self.browser.visit('http://m.vk.com/audio?act=search&q=mozart')
         except Exception as ex:
             logging.exception(ex)
@@ -62,7 +68,10 @@ class InlineActor(pykka.ThreadingActor):
         try:
             print "Inline Actor msg" + str(message)
             if message.get('command') == 'q':
-                self.on_query(message.get('q'))
+                if message.get('debounced', False) == True:
+                    self.on_query(message.get('q'))
+                else:
+                    self.q_debounce_s.on_next(message)
 
         except Exception as ex:
             logging.exception(ex)
@@ -73,8 +82,8 @@ class InlineActor(pykka.ThreadingActor):
 
             quote = urllib.quote(query.query.encode('utf-8'))
             print ('start search: ' + query.query.encode('utf-8'))
-            self.browser.visit('http://m.vk.com/audio?act=search&q=' + quote + "&offset=" + (0 if query.offset is None else query.offset))
-
+            self.browser.visit('http://m.vk.com/audio?act=search&q=' + quote + "&offset=" + (
+                0 if query.offset is None else query.offset))
 
             for body in self.browser.find_by_css(".ai_body"):
                 try:
