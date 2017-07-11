@@ -9,7 +9,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.phantomjs import webdriver
 from splinter import Browser
 import urllib
-from rx.concurrency import IOLoopScheduler
+from rx.concurrency import ThreadPoolScheduler
 from rx.subjects import Subject
 
 
@@ -20,7 +20,7 @@ class InlineActor(pykka.ThreadingActor):
         self.browser = None
         self.current_q = None
         self.q_debounce_s = Subject()
-        self.scheduler = IOLoopScheduler()
+        self.scheduler = ThreadPoolScheduler()
         self.q_debounce_s.debounce(
             0.750,  # Pause for 750ms
             scheduler=self.scheduler
