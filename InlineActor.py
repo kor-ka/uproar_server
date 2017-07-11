@@ -11,6 +11,7 @@ from splinter import Browser
 import urllib
 from rx.concurrency.threadpoolscheduler import ThreadPoolScheduler
 from rx.subjects import Subject
+import time
 
 
 def mark_debounced(m):
@@ -94,18 +95,35 @@ class InlineActor(pykka.ThreadingActor):
             self.browser.visit('http://m.vk.com/audio?act=search&q=' + quote + "&offset=" + (
                 0 if query.offset is None else query.offset))
 
+            print("parsing...")
+
             for body in self.browser.find_by_css(".ai_body"):
                 try:
 
+                    loop = time.time()
                     inpt = body.find_by_tag('input').first
+                    end = time.time()
+                    print("input:" + str(end - loop))
+
+                    loop = time.time()
                     label = body.find_by_css('.ai_title')
+                    end = time.time()
+                    print("label:" + str(end - loop))
+
+                    loop = time.time()
                     artist = body.find_by_css('.ai_artist')
+                    end = time.time()
+                    print("artist:" + str(end - loop))
+
+                    loop = time.time()
                     d = None
                     try:
                         duration = body.find_by_css('.ai_dur')
                         d = int(duration['data-dur'])
                     except:
                         pass
+                    end = time.time()
+                    print("duration:" + str(end - loop))
                     # print (label.text.encode('utf-8') + " - " + artist.text.encode('utf-8'))
 
                     r = AudioResult(inpt.value, label.text, artist.text, d)
