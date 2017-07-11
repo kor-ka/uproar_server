@@ -80,7 +80,7 @@ class BotActor(pykka.ThreadingActor):
         for r in res:
             i += 1
             results.append(InlineQueryResultAudio(i, r.url, r.title, performer=r.artist))
-        return self.bot.answerInlineQuery(q.id, results=results, next_offset=(None if len(results) < 5 else len(results)))
+        return self.bot.answerInlineQuery(q.id, results=results, next_offset=(None if len(results) < 49 else len(results)))
 
     def on_receive(self, message):
         try:
