@@ -100,10 +100,15 @@ class InlineActor(pykka.ThreadingActor):
                     inpt = body.find_by_tag('input').first
                     label = body.find_by_css('.ai_title')
                     artist = body.find_by_css('.ai_artist')
-
+                    d = None
+                    try:
+                        duration = body.find_by_css('.ai_dur')
+                        d = int(duration['data-dur'])
+                    except:
+                        pass
                     # print (label.text.encode('utf-8') + " - " + artist.text.encode('utf-8'))
 
-                    r = AudioResult(inpt.value, label.text, artist.text)
+                    r = AudioResult(inpt.value, label.text, artist.text, d)
 
                     res.append(r)
 
@@ -114,7 +119,8 @@ class InlineActor(pykka.ThreadingActor):
 
 
 class AudioResult(object):
-    def __init__(self, url, title, artist):
+    def __init__(self, url, title, artist, duration):
         self.url = url
         self.title = title
         self.artist = artist
+        self.duration = duration

@@ -1,6 +1,7 @@
 import logging
 from pprint import pprint
 
+import sys
 import telegram
 from telegram import Bot
 from telegram import InlineKeyboardMarkup
@@ -25,7 +26,6 @@ import ManagerActor
 from telegram import InlineKeyboardButton, CallbackQuery
 
 
-
 class BotActor(pykka.ThreadingActor):
     def __init__(self, manager):
         super(BotActor, self).__init__()
@@ -47,6 +47,7 @@ class BotActor(pykka.ThreadingActor):
 
         # Start the Bot
         updater.start_polling()
+
     def post(self, bot, update):
         self.manager.tell({'command': 'update', 'update': update})
 
@@ -79,8 +80,10 @@ class BotActor(pykka.ThreadingActor):
         i = offset
         for r in res:
             i += 1
-            results.append(InlineQueryResultAudio(i, r.url, r.title, performer=r.artist))
-        return self.bot.answerInlineQuery(q.id, results=results, next_offset=(None if len(results) < 49 else len(results)))
+            results.append(InlineQueryResultAudio(i, r.url, r.title, performer=r.artist, audio_duration=r.duration))
+        return self.bot.answerInlineQuery(q.id, results=results,
+                                          next_offset=(None if len(results) < 49 else len(results)),
+                                          cache_time=(0 if len(results) == 0 else 1000 * 60 * 60 * 24 * 365))
 
     def on_receive(self, message):
         try:
