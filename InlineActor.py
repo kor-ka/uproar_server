@@ -28,7 +28,7 @@ class InlineActor(pykka.ThreadingActor):
             searcher = self.q_debounce_s.debounce(
                 0.750,  # Pause for 750ms
                 scheduler=self.scheduler
-            ).map(lambda m: m.update({'debounced': True})).flat_map_latest(self.actor_ref.tell)
+            ).map(lambda m: m.update({'debounced': True})).flat_map_latest(self.on_receive)
             searcher.subscribe()
 
             # GOOGLE_CHROME_BIN
