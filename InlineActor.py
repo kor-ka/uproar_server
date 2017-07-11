@@ -35,10 +35,11 @@ class InlineActor(pykka.ThreadingActor):
             #  executable_path = {'executable_path': '/tmp/build_3eb58544f5f97e761b0afd5314624668/kor-ka-uproar_server-bcbb420/.chromedriver/bin/chromedriver'}
 
             cap = webdriver.DesiredCapabilities.PHANTOMJS
-            cap["phantomjs.page.settings.javascriptEnabled"] = False
+            cap["phantomjs.page.settings.loadImages"] = False
 
             driver_options = {'desired_capabilities': cap}
-
+            cap["phantomjs.page.settings.resourceTimeout"] = 0
+            cap["phantomjs.page.settings.webSecurityEnabled"] = False
 
             self.browser = Browser('phantomjs', **driver_options)
             # self.browser = Browser('chrome', **driver_options)
@@ -48,6 +49,11 @@ class InlineActor(pykka.ThreadingActor):
             self.browser.fill("email", os.getenv("vk_login", ""))
             self.browser.fill("pass", os.getenv("vk_pass", ""))
             self.browser.find_by_value("Log in").first.click()
+
+            # dont know is it working
+            cap["phantomjs.page.settings.javascriptEnabled"] = False
+
+
             self.browser.visit('http://m.vk.com/audio?act=search&q=mozart')
         except Exception as ex:
             logging.exception(ex)
