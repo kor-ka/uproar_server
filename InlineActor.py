@@ -45,10 +45,11 @@ class InlineActor(pykka.ThreadingActor):
         try:
             print "Inline Actor msg" + str(message)
             if message.get('command') == 'q':
-                if message.get('time') is None:
-                    self.q_debounce(message.get('q'))
-                elif self.q_time == message.get('time'):
-                    self.on_query(message.get('q'))
+                self.on_query(message.get('q'))
+                # if message.get('time') is None:
+                #     self.q_debounce(message.get('q'))
+                # elif self.q_time == message.get('time'):
+                #     self.on_query(message.get('q'))
 
         except Exception as ex:
             logging.exception(ex)
