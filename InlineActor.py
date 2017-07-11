@@ -46,12 +46,12 @@ class InlineActor(pykka.ThreadingActor):
             logging.exception(ex)
             
     def wait_load(self):
-        if len(self.browser.find_by_css('.ai_body')) > 0 or self.count > 10
-        self.count = 0
+        if len(self.browser.find_by_css('.ai_body')) > 0 or self.count > 10:
+            self.count = 0
             return
         else:
             sleep(1)
-            self.count += 0
+            self.count += 1
             self.wait_load()
 
     def on_query(self, query):
