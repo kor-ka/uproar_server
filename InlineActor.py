@@ -65,10 +65,10 @@ class InlineActor(pykka.ThreadingActor):
 
                 try:
 
-                    input = body.find_by_tag('input').first
+                    inpt = body.find_by_tag('input').first
                     label = body.find_by_css('.ai_label')
 
-                    r = AudioResult(input.value, label.text)
+                    r = AudioResult(inpt.value, label.text)
 
                     res.append(r)
 
