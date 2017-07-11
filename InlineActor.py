@@ -42,22 +42,22 @@ class InlineActor(pykka.ThreadingActor):
             prefix = chrome_path[:-len(suffix)]
             os.environ['PATH'] = os.getenv("PATH", "") + ":" + prefix + ".chromedriver/bin:" + chrome_path
 
-            chrome_options = Options()
-            chrome_options.binary_location = "/app/.apt/usr/bin/google-chrome-stable"
-
-            driver_options = {'executable_path': "/app/.chromedriver/bin/chromedriver", 'options': chrome_options}
-
-            # executable_path = {'executable_path': '/tmp/build_3eb58544f5f97e761b0afd5314624668/kor-ka-uproar_server-bcbb420/.chromedriver/bin/chromedriver'}
-
-            # cap = webdriver.DesiredCapabilities.PHANTOMJS
-            # cap["phantomjs.page.settings.loadImages"] = False
+            # chrome_options = Options()
+            # chrome_options.binary_location = "/app/.apt/usr/bin/google-chrome-stable"
             #
-            # driver_options = {'desired_capabilities': cap}
-            # cap["phantomjs.page.settings.resourceTimeout"] = 0
-            # cap["phantomjs.page.settings.webSecurityEnabled"] = False
-            #
-            # self.browser = Browser('phantomjs', **driver_options)
-            self.browser = Browser('chrome', **driver_options)
+            # driver_options = {'executable_path': "/app/.chromedriver/bin/chromedriver", 'options': chrome_options}
+
+            #  executable_path = {'executable_path': '/tmp/build_3eb58544f5f97e761b0afd5314624668/kor-ka-uproar_server-bcbb420/.chromedriver/bin/chromedriver'}
+
+            cap = webdriver.DesiredCapabilities.PHANTOMJS
+            cap["phantomjs.page.settings.loadImages"] = False
+
+            cap["phantomjs.page.settings.resourceTimeout"] = 0
+            cap["phantomjs.page.settings.webSecurityEnabled"] = False
+            driver_options = {'desired_capabilities': cap}
+
+            self.browser = Browser('phantomjs', **driver_options)
+            # self.browser = Browser('chrome', **driver_options)
             self.browser.driver.set_window_size(640, 480)
 
             self.browser.visit('http://m.vk.com')
