@@ -9,7 +9,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.phantomjs import webdriver
 from splinter import Browser
 import urllib
-from rx.concurrency import ThreadPoolScheduler
+from rx.concurrency.threadpoolscheduler import ThreadPoolScheduler
 from rx.subjects import Subject
 
 
