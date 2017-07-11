@@ -101,7 +101,7 @@ class InlineActor(pykka.ThreadingActor):
                 try:
 
                     loop = time.time()
-                    inpt = body.find_by_xpath(".//*[contains(local-name(), 'input')]")
+                    inpt = body.find_by_xpath(".//input")
                     end = time.time()
                     print("input xpath:" + str(end - loop))
 
@@ -111,7 +111,7 @@ class InlineActor(pykka.ThreadingActor):
                     print("input:" + str(end - loop))
 
                     loop = time.time()
-                    label = body.find_by_xpath(".//p[@class='ai_title']")
+                    label = body.find_by_xpath(".//div[@class='ai_title']")
                     end = time.time()
                     print("label xpath:" + str(end - loop))
 
