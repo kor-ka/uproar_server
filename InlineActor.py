@@ -27,7 +27,7 @@ class InlineActor(pykka.ThreadingActor):
             chrome_options = Options()
             chrome_options.binary_location = "/app/.apt/usr/bin/google-chrome-stable"
 
-            driver_options = {'executable_path': "/app/.chromedriver/bin/chromedriver", 'options':chrome_options}
+            driver_options = {'executable_path': "/app/.chromedriver/bin/chromedriver", 'options': chrome_options}
 
             #  executable_path = {'executable_path': '/tmp/build_3eb58544f5f97e761b0afd5314624668/kor-ka-uproar_server-bcbb420/.chromedriver/bin/chromedriver'}
 
@@ -60,7 +60,7 @@ class InlineActor(pykka.ThreadingActor):
 
             quote = urllib.quote(query.query.encode('utf-8'))
             print ('start search: ' + query.query.encode('utf-8'))
-            self.browser.visit('http://m.vk.com/audio?act=search&q=' + quote)
+            self.browser.visit('http://m.vk.com/audio?act=search&q=' + quote + "&offset=" + (0 if query.offset is None else query.offset))
 
             for body in self.browser.find_by_css(".ai_body"):
 
