@@ -69,9 +69,9 @@ class InlineActor(pykka.ThreadingActor):
             wait = WebDriverWait(driver, 10)
             wait.until(EC.invisibility_of_element_located((By.CSS_SELECTOR, '.al_loading .qs_loading')))
 
-            print self.browser.html.encode('ascii', 'xmlcharrefreplace')
+            # print self.browser.html.encode('ascii', 'xmlcharrefreplace')
             #self.browser.find_by_id('au_search_field').first.fill(query.query)
-            for body in 1:
+            for body in self.browser.find_by_css(".ai_body"):
 
                 try:
 
