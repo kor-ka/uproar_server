@@ -50,28 +50,18 @@ class InlineActor(pykka.ThreadingActor):
 
         except Exception as ex:
             logging.exception(ex)
-            
-    def wait_load(self):
-        if len(self.browser.find_by_css('.ai_body')) > 1 or self.count > 10:
-            self.count = 0
-            return
-        else:
-            sleep(1)
-            self.count += 1
-            self.wait_load()
 
     def on_query(self, query):
         if len(query.query) > 0:
             res = []
-            self.browser.visit('http://m.vk.com/audio')
+            self.browser.visit('http://m.vk.com/audio?act=search&q=' + query.query)
 
-            sleep(1)
 
-            self.browser.find_by_id('au_search_field').first.fill(query.query)
+            # self.browser.find_by_id('au_search_field').first.fill(query.query)
 
-            driver = self.browser.driver
-            wait = WebDriverWait(driver, 10)
-            wait.until(EC.invisibility_of_element_located((By.CSS_SELECTOR, '.al_loading .qs_loading')))
+            # driver = self.browser.driver
+            # wait = WebDriverWait(driver, 10)
+            # wait.until(EC.invisibility_of_element_located((By.CSS_SELECTOR, '.al_loading .qs_loading')))
 
             # print self.browser.html.encode('ascii', 'xmlcharrefreplace')
             for body in self.browser.find_by_css(".ai_body"):
