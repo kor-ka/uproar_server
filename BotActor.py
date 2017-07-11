@@ -71,7 +71,12 @@ class BotActor(pykka.ThreadingActor):
 
     def reply_inline(self, q, res):
         results = []
-        i = int(q.offset)
+        offset = 0
+        try:
+            offset = int(q.offset)
+        except:
+            pass
+        i = offset
         for r in res:
             i += 1
             results.append(InlineQueryResultAudio(i, r.url, r.title, performer=r.artist))
