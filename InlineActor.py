@@ -13,6 +13,11 @@ from rx.concurrency.threadpoolscheduler import ThreadPoolScheduler
 from rx.subjects import Subject
 
 
+def mark_debounced(m):
+    m.update({'debounced': True})
+    return m
+
+
 class InlineActor(pykka.ThreadingActor):
     def __init__(self, bot):
         super(InlineActor, self).__init__()
@@ -28,7 +33,7 @@ class InlineActor(pykka.ThreadingActor):
             searcher = self.q_debounce_s.debounce(
                 0.750,  # Pause for 750ms
                 scheduler=self.scheduler
-            ).map(lambda m: m.update({'debounced': True})).flat_map_latest(self.on_receive)
+            ).map(mark_debounced).flat_map_latest(self.actor_ref.tell)
             searcher.subscribe()
 
             # GOOGLE_CHROME_BIN
@@ -66,6 +71,7 @@ class InlineActor(pykka.ThreadingActor):
             self.browser.visit('http://m.vk.com/audio?act=search&q=mozart')
         except Exception as ex:
             logging.exception(ex)
+
 
     def on_receive(self, message):
         try:
