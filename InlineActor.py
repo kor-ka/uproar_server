@@ -1,6 +1,10 @@
 import logging
 import os
 from time import sleep
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium import webdriver
 
 import pykka
 from splinter import Browser
@@ -46,7 +50,7 @@ class InlineActor(pykka.ThreadingActor):
             logging.exception(ex)
             
     def wait_load(self):
-        if len(self.browser.find_by_css('.ai_body')) > 0 or self.count > 10:
+        if len(self.browser.find_by_css('.ai_body')) > 1 or self.count > 10:
             self.count = 0
             return
         else:
@@ -57,11 +61,17 @@ class InlineActor(pykka.ThreadingActor):
     def on_query(self, query):
         if len(query.query) > 0:
             res = []
-            self.browser.visit('http://m.vk.com/audio?q=' + query.query)
-            self.wait_load()
+            search_path = 'http://m.vk.com/audio?q=' + query.query
+            print(search_path)
+            self.browser.visit(search_path)
+
+            driver = self.browser.driver
+            wait = WebDriverWait(driver, 10)
+            wait.until(EC.invisibility_of_element_located((By.CSS_SELECTOR, '.al_loading .qs_loading')))
+
             print self.browser.html.encode('ascii', 'xmlcharrefreplace')
             #self.browser.find_by_id('au_search_field').first.fill(query.query)
-            for body in self.browser.find_by_css(".ai_body"):
+            for body in 1:
 
                 try:
 
