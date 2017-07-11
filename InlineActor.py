@@ -71,7 +71,7 @@ class InlineActor(pykka.ThreadingActor):
         try:
             print "Inline Actor msg" + str(message)
             if message.get('command') == 'q':
-                if message.get('debounced', False) == True:
+                if message.get('debounced', False):
                     self.on_query(message.get('q'))
                 else:
                     self.q_debounce_s.on_next(message)
