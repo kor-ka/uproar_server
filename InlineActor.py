@@ -55,7 +55,7 @@ class InlineActor(pykka.ThreadingActor):
 
             quote = urllib.quote(query.query.encode('utf-8'))
             print ('start search: ' + query.query.encode('utf-8'))
-            self.browser.visit('http://m.vk.com/audio?act=search&q=' + quote)
+            self.browser.visit('http://m.vk.com/audio?act=search&q=' + quote + "&offset=1")
 
             for body in self.browser.find_by_css(".ai_body"):
 
@@ -64,6 +64,8 @@ class InlineActor(pykka.ThreadingActor):
                     inpt = body.find_by_tag('input').first
                     label = body.find_by_css('.ai_title')
                     artist = body.find_by_css('.ai_artist')
+
+                    self.br
 
                     r = AudioResult(inpt.value, label.text, artist.text)
 
