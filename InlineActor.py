@@ -53,7 +53,7 @@ class InlineActor(pykka.ThreadingActor):
         if len(query.query) > 0:
             res = []
 
-            print ('start search: ' + query.query.encode('utf-8'))
+            print ('start search: ' + urllib.quote(query.query.encode('utf-8')))
             self.browser.visit('http://m.vk.com/audio?act=search&q=' + urllib.urlencode(query.query))
 
             for body in self.browser.find_by_css(".ai_body"):
@@ -61,9 +61,10 @@ class InlineActor(pykka.ThreadingActor):
                 try:
 
                     inpt = body.find_by_tag('input').first
-                    label = body.find_by_css('.ai_label')
+                    label = body.find_by_css('.ai_title')
+                    artist = body.find_by_css('.ai_artist')
 
-                    r = AudioResult(inpt.value, label.text)
+                    r = AudioResult(inpt.value, label.text, artist.text)
 
                     res.append(r)
 
@@ -74,6 +75,7 @@ class InlineActor(pykka.ThreadingActor):
 
 
 class AudioResult(object):
-    def __init__(self, url, title):
+    def __init__(self, url, title, artist):
         self.url = url
         self.title = title
+        self.artist = artist
