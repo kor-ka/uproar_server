@@ -5,6 +5,7 @@ import threading
 from datetime import datetime
 
 import pykka
+from selenium.webdriver.chrome.options import Options
 from splinter import Browser
 import urllib
 
@@ -22,15 +23,19 @@ class InlineActor(pykka.ThreadingActor):
             chrome_path = os.getenv("GOOGLE_CHROME_SHIM", "")
             prefix = chrome_path[:-len(suffix)]
             os.environ['PATH'] = os.getenv("PATH", "") + ":" + prefix + ".chromedriver/bin:" + chrome_path
-            executable_path = {'executable_path': "/app/.chromedriver/bin/chromedriver"}
+
+            chrome_options = Options()
+            chrome_options.binary_location = chrome_path
+
+            driver_options = {'executable_path': "/app/.chromedriver/bin/chromedriver", 'chrome_options':chrome_options}
 
             #  executable_path = {'executable_path': '/tmp/build_3eb58544f5f97e761b0afd5314624668/kor-ka-uproar_server-bcbb420/.chromedriver/bin/chromedriver'}
 
-            print executable_path
+            print driver_options
 
             # self.browser = Browser('chrome', **executable_path)
-            self.browser = Browser('phantomjs')
-            self.browser.driver.set_window_size(640, 480)
+            self.browser = Browser('chrome', **driver_options)
+            # self.browser.driver.set_window_size(640, 480)
 
             self.browser.visit('http://m.vk.com')
             self.browser.fill("email", os.getenv("vk_login", ""))
