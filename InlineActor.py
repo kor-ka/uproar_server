@@ -33,9 +33,9 @@ class InlineActor(pykka.ThreadingActor):
 
             print driver_options
 
-            # self.browser = Browser('chrome', **executable_path)
-            self.browser = Browser('chrome', **driver_options)
-            # self.browser.driver.set_window_size(640, 480)
+            self.browser = Browser('phantomjs')
+            # self.browser = Browser('chrome', **driver_options)
+            self.browser.driver.set_window_size(640, 480)
 
             self.browser.visit('http://m.vk.com')
             self.browser.fill("email", os.getenv("vk_login", ""))
@@ -60,7 +60,7 @@ class InlineActor(pykka.ThreadingActor):
 
             quote = urllib.quote(query.query.encode('utf-8'))
             print ('start search: ' + query.query.encode('utf-8'))
-            self.browser.visit('http://m.vk.com/audio?act=search&q=' + quote + "&offset=1")
+            self.browser.visit('http://m.vk.com/audio?act=search&q=' + quote)
 
             for body in self.browser.find_by_css(".ai_body"):
 
