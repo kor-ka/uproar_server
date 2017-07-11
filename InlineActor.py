@@ -66,6 +66,7 @@ class InlineActor(pykka.ThreadingActor):
             self.browser.visit(search_path)
 
             driver = self.browser.driver
+            driver.set_window_size(640, 480)
             wait = WebDriverWait(driver, 10)
             wait.until(EC.invisibility_of_element_located((By.CSS_SELECTOR, '.al_loading .qs_loading')))
 
