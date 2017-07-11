@@ -24,7 +24,7 @@ class InlineActor(pykka.ThreadingActor):
         self.q_debounce_s.debounce(
             0.750,  # Pause for 750ms
             scheduler=self.scheduler
-        ).map(lambda m: m.update({'debounced': True})).subscribe(lambda m: self.actor_ref.tell(m))
+        ).subscribe(lambda m: self.on_query(m))
 
     def on_start(self):
         try:
@@ -68,10 +68,7 @@ class InlineActor(pykka.ThreadingActor):
         try:
             print "Inline Actor msg" + str(message)
             if message.get('command') == 'q':
-                if message.get('debounced', False):
-                    self.on_query(message.get('q'))
-                else:
-                    self.q_debounce_s.on_next(message)
+                self.q_debounce_s.on_next(message)
 
         except Exception as ex:
             logging.exception(ex)
