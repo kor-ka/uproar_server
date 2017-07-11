@@ -53,8 +53,9 @@ class InlineActor(pykka.ThreadingActor):
         if len(query.query) > 0:
             res = []
 
-            print ('start search: ' + urllib.quote(query.query.encode('utf-8')))
-            self.browser.visit('http://m.vk.com/audio?act=search&q=' + urllib.urlencode(query.query))
+            quote = urllib.quote(query.query.encode('utf-8'))
+            print ('start search: ' + query.query.encode('utf-8'))
+            self.browser.visit('http://m.vk.com/audio?act=search&q=' + quote)
 
             for body in self.browser.find_by_css(".ai_body"):
 
