@@ -100,42 +100,18 @@ class InlineActor(pykka.ThreadingActor):
             for body in self.browser.find_by_css(".ai_body"):
                 try:
 
-                    loop = time.time()
-                    inpt = body.find_by_xpath(".//input")
-                    end = time.time()
-                    print("input xpath:" + str(end - loop))
-
-                    loop = time.time()
                     inpt = body.find_by_tag('input').first
-                    end = time.time()
-                    print("input:" + str(end - loop))
 
-                    loop = time.time()
-                    label = body.find_by_xpath(".//div[@class='ai_title']")
-                    end = time.time()
-                    print("label xpath:" + str(end - loop))
-
-                    loop = time.time()
                     label = body.find_by_css('.ai_title')
-                    end = time.time()
-                    print("label:" + str(end - loop))
 
-
-
-                    loop = time.time()
                     artist = body.find_by_css('.ai_artist')
-                    end = time.time()
-                    print("artist:" + str(end - loop))
 
-                    loop = time.time()
                     d = None
                     try:
                         duration = body.find_by_css('.ai_dur')
                         d = int(duration['data-dur'])
                     except:
                         pass
-                    end = time.time()
-                    print("duration:" + str(end - loop))
                     # print (label.text.encode('utf-8') + " - " + artist.text.encode('utf-8'))
 
                     r = AudioResult(inpt.value, label.text, artist.text, d)
