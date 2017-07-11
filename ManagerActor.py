@@ -43,6 +43,7 @@ class ManagerActor(pykka.ThreadingActor):
         inline_actor = self.inline_actors.get(user_id)
         if inline_actor is None or not inline_actor.is_alive:
             inline_actor = InlineActor.InlineActor.start(self.bot)
+            print("new one: " + inline_actor)
             self.inline_actors[user_id] = inline_actor
         return inline_actor
 
