@@ -21,10 +21,11 @@ class InlineActor(pykka.ThreadingActor):
         self.current_q = None
         self.q_debounce_s = Subject()
         self.scheduler = IOLoopScheduler()
-        self.q_debounce_s.debounce(
+        d = self.q_debounce_s.debounce(
             0.750,  # Pause for 750ms
             scheduler=self.scheduler
         ).map(lambda m: m.update({'debounced':True})).flat_map_latest(self.actor_ref.tell)
+        d.subscribe()
 
     def on_start(self):
         try:
