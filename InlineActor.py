@@ -1,10 +1,8 @@
 import logging
 import os
 from time import sleep
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium import webdriver
+import threading
+from datetime import datetime
 
 import pykka
 from splinter import Browser
@@ -16,6 +14,7 @@ class InlineActor(pykka.ThreadingActor):
         self.bot = bot
         self.browser = None
         self.count = 0
+        self.q_time = datetime.now()
 
     def on_start(self):
         try:
@@ -46,10 +45,18 @@ class InlineActor(pykka.ThreadingActor):
         try:
             print "Inline Actor msg" + str(message)
             if message.get('command') == 'q':
-                self.on_query(message.get('q'))
+                if message.get('time') is None:
+                    self.q_debounce(message.get('q'))
+                elif self.q_time == message.get('time'):
+                    self.on_query(message.get('q'))
 
         except Exception as ex:
             logging.exception(ex)
+
+    def q_debounce(self, query):
+        delayed = PostDelayed()
+        self.q_time = delayed.time
+        delayed.post(self.actor_ref, {'time': delayed.time, 'q':query, 'command':'q'}, 800)
 
     def on_query(self, query):
         if len(query.query) > 0:
@@ -85,3 +92,19 @@ class AudioResult(object):
     def __init__(self, url, title):
         self.url = url
         self.title = title
+
+class PostDelayed(threading.Thread):
+    def __init__(self):
+        self.running = True
+        threading.Thread.__init__(self)
+        self.time = datetime.now()
+        super(PostDelayed, self).__init__()
+
+    def run(self):
+        while self.running:
+            pass
+
+    def post(self, ref, message, delay):
+        sleep(delay)
+        ref.tell(message)
+        self.running = False
