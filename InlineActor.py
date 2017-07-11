@@ -65,7 +65,7 @@ class InlineActor(pykka.ThreadingActor):
                     label = body.find_by_css('.ai_title')
                     artist = body.find_by_css('.ai_artist')
 
-                    self.br
+                    print (label.text.encode('utf-8') + " - " + artist.text.encode('utf-8'))
 
                     r = AudioResult(inpt.value, label.text, artist.text)
 
