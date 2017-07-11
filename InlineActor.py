@@ -33,7 +33,7 @@ class InlineActor(pykka.ThreadingActor):
             searcher = self.q_debounce_s.debounce(
                 0.750,  # Pause for 750ms
                 scheduler=self.scheduler
-            ).map(mark_debounced).flat_map_latest(self.actor_ref.tell)
+            ).map(mark_debounced).map(self.actor_ref.tell)
             searcher.subscribe()
 
             # GOOGLE_CHROME_BIN
