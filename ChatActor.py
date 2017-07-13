@@ -63,9 +63,9 @@ class ChatActor(pykka.ThreadingActor):
         self.devices = None
         self.devices_tokens = None
         self.latest_tracks = None
-        self.current_placeholder = None
         self.current_orig_message_id = None
         self.users = None
+        self.current_playing_ids = dict()
         self.skip_gifs = ["CgADBAADqWkAAtkcZAc7PiBvHsR8IwI", "CgADBAADrgMAAuMYZAcKVOFNoEE_xgI", "CgADBAADJkAAAnobZAftbqSTl-HsIQI", "CgADBAADLBkAAuIaZAej8zwqpX3GeAI"]
         self.promote_gifs = ["CgADBAADWSMAAjUeZAeEqT810zl7IgI", "CgADBAADUEkAAhEXZAfN5P28QjO3KQI", "CgADBAADpAMAAvkcZAfm332885NH7AI", "CgADBAADyQMAAsUZZAe4b-POmx-A8AI"]
 
@@ -285,10 +285,6 @@ class ChatActor(pykka.ThreadingActor):
 
         message_id = None if not orig_with_track_msg else orig_with_track_msg.message_id
 
-        if self.current_placeholder:
-            if message.message_id == self.current_placeholder.message_id:
-                skip
-
 
         if callback[0] == 'vol':
             dev = DeviceData(self.get_token(message.text, callback_query.from_user))
@@ -353,6 +349,7 @@ class ChatActor(pykka.ThreadingActor):
                                'reply_markup': InlineKeyboardMarkup(keyboard)})
 
         elif callback[0] == 'skip':
+            message_id = message_id if message_id else callback[1]
             for likes_data in self.latest_tracks.get(message_id):
                 text = "skipping %s" % likes_data.title
                 for d in self.devices:
@@ -414,9 +411,22 @@ class ChatActor(pykka.ThreadingActor):
             callback_vol_plus = 'vol' + ':' + '1'
             callback_vol_minus = 'vol' + ':' + '0'
 
+            orig_with_track = update.get('orig')
+
+
+            first_row = [InlineKeyboardButton(not_so_loud, callback_data=callback_vol_minus),
+                     InlineKeyboardButton(loud, callback_data=callback_vol_plus)]
+
+            option = None
+
+            if update.get("boring", False):
+                option = InlineKeyboardButton(skip, callback_data='skip:' + orig_with_track)
+
+            if option:
+                first_row.append(option)
+
             keyboard = [
-                [InlineKeyboardButton(not_so_loud, callback_data=callback_vol_minus),
-                 InlineKeyboardButton(loud, callback_data=callback_vol_plus)],
+                first_row
             ]
 
             # if track_keyboard is not None:
@@ -424,9 +434,9 @@ class ChatActor(pykka.ThreadingActor):
 
             message = org_msg + " " + update.get('title') + '\n' + update.get('device_name')
 
-            self.current_placeholder = update.get('placeholder')
-            if self.current_placeholder:
-                self.bot.tell({'command': 'edit', 'base': self.current_placeholder, 'message': message,
+            current_placeholder = update.get('placeholder')
+            if current_placeholder:
+                self.bot.tell({'command': 'edit', 'base': current_placeholder, 'message': message,
                                'reply_markup': InlineKeyboardMarkup(keyboard)})
 
 
@@ -455,6 +465,7 @@ class ChatActor(pykka.ThreadingActor):
             if isinstance(t, TrackStatus):
                 device.tell({'command': 'add_track', 'track': t.data})
             elif isinstance(t, YoutubeVidStatus):
+                t.data['boring'] = True
                 device.tell({'command': 'add_youtube_link', 'youtube_link': t.data})
 
     def on_receive(self, message):
@@ -470,9 +481,12 @@ class ChatActor(pykka.ThreadingActor):
                 message.get('device').tell(
                     {'command': 'move_to', 'chat': self.actor_ref, 'placeholder': message.get('placeholder')})
             elif message.get('command') == 'remove_device':
+                to_remove = None
                 for d in self.devices:
                     if d[0] == message.get('token'):
-                        self.devices.remove(d)
+                        to_remove = d
+                if to_remove:
+                    self.devices.remove(to_remove)
                 self.devices_tokens.remove(message.get('token'))
             elif message.get('command') == 'device_content_status':
                 self.on_device_update(message.get('content_status'))
