@@ -350,7 +350,7 @@ class ChatActor(pykka.ThreadingActor):
 
         elif callback[0] == 'skip':
             message_id = message_id if message_id else callback[1]
-            for likes_data in self.latest_tracks.get(message_id):
+            for likes_data in self.latest_tracks.get(int(message_id)):
                 text = "skipping %s" % likes_data.title
                 for d in self.devices:
                     device_ref = self.enshure_device_ref(d)
@@ -420,7 +420,7 @@ class ChatActor(pykka.ThreadingActor):
             option = None
 
             if update.get("boring", False):
-                option = InlineKeyboardButton(skip, callback_data='skip:' + orig_with_track)
+                option = InlineKeyboardButton(skip, callback_data='skip:' + str(orig_with_track))
 
             if option:
                 first_row.append(option)
