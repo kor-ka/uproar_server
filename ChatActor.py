@@ -460,12 +460,12 @@ class ChatActor(pykka.ThreadingActor):
         t = random.choice(self.latest_tracks.get())
         status = t.device_status.get(token.split('-')[1])
         if status is None or not status.startswith(skip):
+            t.data['boring'] = True
             if hasattr(t, "file_id"):
                 t.data["track_url"] = self.get_d_url(t.file_id)
             if isinstance(t, TrackStatus):
                 device.tell({'command': 'add_track', 'track': t.data})
             elif isinstance(t, YoutubeVidStatus):
-                t.data['boring'] = True
                 device.tell({'command': 'add_youtube_link', 'youtube_link': t.data})
 
     def on_receive(self, message):
