@@ -381,7 +381,7 @@ class ChatActor(pykka.ThreadingActor):
     def get_keyboard(self, likes_data, orig_with_track_msg, msg_with_btns):
         option = None
         if likes_data.dislikes >= votes_to_skip and likes_data.dislikes > likes_data.likes:
-            option = InlineKeyboardButton(skip, callback_data='skip:' + str(orig_with_track_msg))
+            option = InlineKeyboardButton(skip, callback_data='skip:' + str(orig_with_track_msg) + ":" + str(msg_with_btns))
         if likes_data.likes >= votes_to_skip and likes_data.likes > likes_data.dislikes:
             option = InlineKeyboardButton(promoted, callback_data='promote')
         first_row = [InlineKeyboardButton(thumb_up + " " + str(likes_data.likes), callback_data='like:1:' + str(orig_with_track_msg) + ":" + str(msg_with_btns)),
@@ -430,7 +430,7 @@ class ChatActor(pykka.ThreadingActor):
             option = None
 
             if update.get("boring", False):
-                option = InlineKeyboardButton(skip, callback_data='skip:' + str(orig_with_track))
+                option = InlineKeyboardButton(skip, callback_data='skip:' + str(org_msg) + ":" + str(msg_with_btns))
 
             if option:
                 holder_row.append(option)
