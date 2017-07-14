@@ -54,10 +54,7 @@ class StorageActor(pykka.ThreadingActor):
         try:
             print "Storage Actor msg " + str(message)
             key = message.get('key')
-            try:
-                key = key.encode('ascii','replace')
-            except:
-                pass
+
             if message.get('command') == "get":
                 res = []
                 cur = self.db.cursor()
@@ -111,7 +108,7 @@ class StorageActor(pykka.ThreadingActor):
 
                     cur.execute('''DELETE FROM ${table}
                                     WHERE key = %s;'''.replace('${table}',
-                                                               message.get('table')), (str(key)))
+                                                               message.get('table')), (key,))
                     self.db.commit()
                     return True
                 except Exception as ex:
