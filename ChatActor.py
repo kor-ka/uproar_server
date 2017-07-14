@@ -230,15 +230,18 @@ class ChatActor(pykka.ThreadingActor):
                     {'command': 'reply', 'base': message, 'message': 'no devices, please forward one from @uproarbot'})
 
     def reply_to_content(self, message, title):
-        keyboard = [
-            [InlineKeyboardButton(thumb_up + " 0", callback_data='like:1:' + str(message.reply_to.id) + ":" + str(message.id)),
-             InlineKeyboardButton(thumb_down + " 0", callback_data='like:0' + str(message.reply_to.id) + ":" + str(message.id))],
-        ]
+
         title = title.decode("utf-8")
         reply = self.bot.ask(
             {'command': 'reply', 'base': message,
-             'message': title,
-             'reply_markup': InlineKeyboardMarkup(keyboard)})
+             'message': title})
+
+        keyboard = [
+            [InlineKeyboardButton(thumb_up + " 0", callback_data='like:1:' + str(message.id) + ":" + reply.message_id),
+             InlineKeyboardButton(thumb_down + " 0", callback_data='like:0' + str(message.id)  + ":" + reply.message_id)],
+        ]
+
+        self.bot.ask({'command': 'update', 'update': reply, 'reply_markup': InlineKeyboardMarkup(keyboard)})
         return reply
 
     def enshure_device_ref(self, device):
