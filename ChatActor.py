@@ -439,25 +439,24 @@ class ChatActor(pykka.ThreadingActor):
                 holder_row
             ]
 
-            if track_keyboard:
-                for row in track_keyboard:
+            # commented untill we cant get user from original message by id
+            # if track_keyboard:
+            #     for row in track_keyboard:
+            #
+            #         for btn in row:
+            #             if btn.text.startswith(thumb_down):
+            #                 btn.text = thumb_down
+            #             elif btn.text.startswith(thumb_up):
+            #                 btn.text = thumb_up
+            #
+            #
+            #         keyboard.append(row)
 
-                    for btn in row:
-                        if btn.text.startswith(thumb_down):
-                            btn.text = thumb_down
-                        elif btn.text.startswith(thumb_up):
-                            btn.text = thumb_up
-
-
-                    keyboard.append(row)
-
-            # if track_keyboard is not None:
-            #     keyboard.append(track_keyboard[0])
 
             message = org_msg + " " + update.get('title') + '\n' + update.get('device_name')
 
             if update['placeholder'].chat.username:
-                message += "\n" + "t.me/" + update['placeholder'].chat.username + '/' + msg_with_btns
+                message += "\n" + "t.me/" + update['placeholder'].chat.username + '/' + str(msg_with_btns)
 
             current_placeholder = update.get('placeholder')
             if current_placeholder:
