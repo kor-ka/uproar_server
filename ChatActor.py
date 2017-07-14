@@ -364,7 +364,7 @@ class ChatActor(pykka.ThreadingActor):
                     device_ref = self.enshure_device_ref(d)
                     device_ref.tell({'command': 'skip', 'orig': likes_data.original_msg_id})
 
-                self.bot.tell({"command":"sendDoc", "chat_id":self.chat_id, "caption":"Skip by anon azazaz", "file_id": random.choice(self.skip_gifs)})
+                self.bot.tell({"command":"sendDoc", "chat_id":self.chat_id, "caption":"Skip by anon azazaz", "reply_to": int(orig_with_track_msg), "file_id": random.choice(self.skip_gifs)})
 
 
         elif callback[0] == 'promote':
@@ -373,7 +373,7 @@ class ChatActor(pykka.ThreadingActor):
                 for d in self.devices:
                     device_ref = self.enshure_device_ref(d)
                     device_ref.tell({'command': 'promote', 'orig': likes_data.original_msg_id})
-                self.bot.tell({"command":"sendDoc", "chat_id":self.chat_id, "caption":"Promote by %s" % callback_query.from_user.first_name, "file_id":random.choice(self.promote_gifs)})
+                self.bot.tell({"command":"sendDoc", "chat_id":self.chat_id, "caption":"Promote by %s" % callback_query.from_user.first_name, "reply_to": int(orig_with_track_msg), "file_id":random.choice(self.promote_gifs)})
 
         if answer:
             callback_query.answer(text=text, show_alert=show_alert)
@@ -383,7 +383,7 @@ class ChatActor(pykka.ThreadingActor):
         if likes_data.dislikes >= votes_to_skip and likes_data.dislikes > likes_data.likes:
             option = InlineKeyboardButton(skip, callback_data='skip:' + str(orig_with_track_msg) + ":" + str(msg_with_btns))
         if likes_data.likes >= votes_to_skip and likes_data.likes > likes_data.dislikes:
-            option = InlineKeyboardButton(promoted, callback_data='promote')
+            option = InlineKeyboardButton(promoted, callback_data='promote:' + str(orig_with_track_msg) + ":" + str(msg_with_btns))
         first_row = [InlineKeyboardButton(thumb_up + " " + str(likes_data.likes), callback_data='like:1:' + str(orig_with_track_msg) + ":" + str(msg_with_btns)),
                      InlineKeyboardButton(thumb_down + " " + str(likes_data.dislikes), callback_data='like:0:' + str(orig_with_track_msg)  + ":" + str(msg_with_btns))]
         if option is not None:

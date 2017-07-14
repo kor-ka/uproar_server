@@ -67,8 +67,8 @@ class BotActor(pykka.ThreadingActor):
     def send(self, message, chat_id, reply_markup):
         return self.bot.sendMessage(chat_id=chat_id, text=message, reply_markup=reply_markup)
 
-    def sendDoc(self, caption, chat_id, file_id):
-        return self.bot.sendDocument(chat_id, file_id, caption=caption)
+    def sendDoc(self, caption, chat_id, file_id, reply_to):
+        return self.bot.sendDocument(chat_id, file_id, caption=caption, reply_to_message_id=reply_to)
 
     def reply_inline(self, q, res):
         results = []
@@ -99,7 +99,7 @@ class BotActor(pykka.ThreadingActor):
             elif message.get('command') == 'send':
                 return self.send(message.get('message'), message.get('chat_id'), message.get('reply_markup'))
             elif message.get('command') == 'sendDoc':
-                return self.sendDoc(message.get('caption'), message.get('chat_id'), message.get('file_id'))
+                return self.sendDoc(message.get('caption'), message.get('chat_id'), message.get('file_id'), message.get("reply_to"))
             elif message.get('command') == 'inline_res':
                 return self.reply_inline(message.get('q'), message.get('res'))
         except Exception as ex:
