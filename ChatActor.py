@@ -290,8 +290,8 @@ class ChatActor(pykka.ThreadingActor):
         msg_with_btns = 0
 
         try:
-            message_id = callback[-1]
-            msg_with_btns = callback[-2]
+            message_id = callback[-2]
+            msg_with_btns = callback[-1]
         except:
             pass
 
