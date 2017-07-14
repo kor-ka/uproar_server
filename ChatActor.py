@@ -237,8 +237,8 @@ class ChatActor(pykka.ThreadingActor):
              'message': title})
 
         keyboard = [
-            [InlineKeyboardButton(thumb_up + " 0", callback_data='like:1:' + str(message.message_id) + ":" + reply.message_id),
-             InlineKeyboardButton(thumb_down + " 0", callback_data='like:0' + str(message.message_id)  + ":" + reply.message_id)],
+            [InlineKeyboardButton(thumb_up + " 0", callback_data='like:1:' + str(message.message_id) + ":" + str(reply.message_id)),
+             InlineKeyboardButton(thumb_down + " 0", callback_data='like:0' + str(message.message_id)  + ":" + str(reply.message_id))],
         ]
 
         self.bot.ask({'command': 'update', 'update': reply, 'reply_markup': InlineKeyboardMarkup(keyboard)})
