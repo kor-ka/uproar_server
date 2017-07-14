@@ -107,7 +107,7 @@ class StorageActor(pykka.ThreadingActor):
 
                     cur.execute('''DELETE FROM ${table}
                                     WHERE key = %s;'''.replace('${table}',
-                                                               message.get('table')), (key))
+                                                               message.get('table')), (str(key)))
                     self.db.commit()
                     return True
                 except Exception as ex:
