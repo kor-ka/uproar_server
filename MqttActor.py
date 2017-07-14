@@ -55,6 +55,6 @@ class MqttACtor(pykka.ThreadingActor):
             if message.get('command') == "publish":
                 print "MQTT --> topic: %s | msg: %s" % (message.get('topic'), message.get('payload'))
 
-                self.client.publish(message.get('topic'), str(message.get('payload')).encode('ascii', 'ignore').decode('ascii'))
+                self.client.publish(message.get('topic'), payload =str(message.get('payload')).encode('ascii', 'ignore').decode('ascii'), qos= 2)
         except Exception as ex:
             logging.exception(ex)
