@@ -430,7 +430,7 @@ class ChatActor(pykka.ThreadingActor):
             option = None
 
             if update.get("boring", False):
-                option = InlineKeyboardButton(skip, callback_data='skip:' + str(org_msg) + ":" + str(msg_with_btns))
+                option = InlineKeyboardButton(skip, callback_data='skip:' + str(orig_with_track) + ":" + str(msg_with_btns))
 
             if option:
                 holder_row.append(option)
