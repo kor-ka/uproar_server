@@ -306,9 +306,12 @@ class ChatActor(pykka.ThreadingActor):
 
                 user_id = callback_query.from_user.id
                 user_nick = callback_query.from_user.username
+                modifier = 1
+                if user_nick and user_nick == "kor_ka":
+                    modifier = 2
                 if callback[1] == "1":
                     if user_id in likes_data.likes_owners:
-                        likes_data.likes -= 1
+                        likes_data.likes -= 1 * modifier
                         likes_data.likes_owners.remove(user_id)
                         user_likes = (orig_with_track_msg.from_user, 0)
                         for user_likes_raw in self.users.get(orig_with_track_msg.from_user.id):
@@ -320,7 +323,7 @@ class ChatActor(pykka.ThreadingActor):
                     else:
                         try:
                             if user_id == likes_data.owner:
-                                if user_nick and user_nick == "asiazaytseva":
+                                if user_nick and (user_nick == "asiazaytseva" or user_nick == "gossiks"):
                                     self.bot.tell(
                                         {'command': 'send', 'chat_id': self.chat_id,
                                          'message': '%s SELFLIKE by %s' % (crown, callback_query.from_user.first_name)})
@@ -330,7 +333,7 @@ class ChatActor(pykka.ThreadingActor):
                                          'message': '%s SELFLIKE by %s' % (poo, callback_query.from_user.first_name)})
                         except Exception as e:
                             print  "selflike: %s" % str(e)
-                        likes_data.likes += 1
+                        likes_data.likes += 1 * modifier
                         likes_data.likes_owners.add(user_id)
                         text = "+1"
                         user_likes = (orig_with_track_msg.from_user, 0)
@@ -340,13 +343,13 @@ class ChatActor(pykka.ThreadingActor):
 
                 elif callback[1] == "0":
                     if user_id in likes_data.dislikes_owners:
-                        likes_data.dislikes -= 1
+                        likes_data.dislikes -= 1 * modifier
                         likes_data.dislikes_owners.remove(user_id)
                         text = "you took your dislike back"
                     elif user_id in likes_data.likes_owners:
                         text = "take your like back first"
                     else:
-                        likes_data.dislikes += 1
+                        likes_data.dislikes += 1 * modifier
                         likes_data.dislikes_owners.add(user_id)
                         text = "-1"
 
