@@ -452,11 +452,12 @@ class ChatActor(pykka.ThreadingActor):
             #
             #         keyboard.append(row)
 
-
-            message = org_msg + " " + update.get('title') + '\n' + update.get('device_name')
+            message = org_msg + " " + update.get('title')
 
             if update['placeholder'].chat.username:
                 message += "\n" + "t.me/" + update['placeholder'].chat.username + '/' + str(msg_with_btns)
+
+            message += '\n' + update.get('device_name')
 
             current_placeholder = update.get('placeholder')
             if current_placeholder:
