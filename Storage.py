@@ -53,7 +53,11 @@ class StorageActor(pykka.ThreadingActor):
     def on_receive(self, message):
         try:
             print "Storage Actor msg " + str(message)
-            key = message.get('key').encode('ascii','replace')
+            key = message.get('key')
+            try:
+                key = key.encode('ascii','replace')
+            except:
+                pass
             if message.get('command') == "get":
                 res = []
                 cur = self.db.cursor()
