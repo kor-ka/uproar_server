@@ -231,8 +231,8 @@ class ChatActor(pykka.ThreadingActor):
 
     def reply_to_content(self, message, title):
         keyboard = [
-            [InlineKeyboardButton(thumb_up + " 0", callback_data='like:1'),
-             InlineKeyboardButton(thumb_down + " 0", callback_data='like:0')],
+            [InlineKeyboardButton(thumb_up + " 0", callback_data='like:1:' + str(message.reply_to.id) + ":" + str(message.id)),
+             InlineKeyboardButton(thumb_down + " 0", callback_data='like:0' + str(message.reply_to.id) + ":" + str(message.id))],
         ]
         title = title.decode("utf-8")
         reply = self.bot.ask(
@@ -283,8 +283,14 @@ class ChatActor(pykka.ThreadingActor):
 
         orig_with_track_msg = message.reply_to_message
 
-        message_id = None if not orig_with_track_msg else orig_with_track_msg.message_id
+        message_id = 0
+        msg_with_btns = 0
 
+        try:
+            message_id = callback[-1]
+            msg_with_btns = callback[-2]
+        except:
+            pass
 
         if callback[0] == 'vol':
             dev = DeviceData(self.get_token(message.text, callback_query.from_user))
@@ -343,13 +349,12 @@ class ChatActor(pykka.ThreadingActor):
 
                 self.latest_tracks.put(message_id, likes_data)
 
-                keyboard = self.get_keyboard(likes_data)
+                keyboard = self.get_keyboard(likes_data, message_id, msg_with_btns)
 
                 self.bot.tell({'command': 'edit_reply_markup', 'base': callback_query,
                                'reply_markup': InlineKeyboardMarkup(keyboard)})
 
         elif callback[0] == 'skip':
-            message_id = message_id if message_id else callback[1]
             for likes_data in self.latest_tracks.get(int(message_id)):
                 text = "skipping %s" % likes_data.title
                 for d in self.devices:
@@ -370,14 +375,14 @@ class ChatActor(pykka.ThreadingActor):
         if answer:
             callback_query.answer(text=text, show_alert=show_alert)
 
-    def get_keyboard(self, likes_data):
+    def get_keyboard(self, likes_data, orig_with_track_msg, msg_with_btns):
         option = None
         if likes_data.dislikes >= votes_to_skip and likes_data.dislikes > likes_data.likes:
-            option = InlineKeyboardButton(skip, callback_data='skip')
+            option = InlineKeyboardButton(skip, callback_data='skip:' + str(orig_with_track_msg))
         if likes_data.likes >= votes_to_skip and likes_data.likes > likes_data.dislikes:
             option = InlineKeyboardButton(promoted, callback_data='promote')
-        first_row = [InlineKeyboardButton(thumb_up + " " + str(likes_data.likes), callback_data='like:1'),
-                     InlineKeyboardButton(thumb_down + " " + str(likes_data.dislikes), callback_data='like:0')]
+        first_row = [InlineKeyboardButton(thumb_up + " " + str(likes_data.likes), callback_data='like:1:' + str(orig_with_track_msg) + ":" + str(msg_with_btns)),
+                     InlineKeyboardButton(thumb_down + " " + str(likes_data.dislikes), callback_data='like:0:' + str(orig_with_track_msg)  + ":" + str(msg_with_btns))]
         if option is not None:
             first_row.append(option)
         keyboard = [first_row]
@@ -388,6 +393,9 @@ class ChatActor(pykka.ThreadingActor):
         track_keyboard = None
 
         org_msg = update.get('message')
+
+        orig_with_track = update.get('orig')
+        msg_with_btns = update.get('message_id')
 
         self.current_orig_message_id = update.get('orig')
         for track_status in self.latest_tracks.get(self.current_orig_message_id):
@@ -400,7 +408,7 @@ class ChatActor(pykka.ThreadingActor):
 
             update['message'] = message
 
-            track_keyboard = self.get_keyboard(track_status)
+            track_keyboard = self.get_keyboard(track_status, orig_with_track, msg_with_btns)
 
             self.bot.tell({'command': 'update', 'update': update, 'reply_markup': InlineKeyboardMarkup(track_keyboard)})
             self.latest_tracks.put(self.current_orig_message_id, track_status)
@@ -411,10 +419,9 @@ class ChatActor(pykka.ThreadingActor):
             callback_vol_plus = 'vol' + ':' + '1'
             callback_vol_minus = 'vol' + ':' + '0'
 
-            orig_with_track = update.get('orig')
 
 
-            first_row = [InlineKeyboardButton(not_so_loud, callback_data=callback_vol_minus),
+            holder_row = [InlineKeyboardButton(not_so_loud, callback_data=callback_vol_minus),
                      InlineKeyboardButton(loud, callback_data=callback_vol_plus)]
 
             option = None
@@ -423,16 +430,31 @@ class ChatActor(pykka.ThreadingActor):
                 option = InlineKeyboardButton(skip, callback_data='skip:' + str(orig_with_track))
 
             if option:
-                first_row.append(option)
+                holder_row.append(option)
 
             keyboard = [
-                first_row
+                holder_row
             ]
+
+            if track_keyboard:
+                for row in track_keyboard:
+
+                    for btn in row:
+                        if btn.text.startswith(thumb_down):
+                            btn.text = thumb_down
+                        elif btn.text.startswith(thumb_up):
+                            btn.text = thumb_up
+
+
+                    keyboard.append(row)
 
             # if track_keyboard is not None:
             #     keyboard.append(track_keyboard[0])
 
             message = org_msg + " " + update.get('title') + '\n' + update.get('device_name')
+
+            if update['placeholder'].chat.username:
+                message += "\n" + "t.me/" + update['placeholder'].chat.username + '/' + msg_with_btns
 
             current_placeholder = update.get('placeholder')
             if current_placeholder:
