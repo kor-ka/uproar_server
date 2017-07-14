@@ -364,7 +364,7 @@ class ChatActor(pykka.ThreadingActor):
                     device_ref = self.enshure_device_ref(d)
                     device_ref.tell({'command': 'skip', 'orig': likes_data.original_msg_id})
 
-                self.bot.tell({"command":"sendDoc", "chat_id":self.chat_id, "caption":"Skip by anon azazaz", "reply_to": int(orig_with_track_msg), "file_id": random.choice(self.skip_gifs)})
+                self.bot.tell({"command":"sendDoc", "chat_id":self.chat_id, "caption":"Skip by anon azazaz", "reply_to": int(message_id), "file_id": random.choice(self.skip_gifs)})
 
 
         elif callback[0] == 'promote':
@@ -373,7 +373,7 @@ class ChatActor(pykka.ThreadingActor):
                 for d in self.devices:
                     device_ref = self.enshure_device_ref(d)
                     device_ref.tell({'command': 'promote', 'orig': likes_data.original_msg_id})
-                self.bot.tell({"command":"sendDoc", "chat_id":self.chat_id, "caption":"Promote by %s" % callback_query.from_user.first_name, "reply_to": int(orig_with_track_msg), "file_id":random.choice(self.promote_gifs)})
+                self.bot.tell({"command":"sendDoc", "chat_id":self.chat_id, "caption":"Promote by %s" % callback_query.from_user.first_name, "reply_to": int(message_id), "file_id":random.choice(self.promote_gifs)})
 
         if answer:
             callback_query.answer(text=text, show_alert=show_alert)
