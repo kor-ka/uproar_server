@@ -85,6 +85,13 @@ class ChatActor(pykka.ThreadingActor):
     def on_message(self, message):
         if message.text:
             text = message.text
+
+            if message.chat.type != 'private' and text.startswith('/crown'):
+                    self.bot.tell(
+                        {'command': 'send', 'chat_id': message.chat_id,
+                         'message': 'You can get crown instead of poo, just ask me in private ;)'})
+                    return
+
             if text.startswith('/token'):
 
                 if not message.from_user.username:
