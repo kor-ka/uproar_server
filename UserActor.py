@@ -29,7 +29,7 @@ class UserActor(pykka.ThreadingActor):
             'description': u'replaces your selflike ' + self.poo + u' with ' + self.crown + "!",
             'payload': crown_requset,
             'provider_token': os.getenv("telegram_payment_token"),
-            'start_parameter': "/crown",
+            'start_parameter': "crown",
             'currency': "RUB",
             'prices': [LabeledPrice(self.crown, 10)],
 
