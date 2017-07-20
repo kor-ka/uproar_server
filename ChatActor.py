@@ -320,14 +320,18 @@ class ChatActor(pykka.ThreadingActor):
                     else:
                         try:
                             if user_id == likes_data.owner:
+                                emoji = poo
+
                                 if user_nick and (user_nick == "asiazaytseva" or user_nick == "gossiks"):
-                                    self.bot.tell(
-                                        {'command': 'send', 'chat_id': self.chat_id,
-                                         'message': '%s SELFLIKE by %s' % (crown, callback_query.from_user.first_name)})
-                                else:
-                                    self.bot.tell(
-                                        {'command': 'send', 'chat_id': self.chat_id,
-                                         'message': '%s SELFLIKE by %s' % (poo, callback_query.from_user.first_name)})
+                                    emoji = crown
+
+                                if self.manager.ask({"command":"get_user", "user_id":user_id}).ask({"command":"crown_active"}):
+                                    emoji = crown
+
+                                self.bot.tell(
+                                    {'command': 'send', 'chat_id': self.chat_id,
+                                     'message': '%s SELFLIKE by %s' % (emoji, callback_query.from_user.first_name)})
+
                         except Exception as e:
                             print  "selflike: %s" % str(e)
                         likes_data.likes += 1 * modifier
