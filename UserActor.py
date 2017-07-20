@@ -42,7 +42,7 @@ class UserActor(pykka.ThreadingActor):
             logging.exception(ex)
 
     def on_message(self, message):
-        if message.text and (message.text == '/crown' or message.text == '/start crown'):
+        if message.text and (message.text.startswith('/crown') or message.text == '/start crown'):
             self.request_crown(message.chat.id)
 
         if message.successful_payment:

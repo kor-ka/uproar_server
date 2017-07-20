@@ -20,8 +20,7 @@ class ManagerActor(pykka.ThreadingActor):
 
     def on_message(self, message):
         self.get_chat(message.chat_id).tell({'command':'message', 'message':message})
-        if message.chat.type == 'private':
-            self.get_user(message.from_user.id).tell({"command": "msg", "msg": message})
+        self.get_user(message.from_user.id).tell({"command": "msg", "msg": message})
 
     def on_callback_query(self, callback_query):
         if callback_query.message:
