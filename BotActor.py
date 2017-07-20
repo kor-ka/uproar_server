@@ -20,6 +20,7 @@ from telegram.ext import CallbackQueryHandler
 from telegram.ext import Filters
 from telegram.ext import InlineQueryHandler
 from telegram.ext import MessageHandler
+from telegram.ext import PreCheckoutQueryHandler
 from telegram.ext import Updater
 
 import ManagerActor
@@ -44,6 +45,7 @@ class BotActor(pykka.ThreadingActor):
         dp.add_handler(MessageHandler(Filters.all, self.post))
         dp.add_handler(CallbackQueryHandler(self.post))
         dp.add_handler(InlineQueryHandler(self.post))
+        dp.add_handler(PreCheckoutQueryHandler(self.post))
 
         # Start the Bot
         updater.start_polling()
