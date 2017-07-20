@@ -8,7 +8,7 @@ from telegram import LabeledPrice
 import Storage
 from Storage import StorageProvider
 
-crown_requset = 0xff
+crown_requset = "crown_requset"
 class UserActor(pykka.ThreadingActor):
     def __init__(self, id, bot):
         super(UserActor, self).__init__()
@@ -31,7 +31,7 @@ class UserActor(pykka.ThreadingActor):
 
     def on_receive(self, message):
         try:
-            print "Manager Actor msg " + str(message)
+            print "User Actor msg " + str(message)
             if message['command'] == 'msg':
                 self.on_message(message['msg'])
             elif message['command'] == 'pre':
