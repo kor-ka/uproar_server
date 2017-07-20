@@ -19,7 +19,7 @@ class UserActor(pykka.ThreadingActor):
             self.on_precheckout(message['pre'])
 
     def on_message(self, message):
-        if message.text and message.text == '/crown':
+        if message.text and (message.text == '/crown' or message.text == '/start crown'):
             self.request_crown(message.chat.id)
 
     def request_crown(self, chat_id):
