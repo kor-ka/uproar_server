@@ -53,8 +53,8 @@ class UserActor(pykka.ThreadingActor):
     def request_crown(self, chat_id):
         args = {
             'chat_id': chat_id,
-            'title': 'get a crown!',
-            'description': u'replaces your selflike ' + self.poo + u' with ' + self.crown + " for 24h!",
+            'title': 'Get a crown!',
+            'description': u'Replaces your selflike ' + self.poo + u' with ' + self.crown + " for 24h!",
             'payload': crown_requset,
             'provider_token': os.getenv("telegram_payment_token"),
             'start_parameter': "crown",
@@ -66,7 +66,7 @@ class UserActor(pykka.ThreadingActor):
 
     def on_precheckout(self, pre):
         if pre.invoice_payload == crown_requset:
-            pre.answer(pre.id, True)
+            self.bot.tell({"command":"confirm_precheckout", "id":pre.id})
 
     def crown_active(self):
        return self.crown_data["ends"] >= int(round(time.time() * 1000))

@@ -106,5 +106,7 @@ class BotActor(pykka.ThreadingActor):
                 return self.reply_inline(message.get('q'), message.get('res'))
             elif message.get('command') == 'invoice':
                 return self.bot.sendInvoice(**message["invoice_args"])
+            elif message.get('command') == 'confirm_precheckout':
+                return self.bot.answer_pre_checkout_query(message["id"], True)
         except Exception as ex:
             logging.exception(ex)
