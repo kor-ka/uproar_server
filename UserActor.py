@@ -1,5 +1,6 @@
 import os
 
+import logging
 import pykka
 import time
 from telegram import LabeledPrice
@@ -20,18 +21,25 @@ class UserActor(pykka.ThreadingActor):
         self.crown_data = {"ends":0}
 
     def on_start(self):
-        self.storage = self.db.ask(
-            {'command': 'get_list', 'name': Storage.USER_STORAGE, 'suffix': str(self.id)})
-        for crown in self.storage.get('crown'):
-            self.crown_data = crown
+        try:
+            self.storage = self.db.ask(
+                {'command': 'get_list', 'name': Storage.USER_STORAGE, 'suffix': str(self.id)})
+            for crown in self.storage.get('crown'):
+                self.crown_data = crown
+        except Exception as ex:
+            logging.exception(ex)
 
     def on_receive(self, message):
-        if message['command'] == 'msg':
-            self.on_message(message['msg'])
-        elif message['command'] == 'pre':
-            self.on_precheckout(message['pre'])
-        elif message['command'] == 'crown_active':
-            return self.crown_active()
+        try:
+            print "Manager Actor msg " + str(message)
+            if message['command'] == 'msg':
+                self.on_message(message['msg'])
+            elif message['command'] == 'pre':
+                self.on_precheckout(message['pre'])
+            elif message['command'] == 'crown_active':
+                return self.crown_active()
+        except Exception as ex:
+            logging.exception(ex)
 
     def on_message(self, message):
         if message.text and (message.text == '/crown' or message.text == '/start crown'):
