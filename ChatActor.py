@@ -233,7 +233,7 @@ class ChatActor(pykka.ThreadingActor):
 
         keyboard = [
             [InlineKeyboardButton(thumb_up + " 0", callback_data='like:1:' + str(message.message_id)),
-             InlineKeyboardButton(thumb_down + " 0", callback_data='like:0' + str(message.message_id))],
+             InlineKeyboardButton(thumb_down + " 0", callback_data='like:0:' + str(message.message_id))],
         ]
 
         title = title.decode("utf-8")
