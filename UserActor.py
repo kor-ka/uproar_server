@@ -31,7 +31,7 @@ class UserActor(pykka.ThreadingActor):
             'provider_token': os.getenv("telegram_payment_token"),
             'start_parameter': "crown",
             'currency': "RUB",
-            'prices': [LabeledPrice(self.crown, 1000)],
+            'prices': [LabeledPrice(self.crown, 5885)],
 
                 }
         self.bot.tell({'command':'invoice', 'invoice_args':args})
