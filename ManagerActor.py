@@ -4,6 +4,7 @@ from pprint import pprint
 import pykka
 import BotActor, MqttActor, ChatActor, DeviceActor, Storage
 import InlineActor
+import UserActor
 
 
 class ManagerActor(pykka.ThreadingActor):
@@ -14,10 +15,13 @@ class ManagerActor(pykka.ThreadingActor):
 
         self.devices = dict()
         self.chats = dict()
+        self.users = dict()
         self.inline_actors = dict()
 
     def on_message(self, message):
         self.get_chat(message.chat_id).tell({'command':'message', 'message':message})
+        if message.chat.type == 'private':
+            self.get_user(message.from_user.id).tell({"command": "msg", "msg": message})
 
     def on_callback_query(self, callback_query):
         if callback_query.message:
@@ -25,6 +29,9 @@ class ManagerActor(pykka.ThreadingActor):
 
     def on_inline_query(self, inline_query):
         self.get_inline_actor(inline_query.from_user.id).tell({"command": "q", "q":inline_query})
+
+    def on_pre_checkout_query(self, pre_checkout_query):
+        self.get_user(pre_checkout_query.from_user.id).tell({"command": "pre", "pre":pre_checkout_query})
 
     def on_device_update(self, token, update):
         self.get_device(token).tell({'command':'update', 'update':update})
@@ -38,6 +45,13 @@ class ManagerActor(pykka.ThreadingActor):
             chat = ChatActor.ChatActor.start(chat_id, self.actor_ref, self.bot)
             self.chats[chat_id] = chat
         return chat
+
+    def get_user(self, user_id):
+        user = self.users.get(user_id)
+        if user is None or not user.is_alive:
+            user = UserActor.UserActor.start(user_id, self.bot)
+            self.users[user_id] = user
+        return user
 
     def get_inline_actor(self, user_id):
         inline_actor = self.inline_actors.get(user_id)
@@ -65,12 +79,16 @@ class ManagerActor(pykka.ThreadingActor):
                     self.on_callback_query(update.callback_query)
                 elif update.inline_query:
                     self.on_inline_query(update.inline_query)
+                elif update.pre_checkout_query:
+                    self.on_pre_checkout_query(update.pre_checkout_query)
             elif message.get('command') == 'device_out':
                 self.on_device_out_update(message.get('token'), message.get('update'))
             elif message.get('command') == 'get_device':
                 return self.get_device(message.get('token'))
             elif message.get('command') == 'get_chat':
                 return self.get_chat(message.get('chat_id'))
+            elif message.get('command') == 'get_user':
+                return self.get_user(message.get('user_id'))
         except Exception as ex:
             logging.exception(ex)
 

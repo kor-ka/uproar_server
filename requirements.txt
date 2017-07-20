@@ -1,6 +1,6 @@
 paho-mqtt
 pykka
-python-telegram-bot
+python-telegram-bot==6.1.0
 psycopg2
 requests
 splinter
