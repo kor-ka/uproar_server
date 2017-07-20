@@ -103,6 +103,6 @@ class BotActor(pykka.ThreadingActor):
             elif message.get('command') == 'inline_res':
                 return self.reply_inline(message.get('q'), message.get('res'))
             elif message.get('command') == 'invoice':
-                return self.bot.sendInvoice(**message["invoice"])
+                return self.bot.sendInvoice(**message["invoice_args"])
         except Exception as ex:
             logging.exception(ex)
