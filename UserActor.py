@@ -50,7 +50,7 @@ class UserActor(pykka.ThreadingActor):
 
         if message.successful_payment:
             if message.successful_payment.invoice_payload == crown_requset:
-                self.crown_data.update({"ends":int(round(time.time() * 1000)) + 1000 * 60 * 24})
+                self.crown_data.update({"ends":int(round(time.time() * 1000)) + 1000 * 60 * 60 * 24})
                 self.storage.put("crown", self.crown_data)
 
     def request_crown(self, chat_id):
