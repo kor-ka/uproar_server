@@ -13,7 +13,7 @@ class ManagerActor(pykka.ThreadingActor):
         super(ManagerActor, self).__init__()
         self.bot = BotActor.BotActor.start(self.actor_ref)
         self.mqtt = MqttActor.MqttACtor.start(self.actor_ref)
-        self.flask = FlaskRunner.FlaskRunner.start(self.actor_ref)
+        # self.flask = FlaskRunner.FlaskRunner.start(self.actor_ref)
 
         self.devices = dict()
         self.chats = dict()
