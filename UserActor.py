@@ -1,6 +1,8 @@
 import os
 
 import logging
+from pprint import pprint
+
 import pykka
 import time
 from telegram import LabeledPrice
@@ -26,6 +28,7 @@ class UserActor(pykka.ThreadingActor):
                 {'command': 'get_list', 'name': Storage.USER_STORAGE, 'suffix': str(self.id)})
             for crown in self.storage.get('crown'):
                 self.crown_data = crown
+                pprint(self.crown_data)
         except Exception as ex:
             logging.exception(ex)
 

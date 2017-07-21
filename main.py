@@ -12,6 +12,8 @@ import pykka
 import urllib
 import json
 import os
+
+import FlaskRunner
 import ManagerActor
 
 if __name__ == '__main__':
