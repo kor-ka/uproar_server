@@ -15,6 +15,7 @@ def run(manager):
     @app.route('/pay_callback', methods=['POST'])
     def pay_callback():
         manager.tell({"command":"payment", "data":request.data})
+        return ''
 
 
     port = int(os.environ.get('PORT', 5000))
