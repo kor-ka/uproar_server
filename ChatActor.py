@@ -425,7 +425,7 @@ class ChatActor(pykka.ThreadingActor):
 
             update['message'] = message
 
-            track_keyboard = self.get_keyboard(track_status, orig_with_track, msg_with_btns)
+            track_keyboard = self.get_keyboard(track_status, orig_with_track)
 
             self.bot.tell({'command': 'update', 'update': update, 'reply_markup': InlineKeyboardMarkup(track_keyboard)})
             self.latest_tracks.put(self.current_orig_message_id, track_status)
