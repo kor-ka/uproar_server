@@ -1,6 +1,7 @@
 import os
 
 from flask import Flask
+from flask import json
 from flask import request
 
 
@@ -15,7 +16,7 @@ def run(manager):
     @app.route('/pay_callback', methods=['POST'])
     def pay_callback():
         manager.tell({"command":"payment", "data":request.data})
-        return ''
+        return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
 
 
     port = int(os.environ.get('PORT', 5000))
