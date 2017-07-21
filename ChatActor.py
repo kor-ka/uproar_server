@@ -90,7 +90,7 @@ class ChatActor(pykka.ThreadingActor):
                     self.bot.tell(
                         {'command': 'send', 'chat_id': message.chat_id,
                          'message': 'You can get crown instead of poo, just hit this button',
-                         'reply_markup': InlineKeyboardMarkup([InlineKeyboardButton('Get a crown!', url='t.me/uproarbot?start=crown')]),
+                         'reply_markup': InlineKeyboardMarkup([[InlineKeyboardButton('Get a crown!', url='t.me/uproarbot?start=crown')]]),
 
                          })
                     return
