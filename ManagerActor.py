@@ -91,6 +91,8 @@ class ManagerActor(pykka.ThreadingActor):
                 return self.get_chat(message.get('chat_id'))
             elif message.get('command') == 'get_user':
                 return self.get_user(message.get('user_id'))
+            elif message.get('command') == 'payment':
+                pprint(message['data'])
         except Exception as ex:
             logging.exception(ex)
 
