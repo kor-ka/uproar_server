@@ -222,6 +222,8 @@ class ChatActor(pykka.ThreadingActor):
                 return
 
             if len(self.devices) > 0:
+                print (message.audio.performer)
+                print (message.audio.title)
                 title = ' - '.join(filter(None, (message.audio.performer, message.audio.title)))
                 title = message.audio.file_id if not title else title
                 title = title.encode("utf-8")
