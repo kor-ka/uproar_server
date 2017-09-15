@@ -222,7 +222,7 @@ class ChatActor(pykka.ThreadingActor):
                 return
 
             if len(self.devices) > 0:
-                title = message.audio.performer + " - " + message.audio.title
+                title = ' - '.join(filter(bool, (message.audio.performer, message.audio.title)))
                 title = title.encode("utf-8")
                 reply = self.reply_to_content(message, title)
 
