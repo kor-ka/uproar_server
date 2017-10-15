@@ -84,7 +84,7 @@ class ChatActor(pykka.ThreadingActor):
 
     def on_message(self, message):
         if message.text:
-            text = message.text
+            text = message.text  # type: str
 
             if message.chat.type != 'private' and text.startswith('/crown'):
                     self.bot.tell(
@@ -95,10 +95,10 @@ class ChatActor(pykka.ThreadingActor):
                          })
                     return
 
-            if text.startswith('скажи'):
+            if text.lower().startswith('скажи'):
                 self.bot.ask(
-                    {'command': 'reply', 'base': message,
-                     'message': text.replace("скажи", "")})
+                    {'command': 'send', 'chat_id': message.chat_id,
+                         'message': text.lower().replace("скажи", "")})
 
             if text.startswith('/token'):
 
