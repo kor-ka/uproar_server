@@ -95,10 +95,10 @@ class ChatActor(pykka.ThreadingActor):
                          })
                     return
 
-            if text.lower().startswith('скажи'):
+            if text.lower().startswith(u'скажи'):
                 self.bot.ask(
                     {'command': 'send', 'chat_id': message.chat_id,
-                         'message': text.lower().replace("скажи", "")})
+                         'message': text.lower().replace(u"скажи", "")})
 
             if text.startswith('/token'):
 
