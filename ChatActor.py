@@ -95,6 +95,11 @@ class ChatActor(pykka.ThreadingActor):
                          })
                     return
 
+            if text.startswith('скажи'):
+                self.bot.ask(
+                    {'command': 'reply', 'base': message,
+                     'message': text.replace("скажи", "")})
+
             if text.startswith('/token'):
 
                 if not message.from_user.username:
