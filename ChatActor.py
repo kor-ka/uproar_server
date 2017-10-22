@@ -227,17 +227,17 @@ class ChatActor(pykka.ThreadingActor):
                 request.session_id = message.chat.id
                 request.query = message["text"]
                 response = request.getresponse()
-                if response.code // 100 == 2:
-                    string = response.read().decode('utf-8')
-                    res = json.loads(string)
-                    if res["result"]["action"].endswith("echo"):
-                        self.bot.ask(
-                            {'command': 'send', 'chat_id': message.chat_id,
-                             'message': text.lower().replace(u"скажи", "")})
-                    elif res["result"]["action"].startswith("smalltalk"):
-                        self.bot.ask(
-                            {'command': 'send', 'chat_id': message.chat_id,
-                             'message': text})
+
+                string = response.read().decode('utf-8')
+                res = json.loads(string)
+                if res["result"]["action"].endswith("echo"):
+                    self.bot.ask(
+                        {'command': 'send', 'chat_id': message.chat_id,
+                         'message': text.lower().replace(u"скажи", "")})
+                elif res["result"]["action"].startswith("smalltalk"):
+                    self.bot.ask(
+                        {'command': 'send', 'chat_id': message.chat_id,
+                         'message': text})
 
         if message.audio:
             # TODO try catch, move to func - regenerate url before send todevice
