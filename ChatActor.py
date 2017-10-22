@@ -7,6 +7,8 @@ from array import array
 import random
 import re
 import logging
+
+import apiai
 import pykka, os, urllib, json
 import requests
 from requests.auth import HTTPBasicAuth
@@ -68,6 +70,7 @@ class ChatActor(pykka.ThreadingActor):
         self.current_playing_ids = dict()
         self.skip_gifs = ["CgADBAADqWkAAtkcZAc7PiBvHsR8IwI", "CgADBAADrgMAAuMYZAcKVOFNoEE_xgI", "CgADBAADJkAAAnobZAftbqSTl-HsIQI", "CgADBAADLBkAAuIaZAej8zwqpX3GeAI"]
         self.promote_gifs = ["CgADBAADWSMAAjUeZAeEqT810zl7IgI", "CgADBAADUEkAAhEXZAfN5P28QjO3KQI", "CgADBAADpAMAAvkcZAfm332885NH7AI", "CgADBAADyQMAAsUZZAe4b-POmx-A8AI"]
+        self.ai = apiai.ApiAI("78d0cdf68bd8449cb6fcdde8d0b0cd02")
 
     def on_start(self):
         self.latest_tracks = self.db.ask(
@@ -95,10 +98,6 @@ class ChatActor(pykka.ThreadingActor):
                          })
                     return
 
-            if text.lower().startswith(u'скажи'):
-                self.bot.ask(
-                    {'command': 'send', 'chat_id': message.chat_id,
-                         'message': text.lower().replace(u"скажи", "")})
 
             if text.startswith('/token'):
 
@@ -215,6 +214,24 @@ class ChatActor(pykka.ThreadingActor):
                     self.bot.tell(
                         {'command': 'reply', 'base': message,
                          'message': 'no devices, please forward one from @uproarbot'})
+
+            elif message.chat.type == 'private':
+                request = self.ai.text_request()
+                request.lang = 'ru'
+                request.session_id = message.chat.id
+                request.query = message["text"]
+                response = request.getresponse()
+                if response.code // 100 == 2:
+                    string = response.read().decode('utf-8')
+                    res = json.loads(string)
+                    if res["result"]["action"].endswith("echo"):
+                        self.bot.ask(
+                            {'command': 'send', 'chat_id': message.chat_id,
+                             'message': text.lower().replace(u"скажи", "")})
+                    elif res["result"]["action"].startswith("smalltalk"):
+                        self.bot.ask(
+                            {'command': 'send', 'chat_id': message.chat_id,
+                             'message': text})
 
         if message.audio:
             # TODO try catch, move to func - regenerate url before send todevice

@@ -9,3 +9,4 @@ rx
 futures
 Flask
 gunicorn
+apiai
