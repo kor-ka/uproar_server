@@ -234,7 +234,7 @@ class ChatActor(pykka.ThreadingActor):
                     self.bot.ask(
                         {'command': 'send', 'chat_id': message.chat_id,
                          'message': text.lower().replace(u"скажи", "")})
-                elif res["result"]["action"].startswith("smalltalk"):
+                else:
                     self.bot.ask(
                         {'command': 'send', 'chat_id': message.chat_id,
                          'message': res["result"]["fulfillment"]["speech"]})
