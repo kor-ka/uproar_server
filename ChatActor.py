@@ -237,7 +237,7 @@ class ChatActor(pykka.ThreadingActor):
                 elif res["result"]["action"].startswith("smalltalk"):
                     self.bot.ask(
                         {'command': 'send', 'chat_id': message.chat_id,
-                         'message': text})
+                         'message': res["result"]["fulfillment"]["speech"]})
 
         if message.audio:
             # TODO try catch, move to func - regenerate url before send todevice
