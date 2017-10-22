@@ -26,6 +26,8 @@ from pprint import pprint
 
 from telegram import InlineKeyboardMarkup
 
+from apiai.text import TextRequest
+
 loud = u'\U0001F50A'
 not_so_loud = u'\U0001F509'
 
@@ -70,7 +72,6 @@ class ChatActor(pykka.ThreadingActor):
         self.current_playing_ids = dict()
         self.skip_gifs = ["CgADBAADqWkAAtkcZAc7PiBvHsR8IwI", "CgADBAADrgMAAuMYZAcKVOFNoEE_xgI", "CgADBAADJkAAAnobZAftbqSTl-HsIQI", "CgADBAADLBkAAuIaZAej8zwqpX3GeAI"]
         self.promote_gifs = ["CgADBAADWSMAAjUeZAeEqT810zl7IgI", "CgADBAADUEkAAhEXZAfN5P28QjO3KQI", "CgADBAADpAMAAvkcZAfm332885NH7AI", "CgADBAADyQMAAsUZZAe4b-POmx-A8AI"]
-        self.ai = apiai.ApiAI("78d0cdf68bd8449cb6fcdde8d0b0cd02")
 
     def on_start(self):
         self.latest_tracks = self.db.ask(
@@ -216,7 +217,12 @@ class ChatActor(pykka.ThreadingActor):
                          'message': 'no devices, please forward one from @uproarbot'})
 
             elif message.chat.type == 'private':
-                request = self.ai.text_request()
+                request = TextRequest(
+                    "78d0cdf68bd8449cb6fcdde8d0b0cd02",
+                    'api.api.ai',
+                    '20150910',
+                    None
+                )
                 request.lang = 'ru'
                 request.session_id = message.chat.id
                 request.query = message["text"]
