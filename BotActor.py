@@ -66,8 +66,8 @@ class BotActor(pykka.ThreadingActor):
     def edit_reply_markup(self, query, reply_markup):
         return query.edit_message_reply_markup(reply_markup=reply_markup)
 
-    def send(self, message, chat_id, reply_markup):
-        return self.bot.sendMessage(chat_id=chat_id, text=message, reply_markup=reply_markup)
+    def send(self, message, chat_id, reply_markup, disable_notification):
+        return self.bot.sendMessage(chat_id=chat_id, text=message, reply_markup=reply_markup, disable_notification = disable_notification)
 
     def sendDoc(self, caption, chat_id, file_id, reply_to):
         return self.bot.sendDocument(chat_id, file_id, caption=caption, reply_to_message_id=reply_to)
@@ -99,7 +99,7 @@ class BotActor(pykka.ThreadingActor):
             elif message.get('command') == 'edit_reply_markup':
                 return self.edit_reply_markup(message.get('base'), message.get('reply_markup'))
             elif message.get('command') == 'send':
-                return self.send(message.get('message'), message.get('chat_id'), message.get('reply_markup'))
+                return self.send(message.get('message'), message.get('chat_id'), message.get('reply_markup'), message.get('disable_notification', False))
             elif message.get('command') == 'sendDoc':
                 return self.sendDoc(message.get('caption'), message.get('chat_id'), message.get('file_id'), message.get("reply_to"))
             elif message.get('command') == 'inline_res':
