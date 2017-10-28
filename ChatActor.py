@@ -21,6 +21,7 @@ from collections import OrderedDict
 from operator import itemgetter
 from time import time
 import hashlib
+import dateutil.parser
 
 from pprint import pprint
 
@@ -70,8 +71,10 @@ class ChatActor(pykka.ThreadingActor):
         self.current_orig_message_id = None
         self.users = None
         self.current_playing_ids = dict()
-        self.skip_gifs = ["CgADBAADqWkAAtkcZAc7PiBvHsR8IwI", "CgADBAADrgMAAuMYZAcKVOFNoEE_xgI", "CgADBAADJkAAAnobZAftbqSTl-HsIQI", "CgADBAADLBkAAuIaZAej8zwqpX3GeAI"]
-        self.promote_gifs = ["CgADBAADWSMAAjUeZAeEqT810zl7IgI", "CgADBAADUEkAAhEXZAfN5P28QjO3KQI", "CgADBAADpAMAAvkcZAfm332885NH7AI", "CgADBAADyQMAAsUZZAe4b-POmx-A8AI"]
+        self.skip_gifs = ["CgADBAADqWkAAtkcZAc7PiBvHsR8IwI", "CgADBAADrgMAAuMYZAcKVOFNoEE_xgI",
+                          "CgADBAADJkAAAnobZAftbqSTl-HsIQI", "CgADBAADLBkAAuIaZAej8zwqpX3GeAI"]
+        self.promote_gifs = ["CgADBAADWSMAAjUeZAeEqT810zl7IgI", "CgADBAADUEkAAhEXZAfN5P28QjO3KQI",
+                             "CgADBAADpAMAAvkcZAfm332885NH7AI", "CgADBAADyQMAAsUZZAe4b-POmx-A8AI"]
 
     def on_start(self):
         self.latest_tracks = self.db.ask(
@@ -91,14 +94,14 @@ class ChatActor(pykka.ThreadingActor):
             text = message.text  # type: str
 
             if message.chat.type != 'private' and text.startswith('/crown'):
-                    self.bot.tell(
-                        {'command': 'send', 'chat_id': message.chat_id,
-                         'message': 'You can get crown instead of poo, just hit this button',
-                         'reply_markup': InlineKeyboardMarkup([[InlineKeyboardButton('Get a crown!', url='t.me/uproarbot?start=crown')]]),
+                self.bot.tell(
+                    {'command': 'send', 'chat_id': message.chat_id,
+                     'message': 'You can get crown instead of poo, just hit this button',
+                     'reply_markup': InlineKeyboardMarkup(
+                         [[InlineKeyboardButton('Get a crown!', url='t.me/uproarbot?start=crown')]]),
 
-                         })
-                    return
-
+                     })
+                return
 
             if text.startswith('/token'):
 
@@ -115,13 +118,16 @@ class ChatActor(pykka.ThreadingActor):
 
                 device_mqtt_user = message.from_user.username + '-' + random_str
 
-                r0 = requests.post("https://api.cloudmqtt.com/user", data='{"username":"%s", "password":"%s"}' % (device_mqtt_user, token_set), auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass), headers={"Content-Type":"application/json"})
-
-                r1 = requests.post("https://api.cloudmqtt.com/acl",
-                                   data='{"username":"%s", "topic":"%s", "read":false, "write":true}' % (device_mqtt_user, "device_out"),
+                r0 = requests.post("https://api.cloudmqtt.com/user",
+                                   data='{"username":"%s", "password":"%s"}' % (device_mqtt_user, token_set),
                                    auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass),
                                    headers={"Content-Type": "application/json"})
 
+                r1 = requests.post("https://api.cloudmqtt.com/acl",
+                                   data='{"username":"%s", "topic":"%s", "read":false, "write":true}' % (
+                                       device_mqtt_user, "device_out"),
+                                   auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass),
+                                   headers={"Content-Type": "application/json"})
 
                 r2 = requests.post("https://api.cloudmqtt.com/acl",
                                    data='{"username":"%s", "topic":"%s", "read":true, "write":false}' % (
@@ -135,18 +141,19 @@ class ChatActor(pykka.ThreadingActor):
                                    auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass),
                                    headers={"Content-Type": "application/json"})
 
-                if r0.status_code/100 == 2 and r1.status_code/100 == 2 and r2.status_code/100 == 2 and r3.status_code/100 == 2:
+                if r0.status_code / 100 == 2 and r1.status_code / 100 == 2 and r2.status_code / 100 == 2 and r3.status_code / 100 == 2:
                     token_message = self.bot.ask(
                         {'command': 'send', 'chat_id': message.chat_id,
                          'message': loud + ' ' + message.from_user.username + '\'s device: ' + random_str})
 
                     self.bot.tell({'command': 'send', 'chat_id': message.chat_id, 'message': token_set + '\n\nMessage '
-                                                                                                 'above is your device '
-                                                                                                 'holder, forward it to '
-                                                                                                 'chat to subscribe'})
+                                                                                                         'above is your device '
+                                                                                                         'holder, forward it to '
+                                                                                                         'chat to subscribe'})
                 else:
                     self.bot.tell(
-                        {'command': 'send', 'chat_id': message.chat_id, 'message': "sorry, can't create token, try again later"})
+                        {'command': 'send', 'chat_id': message.chat_id,
+                         'message': "sorry, can't create token, try again later"})
 
             elif text.startswith(loud):
                 if message.from_user.username and message.text.replace(loud + ' ', '').startswith(
@@ -195,13 +202,13 @@ class ChatActor(pykka.ThreadingActor):
             elif re.match("^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$", text):
                 if len(self.devices) > 0:
                     resp = urllib.urlopen(text)
-                    if resp.getcode()/100 == 2:
+                    if resp.getcode() / 100 == 2:
                         page = resp.read()
-                        regex = re.compile('<title>(.*?)</title>', re.IGNORECASE|re.DOTALL)
+                        regex = re.compile('<title>(.*?)</title>', re.IGNORECASE | re.DOTALL)
                         title = regex.search(page).group(1)
                         reply = self.reply_to_content(message, title)
                         status = YoutubeVidStatus(message.message_id, reply.message_id, message.chat_id, title, text,
-                                             message.from_user.id, time())
+                                                  message.from_user.id, time())
                         data = status.data
                         data['url'] = text
 
@@ -216,7 +223,7 @@ class ChatActor(pykka.ThreadingActor):
                         {'command': 'reply', 'base': message,
                          'message': 'no devices, please forward one from @uproarbot'})
 
-            elif message.chat.type == 'private':
+            else:
                 request = TextRequest(
                     "78d0cdf68bd8449cb6fcdde8d0b0cd02",
                     'api.api.ai',
@@ -233,11 +240,25 @@ class ChatActor(pykka.ThreadingActor):
                 if res["result"]["action"].endswith("echo"):
                     reply_text = text.lower().replace(u"скажи", "")
                 else:
+
+                    if res["result"]["action"] == 'uproarbot.play':
+                        if res["result"]["parameters"]["uproar_turn"] == 'on':
+                            self.on_boring(self.devices[0][0], self.devices[0][1])
+                        else:
+                            # todo support turn off
+                            pass
+                    elif res["result"]["action"] == 'uproarbot.reminder':
+                        date = res["result"]["parameters"]["date"]  # type: str
+                        if "/" in date:
+                            date = date.split("/")[0]
+                        text = res["result"]["parameters"]["any"]
+                        # todo schedule reminder
+
                     reply_text = res["result"]["fulfillment"]["speech"]
 
                 self.bot.ask(
                     {'command': 'send', 'chat_id': message.chat_id,
-                     'message': reply_text, 'disable_notification':True})
+                     'message': reply_text})
 
         if message.audio:
             # TODO try catch, move to func - regenerate url before send todevice
@@ -255,7 +276,8 @@ class ChatActor(pykka.ThreadingActor):
                 title = title.encode("utf-8")
                 reply = self.reply_to_content(message, title)
 
-                status = TrackStatus(message.message_id, reply.message_id, message.chat_id, title, file_id, message.from_user.id, time())
+                status = TrackStatus(message.message_id, reply.message_id, message.chat_id, title, file_id,
+                                     message.from_user.id, time())
                 data = status.data
                 data['track_url'] = durl
                 self.latest_tracks.put(message.message_id, status)
@@ -305,7 +327,8 @@ class ChatActor(pykka.ThreadingActor):
 
     def get_token(self, text, user):
         last_str = string.split(text, '\n')[-1].replace(loud, '').replace(' ', '')
-        token = string.split(last_str, '\'')[0] + '-' + last_str[-5:] + '-' + str(hashlib.sha256(last_str[-5:] + self.secret).hexdigest())
+        token = string.split(last_str, '\'')[0] + '-' + last_str[-5:] + '-' + str(
+            hashlib.sha256(last_str[-5:] + self.secret).hexdigest())
         return token
 
     def get_device(self, token):
@@ -364,7 +387,8 @@ class ChatActor(pykka.ThreadingActor):
                                 if user_nick and (user_nick == "asiazaytseva" or user_nick == "gossiks"):
                                     emoji = crown
 
-                                if self.manager.ask({"command":"get_user", "user_id":user_id}).ask({"command":"crown_active"}):
+                                if self.manager.ask({"command": "get_user", "user_id": user_id}).ask(
+                                        {"command": "crown_active"}):
                                     emoji = crown
 
                                 self.bot.tell(
@@ -407,7 +431,8 @@ class ChatActor(pykka.ThreadingActor):
                     device_ref = self.enshure_device_ref(d)
                     device_ref.tell({'command': 'skip', 'orig': likes_data.original_msg_id})
 
-                self.bot.tell({"command":"sendDoc", "chat_id":self.chat_id, "caption":"Skip by anon azazaz", "reply_to": int(message_id), "file_id": random.choice(self.skip_gifs)})
+                self.bot.tell({"command": "sendDoc", "chat_id": self.chat_id, "caption": "Skip by anon azazaz",
+                               "reply_to": int(message_id), "file_id": random.choice(self.skip_gifs)})
 
 
         elif callback[0] == 'promote':
@@ -416,7 +441,9 @@ class ChatActor(pykka.ThreadingActor):
                 for d in self.devices:
                     device_ref = self.enshure_device_ref(d)
                     device_ref.tell({'command': 'promote', 'orig': likes_data.original_msg_id})
-                self.bot.tell({"command":"sendDoc", "chat_id":self.chat_id, "caption":"Promote by %s" % callback_query.from_user.first_name, "reply_to": int(message_id), "file_id":random.choice(self.promote_gifs)})
+                self.bot.tell({"command": "sendDoc", "chat_id": self.chat_id,
+                               "caption": "Promote by %s" % callback_query.from_user.first_name,
+                               "reply_to": int(message_id), "file_id": random.choice(self.promote_gifs)})
 
         if answer:
             callback_query.answer(text=text, show_alert=show_alert)
@@ -424,11 +451,13 @@ class ChatActor(pykka.ThreadingActor):
     def get_keyboard(self, likes_data, orig_with_track_msg):
         option = None
         if likes_data.dislikes >= votes_to_skip and likes_data.dislikes > likes_data.likes:
-            option = InlineKeyboardButton(skip, callback_data='skip:' + str(orig_with_track_msg) )
+            option = InlineKeyboardButton(skip, callback_data='skip:' + str(orig_with_track_msg))
         if likes_data.likes >= votes_to_skip and likes_data.likes > likes_data.dislikes:
-            option = InlineKeyboardButton(promoted, callback_data='promote:' + str(orig_with_track_msg) )
-        first_row = [InlineKeyboardButton(thumb_up + " " + str(likes_data.likes), callback_data='like:1:' + str(orig_with_track_msg) ),
-                     InlineKeyboardButton(thumb_down + " " + str(likes_data.dislikes), callback_data='like:0:' + str(orig_with_track_msg)  )]
+            option = InlineKeyboardButton(promoted, callback_data='promote:' + str(orig_with_track_msg))
+        first_row = [InlineKeyboardButton(thumb_up + " " + str(likes_data.likes),
+                                          callback_data='like:1:' + str(orig_with_track_msg)),
+                     InlineKeyboardButton(thumb_down + " " + str(likes_data.dislikes),
+                                          callback_data='like:0:' + str(orig_with_track_msg))]
         if option is not None:
             first_row.append(option)
         keyboard = [first_row]
@@ -459,21 +488,18 @@ class ChatActor(pykka.ThreadingActor):
             self.bot.tell({'command': 'update', 'update': update, 'reply_markup': InlineKeyboardMarkup(track_keyboard)})
             self.latest_tracks.put(self.current_orig_message_id, track_status)
 
-
         if org_msg.startswith(u'\U0001F3B6') or org_msg.startswith(u'\U00002B1B'):
 
             callback_vol_plus = 'vol' + ':' + '1'
             callback_vol_minus = 'vol' + ':' + '0'
 
-
-
             holder_row = [InlineKeyboardButton(not_so_loud, callback_data=callback_vol_minus),
-                     InlineKeyboardButton(loud, callback_data=callback_vol_plus)]
+                          InlineKeyboardButton(loud, callback_data=callback_vol_plus)]
 
             option = None
 
             if update.get("boring", False):
-                option = InlineKeyboardButton(skip, callback_data='skip:' + str(orig_with_track) )
+                option = InlineKeyboardButton(skip, callback_data='skip:' + str(orig_with_track))
 
             if option:
                 holder_row.append(option)
@@ -506,7 +532,6 @@ class ChatActor(pykka.ThreadingActor):
             if current_placeholder:
                 self.bot.tell({'command': 'edit', 'base': current_placeholder, 'message': message,
                                'reply_markup': InlineKeyboardMarkup(keyboard)})
-
 
     def on_device_online(self, token, device):
         for t in self.latest_tracks.get():
@@ -544,7 +569,7 @@ class ChatActor(pykka.ThreadingActor):
             if message.get('command') == 'callback_query':
                 self.on_callback_query(message.get('callback_query'))
             elif message.get('command') == 'add_device':
-                self.devices.add((message.get('token'),message.get('device')))
+                self.devices.add((message.get('token'), message.get('device')))
                 self.devices_tokens.put(message.get('token'), message.get('token'))
                 message.get('device').tell(
                     {'command': 'move_to', 'chat': self.actor_ref, 'placeholder': message.get('placeholder')})
@@ -591,13 +616,14 @@ class ContentStatus(object):
         self.owner = owner
         self.time = time
         self.data = {"chat_id": chat_id, "message_id": msg_id,
-                        "orig": orig, 'title': title}
+                     "orig": orig, 'title': title}
 
 
 class TrackStatus(ContentStatus):
     def __init__(self, orig, msg_id, chat_id, title, file_id, owner, time):
         super(TrackStatus, self).__init__(orig, msg_id, chat_id, title, owner, time)
         self.file_id = file_id
+
 
 class YoutubeVidStatus(ContentStatus):
     def __init__(self, orig, msg_id, chat_id, title, link, owner, time):
