@@ -258,7 +258,7 @@ class ChatActor(pykka.ThreadingActor):
 
                 self.bot.ask(
                     {'command': 'send', 'chat_id': message.chat_id,
-                     'message': reply_text})
+                     'message': reply_text, 'disable_notification':True})
 
         if message.audio:
             # TODO try catch, move to func - regenerate url before send todevice
