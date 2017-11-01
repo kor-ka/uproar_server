@@ -260,7 +260,8 @@ class ChatActor(pykka.ThreadingActor):
                     elif res["result"]["action"] == 'great.fucking.advice':
                         adv_res = urllib.urlopen("http://fucking-great-advice.ru/api/random")
                         adv_json = json.loads(adv_res.read())
-                        adv = unicode(adv_json["text"])
+                        adv = adv_json["text"]
+                        print adv
                         reply_text = adv.decode('unicode_escape')
 
                     reply_text = res["result"]["fulfillment"]["speech"] if reply_text is None else reply_text
