@@ -237,6 +237,9 @@ class ChatActor(pykka.ThreadingActor):
 
                 string = response.read().decode('utf-8')
                 res = json.loads(string)
+
+                reply_text = None
+
                 if res["result"]["action"].endswith("echo"):
                     reply_text = text.lower().replace(u"скажи", "")
                 else:
@@ -254,7 +257,13 @@ class ChatActor(pykka.ThreadingActor):
                         text = res["result"]["parameters"]["any"]
                         # todo schedule reminder
 
-                    reply_text = res["result"]["fulfillment"]["speech"]
+                    elif res["result"]["action"] == 'great.fucking.advice':
+                        adv_res = urllib.urlopen("http://fucking-great-advice.ru/api/random")
+                        adv_json = json.load(adv_res.fp)
+                        adv = adv_json["text"]
+                        reply_text = adv.decode('unicode_escape')
+
+                    reply_text = res["result"]["fulfillment"]["speech"] if reply_text is None else reply_text
 
                 self.bot.ask(
                     {'command': 'send', 'chat_id': message.chat_id,
