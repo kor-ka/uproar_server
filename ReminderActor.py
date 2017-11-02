@@ -11,10 +11,9 @@ from Storage import StorageProvider
 
 
 class ReminderActor(pykka.ThreadingActor):
-    def __init__(self, manager, bot):
+    def __init__(self, manager):
         super(ReminderActor, self).__init__()
         self.manager = manager
-        self.bot = bot
 
         self.db = StorageProvider().get_storage()
         self.storage = None
@@ -30,7 +29,7 @@ class ReminderActor(pykka.ThreadingActor):
         elif message["command"] == "check":
             for r in self.storage.get():
                 if r["date"] <= datetime.datetime.now():
-                    self.bot.ask(
+                    self.manager.bot.ask(
                         {'command': 'send', 'chat_id': message["chat_id"],
                          'message': message["text"]})
             self.check_delayed()
