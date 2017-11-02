@@ -261,7 +261,7 @@ class ChatActor(pykka.ThreadingActor):
                         if "/" in datestr:
                             datestr = datestr.split("/")[0]
 
-                        dateraw = parser.parse(datestr).replace(tzinfo=pytz.timezone('europe/moscow'))
+                        dateraw = parser.parse(datestr).replace(tzinfo=pytz.timezone('Europe/Moscow'))
                         date = self.utc_to_local(dateraw)
                         self.manager.reminder.tell(
                             {"command": "reminder", "date": date, "text": res["result"]["parameters"]["any"],
