@@ -13,6 +13,7 @@ TRACK_TABLE = 'tracks_table'
 CHAT_DEVICES_TABLE = 'chats_devices_table'
 DEVICE_STORAGE = 'device_storage'
 USER_STORAGE = 'user_storage'
+REMINDER_STORAGE = 'reminder_storage'
 
 
 class StorageProvider(object):

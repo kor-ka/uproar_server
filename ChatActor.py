@@ -22,12 +22,18 @@ from operator import itemgetter
 from time import time
 import hashlib
 import dateutil.parser
+import pytz
 
 from pprint import pprint
 
 from telegram import InlineKeyboardMarkup
 
 from apiai.text import TextRequest
+
+import calendar
+from datetime import datetime, timedelta
+
+from dateutil import parser
 
 loud = u'\U0001F50A'
 not_so_loud = u'\U0001F509'
@@ -71,7 +77,7 @@ class ChatActor(pykka.ThreadingActor):
         self.current_orig_message_id = None
         self.users = None
         self.current_playing_ids = dict()
-        self.skip_gifs = ["CgADBAADqWkAAtkcZAc7PiBvHsR8IwI", "CgADBAADrgMAAuMYZAcKVOFNoEE_xgI",
+        self.skip_gifs = ["CgADBAADqWkAAtkcZAc7PiBvHsR8IwI", "CgADBAADrgMAAuMYZAcKVOFNREMINDER_STORAGEoEE_xgI",
                           "CgADBAADJkAAAnobZAftbqSTl-HsIQI", "CgADBAADLBkAAuIaZAej8zwqpX3GeAI"]
         self.promote_gifs = ["CgADBAADWSMAAjUeZAeEqT810zl7IgI", "CgADBAADUEkAAhEXZAfN5P28QjO3KQI",
                              "CgADBAADpAMAAvkcZAfm332885NH7AI", "CgADBAADyQMAAsUZZAe4b-POmx-A8AI"]
@@ -251,11 +257,15 @@ class ChatActor(pykka.ThreadingActor):
                             # todo support turn off
                             pass
                     elif res["result"]["action"] == 'uproarbot.reminder':
-                        date = res["result"]["parameters"]["date"]  # type: str
-                        if "/" in date:
-                            date = date.split("/")[0]
-                        text = res["result"]["parameters"]["any"]
-                        # todo schedule reminder
+                        datestr = res["result"]["parameters"]["date"]  # type: str
+                        if "/" in datestr:
+                            datestr = datestr.split("/")[0]
+
+                        dateraw = parser.parse(datestr).replace(tzinfo=pytz.timezone('europe/moscow'))
+                        date = self.utc_to_local(dateraw)
+                        self.manager.reminder.tell(
+                            {"command": "reminder", "date": date, "text": res["result"]["parameters"]["any"],
+                             "chat_id": message.from_user.id})
 
                     elif res["result"]["action"] == 'great.fucking.advice':
                         adv_res = urllib.urlopen("http://fucking-great-advice.ru/api/random")
@@ -266,7 +276,7 @@ class ChatActor(pykka.ThreadingActor):
 
                 self.bot.ask(
                     {'command': 'send', 'chat_id': message.chat_id,
-                     'message': reply_text, 'disable_notification':True})
+                     'message': reply_text, 'disable_notification': True})
 
         if message.audio:
             # TODO try catch, move to func - regenerate url before send todevice
@@ -297,6 +307,11 @@ class ChatActor(pykka.ThreadingActor):
             else:
                 self.bot.tell(
                     {'command': 'reply', 'base': message, 'message': 'no devices, please forward one from @uproarbot'})
+
+    def utc_to_local(self, utc_dt):
+        timestamp = calendar.timegm(utc_dt.timetuple())
+        local_dt = datetime.fromtimestamp(timestamp)
+        return local_dt.replace(microsecond=utc_dt.microsecond)
 
     def reply_to_content(self, message, title):
 
