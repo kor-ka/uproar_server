@@ -31,7 +31,7 @@ class ReminderActor(pykka.ThreadingActor):
 
             if message["command"] == "reminder":
                 uuid_ = uuid.uuid4()
-                message.update({"uuid", uuid_})
+                message["uuid"]= uuid_
                 self.storage.put(uuid_, message)
             elif message["command"] == "check":
                 for r in self.storage.get():
