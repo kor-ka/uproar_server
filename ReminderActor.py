@@ -29,16 +29,19 @@ class ReminderActor(pykka.ThreadingActor):
             print "ReminderActorr msg " + str(message)
 
             if message["command"] == "reminder":
-                self.storage.put(uuid.uuid4(), message)
+                uuid_ = uuid.uuid4()
+                message.update({"uuid", uuid_})
+                self.storage.put(uuid_, message)
             elif message["command"] == "check":
                 for r in self.storage.get():
                     date_saved = r["date"]
                     now = datetime.datetime.now()
                     print (str(date_saved) + " vs " + str(now))
                     if date_saved <= now:
-                        self.manager.bot.ask(
-                            {'command': 'send', 'chat_id': message["chat_id"],
-                             'message': message["text"]})
+                        self.manager.bot.tell(
+                            {'command': 'send', 'chat_id': r["chat_id"],
+                             'message': r["text"]})
+                        self.storage.remove(r["uuid"])
                 self.check_delayed()
         except Exception as ex:
             logging.exception(ex)
