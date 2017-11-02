@@ -256,7 +256,7 @@ class ChatActor(pykka.ThreadingActor):
                         else:
                             # todo support turn off
                             pass
-                    elif res["result"]["action"] == 'uproarbot.reminder':
+                    elif res["result"]["action"] == 'uproarbot.reminder' and not res["result"]["actionIncomplete"]:
                         datestr = res["result"]["parameters"]["date"]  # type: str
                         if "/" in datestr:
                             datestr = datestr.split("/")[0]
