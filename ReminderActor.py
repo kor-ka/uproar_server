@@ -12,9 +12,10 @@ from Storage import StorageProvider
 
 
 class ReminderActor(pykka.ThreadingActor):
-    def __init__(self, manager):
+    def __init__(self, manager, context):
         super(ReminderActor, self).__init__()
         self.manager = manager
+        self.context = context
 
         self.db = StorageProvider().get_storage()
         self.storage = None
@@ -38,7 +39,7 @@ class ReminderActor(pykka.ThreadingActor):
                     now = datetime.datetime.now()
                     print (str(date_saved) + " vs " + str(now))
                     if date_saved <= now:
-                        self.manager.bot.tell(
+                        self.context.bot.tell(
                             {'command': 'send', 'chat_id': r["chat_id"],
                              'message': r["text"]})
                         self.storage.remove(r["uuid"])

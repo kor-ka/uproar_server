@@ -8,14 +8,23 @@ import InlineActor
 import ReminderActor
 import UserActor
 
+class Context(object):
+    def __init__(self):
+        self.bot = None
+        self.reminder = None
+
 
 class ManagerActor(pykka.ThreadingActor):
     def __init__(self):
         super(ManagerActor, self).__init__()
+        self.context = Context()
         self.bot = BotActor.BotActor.start(self.actor_ref)
         self.mqtt = MqttActor.MqttACtor.start(self.actor_ref)
         # self.flask = FlaskRunner.FlaskRunner.start(self.actor_ref)
-        self.reminder = ReminderActor.ReminderActor.start(self.actor_ref)
+        self.reminder = ReminderActor.ReminderActor.start(self.actor_ref, self.context)
+
+        self.context.bot = self.bot
+        self.context.reminder = self.reminder
 
         self.devices = dict()
         self.chats = dict()
@@ -46,7 +55,7 @@ class ManagerActor(pykka.ThreadingActor):
     def get_chat(self, chat_id):
         chat = self.chats.get(chat_id)
         if chat is None or not chat.is_alive:
-            chat = ChatActor.ChatActor.start(chat_id, self.actor_ref, self.bot)
+            chat = ChatActor.ChatActor.start(chat_id, self.actor_ref, self.bot, self.context)
             self.chats[chat_id] = chat
         return chat
 

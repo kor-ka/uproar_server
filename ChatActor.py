@@ -55,10 +55,11 @@ votes_to_skip = 2
 
 
 class ChatActor(pykka.ThreadingActor):
-    def __init__(self, chat_id, manager, bot):
+    def __init__(self, chat_id, manager, bot, context):
         super(ChatActor, self).__init__()
         self.chat_id = chat_id
         self.manager = manager
+        self.context = context
         storage_provider = StorageProvider()
         self.db = storage_provider.get_storage()
         self.bot = bot
@@ -263,7 +264,7 @@ class ChatActor(pykka.ThreadingActor):
 
                         dateraw = parser.parse(datestr).replace(tzinfo=pytz.timezone('Europe/Moscow'))
                         date = self.utc_to_local(dateraw)
-                        self.manager.reminder.tell(
+                        self.context.reminder.tell(
                             {"command": "reminder", "date": date, "text": res["result"]["parameters"]["any"],
                              "chat_id": message.from_user.id})
 
