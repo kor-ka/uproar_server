@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 import datetime
@@ -24,15 +25,23 @@ class ReminderActor(pykka.ThreadingActor):
         self.check_delayed()
 
     def on_receive(self, message):
-        if message["command"] == "reminder":
-            self.storage.put(uuid.uuid4(), message)
-        elif message["command"] == "check":
-            for r in self.storage.get():
-                if r["date"] <= datetime.datetime.now():
-                    self.manager.bot.ask(
-                        {'command': 'send', 'chat_id': message["chat_id"],
-                         'message': message["text"]})
-            self.check_delayed()
+        try:
+            print "ReminderActorr msg " + str(message)
+
+            if message["command"] == "reminder":
+                self.storage.put(uuid.uuid4(), message)
+            elif message["command"] == "check":
+                for r in self.storage.get():
+                    date_saved = r["date"]
+                    now = datetime.datetime.now()
+                    print (str(date_saved) + " vs " + str(now))
+                    if date_saved <= now:
+                        self.manager.bot.ask(
+                            {'command': 'send', 'chat_id': message["chat_id"],
+                             'message': message["text"]})
+                self.check_delayed()
+        except Exception as ex:
+            logging.exception(ex)
 
     def check_delayed(self, delay=10):
         def delayed():
