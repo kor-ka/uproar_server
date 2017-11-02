@@ -9,6 +9,7 @@ import pykka as pykka
 
 import Storage
 from Storage import StorageProvider
+pin = u'\U0001F4CC'
 
 
 class ReminderActor(pykka.ThreadingActor):
@@ -41,7 +42,7 @@ class ReminderActor(pykka.ThreadingActor):
                     if date_saved <= now:
                         self.context.bot.tell(
                             {'command': 'send', 'chat_id': r["chat_id"],
-                             'message': r["text"]})
+                             'message': pin + " " + r["text"]})
                         self.storage.remove(r["uuid"])
                 self.check_delayed()
         except Exception as ex:
