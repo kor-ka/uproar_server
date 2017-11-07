@@ -262,8 +262,17 @@ class ChatActor(pykka.ThreadingActor):
                         if "/" in datestr:
                             datestr = datestr.split("/")[0]
 
-                        dateraw = parser.parse(datestr).replace(tzinfo=pytz.timezone('Europe/Moscow'))
-                        date = self.utc_to_local(dateraw)
+                        print()
+
+                        dateraw = parser.parse(datestr)
+                        print("from apiai:" + str(dateraw))
+
+                        dateMsk = dateraw.replace(tzinfo=pytz.timezone('Europe/Moscow'))
+                        print("add msk timezone" + str(dateMsk))
+
+                        date = self.utc_to_local(dateMsk)
+                        print("same time in local" + str(date) + " | local " + str(datetime.now()))
+
                         self.context.reminder.tell(
                             {"command": "reminder", "date": date, "text": res["result"]["parameters"]["any"],
                              "chat_id": message.from_user.id})
