@@ -42,10 +42,15 @@ class ReminderActor(pykka.ThreadingActor):
                     now = datetime.datetime.now()
                     now = pytz.UTC.localize(now)
                     print (str(date_saved) + " vs " + str(now))
-                    if date_saved <= now:
-                        self.context.bot.tell(
-                            {'command': 'send', 'chat_id': r["chat_id"],
-                             'message': pin + " " + r["text"]})
+                    try:
+
+                        if date_saved <= now:
+                            self.context.bot.tell(
+                                {'command': 'send', 'chat_id': r["chat_id"],
+                                 'message': pin + " " + r["text"]})
+                            self.storage.remove(r["uuid"])
+                    except Exception as e:
+                        print ("looks like old not tz aware date, delet it")
                         self.storage.remove(r["uuid"])
                 self.check_delayed()
         except Exception as ex:
