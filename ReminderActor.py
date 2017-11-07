@@ -6,9 +6,11 @@ import time
 from threading import Thread
 
 import pykka as pykka
+import pytz
 
 import Storage
 from Storage import StorageProvider
+
 pin = u'\U0001F4CC'
 
 
@@ -32,11 +34,12 @@ class ReminderActor(pykka.ThreadingActor):
 
             if message["command"] == "reminder":
                 uuid_ = str(uuid.uuid4())
-                message["uuid"]= uuid_
+                message["uuid"] = uuid_
                 self.storage.put(uuid_, message)
             elif message["command"] == "check":
                 for r in self.storage.get():
                     date_saved = r["date"]
+                    date_saved = pytz.UTC.localize(date_saved)
                     now = datetime.datetime.now()
                     print (str(date_saved) + " vs " + str(now))
                     if date_saved <= now:
