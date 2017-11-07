@@ -39,8 +39,8 @@ class ReminderActor(pykka.ThreadingActor):
             elif message["command"] == "check":
                 for r in self.storage.get():
                     date_saved = r["date"]
-                    date_saved = pytz.UTC.localize(date_saved)
                     now = datetime.datetime.now()
+                    now = pytz.UTC.localize(now)
                     print (str(date_saved) + " vs " + str(now))
                     if date_saved <= now:
                         self.context.bot.tell(
