@@ -278,7 +278,7 @@ class ChatActor(pykka.ThreadingActor):
 
                             datestr = res["result"]["parameters"]["date"]  # type: str
                             if "/" in datestr:
-                                datestr = datestr.split("/")[0]
+                                datestr = datestr.split("/")[0].replace("Z", "")
 
                             date= pytz.timezone('Europe/Moscow').localize(parser.parse(datestr), is_dst=None)
                             print("from apiai:" + str(date))
