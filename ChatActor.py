@@ -266,7 +266,7 @@ class ChatActor(pykka.ThreadingActor):
                         date= pytz.timezone('Europe/Moscow').localize(parser.parse(datestr), is_dst=None)
                         print("from apiai:" + str(date))
 
-                        now = pytz.UTC.localize(datetime.datetime.now())
+                        now = pytz.UTC.localize(datetime.now())
 
                         if date > now:
                             self.context.reminder.tell(
