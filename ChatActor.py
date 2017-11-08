@@ -60,6 +60,7 @@ class ChatActor(pykka.ThreadingActor):
         self.chat_id = chat_id
         self.manager = manager
         self.context = context
+        self.dialog_context = context
         storage_provider = StorageProvider()
         self.db = storage_provider.get_storage()
         self.bot = bot
@@ -231,6 +232,13 @@ class ChatActor(pykka.ThreadingActor):
                          'message': 'no devices, please forward one from @uproarbot'})
 
             else:
+
+                text_ = message["text"]
+                if self.dialog_context == 'reminder' and text_.strip().lower().startswith(u"в "):
+                    text_ = text_.replace("в", "").replace("В", "")
+                    pass
+
+
                 request = TextRequest(
                     "78d0cdf68bd8449cb6fcdde8d0b0cd02",
                     'api.api.ai',
@@ -239,7 +247,7 @@ class ChatActor(pykka.ThreadingActor):
                 )
                 request.lang = 'ru'
                 request.session_id = message.chat.id
-                request.query = message["text"]
+                request.query = text_
                 request.time_zone = "Europe/Moscow"
                 response = request.getresponse()
 
@@ -247,6 +255,11 @@ class ChatActor(pykka.ThreadingActor):
                 res = json.loads(string)
 
                 reply_text = None
+
+                if not res["result"]["actionIncomplete"]:
+                    self.dialog_context = None
+
+
 
                 if res["result"]["action"].endswith("echo"):
                     reply_text = text.lower().replace(u"скажи", "")
@@ -258,22 +271,28 @@ class ChatActor(pykka.ThreadingActor):
                         else:
                             # todo support turn off
                             pass
-                    elif res["result"]["action"] == 'uproarbot.reminder' and not res["result"]["actionIncomplete"]:
-                        datestr = res["result"]["parameters"]["date"]  # type: str
-                        if "/" in datestr:
-                            datestr = datestr.split("/")[0]
+                    elif res["result"]["action"] == 'uproarbot.reminder':
 
-                        date= pytz.timezone('Europe/Moscow').localize(parser.parse(datestr), is_dst=None)
-                        print("from apiai:" + str(date))
+                        if res["result"]["actionIncomplete"]:
+                            self.dialog_context = "reminder"
 
-                        now = pytz.UTC.localize(datetime.now())
-
-                        if date > now:
-                            self.context.reminder.tell(
-                                {"command": "reminder", "date": date, "text": res["result"]["parameters"]["any"],
-                                 "chat_id": message.from_user.id})
                         else:
-                            reply_text = u"Дата должна быть в будущем"
+
+                            datestr = res["result"]["parameters"]["date"]  # type: str
+                            if "/" in datestr:
+                                datestr = datestr.split("/")[0]
+
+                            date= pytz.timezone('Europe/Moscow').localize(parser.parse(datestr), is_dst=None)
+                            print("from apiai:" + str(date))
+
+                            now = pytz.UTC.localize(datetime.now())
+
+                            if date > now:
+                                self.context.reminder.tell(
+                                    {"command": "reminder", "date": date, "text": res["result"]["parameters"]["any"],
+                                     "chat_id": message.from_user.id})
+                            else:
+                                reply_text = u"Дата должна быть в будущем"
 
                     elif res["result"]["action"] == 'great.fucking.advice':
                         adv_res = urllib.urlopen("http://fucking-great-advice.ru/api/random")
