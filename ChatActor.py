@@ -235,9 +235,7 @@ class ChatActor(pykka.ThreadingActor):
 
                 text_ = message["text"]
                 if self.dialog_context == 'reminder' and text_.strip().lower().startswith(u"в "):
-                    text_ = text_.replace("в", "").replace("В", "")
-                    pass
-
+                    text_ = text_.replace(u"в", "").replace(u"В", "")
 
                 request = TextRequest(
                     "78d0cdf68bd8449cb6fcdde8d0b0cd02",
