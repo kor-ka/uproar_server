@@ -266,9 +266,14 @@ class ChatActor(pykka.ThreadingActor):
                         date= pytz.timezone('Europe/Moscow').localize(parser.parse(datestr), is_dst=None)
                         print("from apiai:" + str(date))
 
-                        self.context.reminder.tell(
-                            {"command": "reminder", "date": date, "text": res["result"]["parameters"]["any"],
-                             "chat_id": message.from_user.id})
+                        now = pytz.UTC.localize(datetime.datetime.now())
+
+                        if date > now:
+                            self.context.reminder.tell(
+                                {"command": "reminder", "date": date, "text": res["result"]["parameters"]["any"],
+                                 "chat_id": message.from_user.id})
+                        else:
+                            reply_text = u"Дата должна быть в будущем"
 
                     elif res["result"]["action"] == 'great.fucking.advice':
                         adv_res = urllib.urlopen("http://fucking-great-advice.ru/api/random")
