@@ -263,7 +263,7 @@ class ChatActor(pykka.ThreadingActor):
                         if "/" in datestr:
                             datestr = datestr.split("/")[0]
 
-                        date = parser.parse(datestr).replace(tzinfo=pytz.timezone('UTC+3'))
+                        date= pytz.timezone('Europe/Moscow').localize(parser.parse(datestr), is_dst=None)
                         print("from apiai:" + str(date))
 
                         self.context.reminder.tell(
