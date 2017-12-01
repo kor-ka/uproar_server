@@ -303,11 +303,17 @@ class ChatActor(pykka.ThreadingActor):
                     {'command': 'send', 'chat_id': message.chat_id,
                      'message': reply_text, 'disable_notification': True})
 
-        if message.audio:
+        if message.audio or message.voice:
             # TODO try catch, move to func - regenerate url before send todevice
             durl = None
 
-            file_id = message.audio.file_id
+            if message.audio:
+                file_id = message.audio.file_id
+            elif message.voice:
+                file_id = message.voice.file_id
+            else:
+                return
+
             durl = self.get_d_url(file_id)
 
             if durl is None:
