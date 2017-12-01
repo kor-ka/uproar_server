@@ -231,77 +231,77 @@ class ChatActor(pykka.ThreadingActor):
                         {'command': 'reply', 'base': message,
                          'message': 'no devices, please forward one from @uproarbot'})
 
-            else:
-
-                text_ = message["text"]
-                if self.dialog_context == 'reminder' and text_.strip().lower().startswith(u"в "):
-                    text_ = text_.replace(u"в", "").replace(u"В", "")
-
-                request = TextRequest(
-                    "78d0cdf68bd8449cb6fcdde8d0b0cd02",
-                    'api.api.ai',
-                    '20150910',
-                    None
-                )
-                request.lang = 'ru'
-                request.session_id = message.chat.id
-                request.query = text_
-                request.time_zone = "Europe/Moscow"
-                response = request.getresponse()
-
-                string = response.read().decode('utf-8')
-                res = json.loads(string)
-
-                reply_text = None
-
-                if not res["result"]["actionIncomplete"]:
-                    self.dialog_context = None
-
-
-
-                if res["result"]["action"].endswith("echo"):
-                    reply_text = text.lower().replace(u"скажи", "")
-                else:
-
-                    if res["result"]["action"] == 'uproarbot.play':
-                        if res["result"]["parameters"]["uproar_turn"] == 'on':
-                            self.on_boring(self.devices[0][0], self.devices[0][1])
-                        else:
-                            # todo support turn off
-                            pass
-                    elif res["result"]["action"] == 'uproarbot.reminder':
-
-                        if res["result"]["actionIncomplete"]:
-                            self.dialog_context = "reminder"
-
-                        else:
-
-                            datestr = res["result"]["parameters"]["date"].replace("Z", "")  # type: str
-                            if "/" in datestr:
-                                datestr = datestr.split("/")[0]
-
-                            date= pytz.timezone('Europe/Moscow').localize(parser.parse(datestr), is_dst=None)
-                            print("from apiai:" + str(date))
-
-                            now = pytz.UTC.localize(datetime.now())
-
-                            if date > now:
-                                self.context.reminder.tell(
-                                    {"command": "reminder", "date": date, "text": res["result"]["parameters"]["any"],
-                                     "chat_id": message.from_user.id})
-                            else:
-                                reply_text = u"Дата должна быть в будущем"
-
-                    elif res["result"]["action"] == 'great.fucking.advice':
-                        adv_res = urllib.urlopen("http://fucking-great-advice.ru/api/random")
-                        adv_json = json.loads(adv_res.read())
-                        reply_text = adv_json["text"]
-
-                    reply_text = res["result"]["fulfillment"]["speech"] if reply_text is None else reply_text
-
-                self.bot.ask(
-                    {'command': 'send', 'chat_id': message.chat_id,
-                     'message': reply_text, 'disable_notification': True})
+            # else:
+            #
+            #     text_ = message["text"]
+            #     if self.dialog_context == 'reminder' and text_.strip().lower().startswith(u"в "):
+            #         text_ = text_.replace(u"в", "").replace(u"В", "")
+            #
+            #     request = TextRequest(
+            #         "78d0cdf68bd8449cb6fcdde8d0b0cd02",
+            #         'api.api.ai',
+            #         '20150910',
+            #         None
+            #     )
+            #     request.lang = 'ru'
+            #     request.session_id = message.chat.id
+            #     request.query = text_
+            #     request.time_zone = "Europe/Moscow"
+            #     response = request.getresponse()
+            #
+            #     string = response.read().decode('utf-8')
+            #     res = json.loads(string)
+            #
+            #     reply_text = None
+            #
+            #     if not res["result"]["actionIncomplete"]:
+            #         self.dialog_context = None
+            #
+            #
+            #
+            #     if res["result"]["action"].endswith("echo"):
+            #         reply_text = text.lower().replace(u"скажи", "")
+            #     else:
+            #
+            #         if res["result"]["action"] == 'uproarbot.play':
+            #             if res["result"]["parameters"]["uproar_turn"] == 'on':
+            #                 self.on_boring(self.devices[0][0], self.devices[0][1])
+            #             else:
+            #                 # todo support turn off
+            #                 pass
+            #         elif res["result"]["action"] == 'uproarbot.reminder':
+            #
+            #             if res["result"]["actionIncomplete"]:
+            #                 self.dialog_context = "reminder"
+            #
+            #             else:
+            #
+            #                 datestr = res["result"]["parameters"]["date"].replace("Z", "")  # type: str
+            #                 if "/" in datestr:
+            #                     datestr = datestr.split("/")[0]
+            #
+            #                 date= pytz.timezone('Europe/Moscow').localize(parser.parse(datestr), is_dst=None)
+            #                 print("from apiai:" + str(date))
+            #
+            #                 now = pytz.UTC.localize(datetime.now())
+            #
+            #                 if date > now:
+            #                     self.context.reminder.tell(
+            #                         {"command": "reminder", "date": date, "text": res["result"]["parameters"]["any"],
+            #                          "chat_id": message.from_user.id})
+            #                 else:
+            #                     reply_text = u"Дата должна быть в будущем"
+            #
+            #         elif res["result"]["action"] == 'great.fucking.advice':
+            #             adv_res = urllib.urlopen("http://fucking-great-advice.ru/api/random")
+            #             adv_json = json.loads(adv_res.read())
+            #             reply_text = adv_json["text"]
+            #
+            #         reply_text = res["result"]["fulfillment"]["speech"] if reply_text is None else reply_text
+            #
+            #     self.bot.ask(
+            #         {'command': 'send', 'chat_id': message.chat_id,
+            #          'message': reply_text, 'disable_notification': True})
 
         if message.audio or message.voice:
             # TODO try catch, move to func - regenerate url before send todevice
