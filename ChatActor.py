@@ -320,9 +320,15 @@ class ChatActor(pykka.ThreadingActor):
                 return
 
             if len(self.devices) > 0:
-                title = ' - '.join(filter(None, (message.audio.performer, message.audio.title)))
-                title = playing if not title else title
-                title = title.encode("utf-8")
+                if message.audio:
+                    title = ' - '.join(filter(None, (message.audio.performer, message.audio.title)))
+                    title = playing if not title else title
+                    title = title.encode("utf-8")
+                elif message.voice:
+                    title = message.from_user.first_name + " - voice"
+                else:
+                    title = "some_audio"
+
                 reply = self.reply_to_content(message, title)
 
                 status = TrackStatus(message.message_id, reply.message_id, message.chat_id, title, file_id,
