@@ -5,7 +5,6 @@ import pykka
 import BotActor, MqttActor, ChatActor, DeviceActor, Storage
 import FlaskRunner
 import InlineActor
-import ReminderActor
 import UserActor
 
 class Context(object):
@@ -21,10 +20,8 @@ class ManagerActor(pykka.ThreadingActor):
         self.bot = BotActor.BotActor.start(self.actor_ref)
         self.mqtt = MqttActor.MqttACtor.start(self.actor_ref)
         # self.flask = FlaskRunner.FlaskRunner.start(self.actor_ref)
-        self.reminder = ReminderActor.ReminderActor.start(self.actor_ref, self.context)
 
         self.context.bot = self.bot
-        self.context.reminder = self.reminder
 
         self.devices = dict()
         self.chats = dict()
