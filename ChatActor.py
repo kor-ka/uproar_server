@@ -159,10 +159,10 @@ class ChatActor(pykka.ThreadingActor):
                                                                                                          'holder, forward it to '
                                                                                                          'chat to subscribe'})
                 else:
-                    print(r0.status_code + " " + r0.text)
-                    print(r1.status_code + " " + r1.text)
-                    print(r2.status_code + " " + r2.text)
-                    print(r3.status_code + " " + r3.text)
+                    print(str(r0.status_code) + " " + r0.text)
+                    print(str(r1.status_code) + " " + r1.text)
+                    print(str(r2.status_code) + " " + r2.text)
+                    print(str(r3.status_code) + " " + r3.text)
                     self.bot.tell(
                         {'command': 'send', 'chat_id': message.chat_id,
                          'message': "sorry, can't create token, try again later"})
