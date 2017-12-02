@@ -126,7 +126,7 @@ class ChatActor(pykka.ThreadingActor):
 
                 device_mqtt_user = message.from_user.username + '-' + random_str
 
-                pattern_prefix = device_mqtt_user + "-"
+                pattern_prefix = ""
 
                 r0 = requests.post("https://api.cloudmqtt.com/user",
                                    data='{"username":"%s", "password":"%s"}' % (device_mqtt_user, token_set),
