@@ -61,10 +61,10 @@ class DeviceActor(pykka.ThreadingActor):
             print "Device Actor msg " + str(message)
 
             if message.get('command') == "add_track":
-                self.publish("add_content", {"audio": message.get('track')})
+                self.publish("add_content", {"audio": message.get('track'), 'additional_id':message.get('additional_id')})
 
             if message.get('command') == "add_youtube_link":
-                self.publish("add_content", {"youtube_link": message.get('youtube_link')})
+                self.publish("add_content", {"youtube_link": message.get('youtube_link'), 'additional_id':message.get('additional_id')})
 
             elif message.get('command') == "move_to":
                 if self.chat is not None and self.chat != message.get('chat'):
