@@ -27,8 +27,10 @@ class DeviceActor(pykka.ThreadingActor):
         self.storage = None
 
     def on_start(self):
+        token = str(self.token).split("_web_")[0] if "_web_" in self.token else self.token
+
         self.storage = self.db.ask(
-            {'command': 'get_list', 'name': Storage.DEVICE_STORAGE, 'suffix': str(self.token).replace(":","")})
+            {'command': 'get_list', 'name': Storage.DEVICE_STORAGE, 'suffix': str(token).replace(":","")})
         for placeholder in self.storage.get('placeholder'):
             self.placeholder = placeholder
             self.chat = self.manager.ask({'command': 'get_chat', 'chat_id': self.placeholder.chat_id})
@@ -48,7 +50,7 @@ class DeviceActor(pykka.ThreadingActor):
         elif msg == 'promote':
             msg = u'\U00002B06 promoted'
         device_id = self.token.split('-')[1]
-        update['device'] = device_id
+        update['device'] = device_id + "" if update["additional_id"] is None else update["additional_id"]
         update['placeholder'] = self.placeholder
         update['device_name'] = get_name(self.token)
         update['message'] = msg
