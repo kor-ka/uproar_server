@@ -112,12 +112,17 @@ class ChatActor(pykka.ThreadingActor):
                 return
 
             if text.startswith('/web'):
-                ok, r0, r1, r2, r3, token_set = self.issue_token(message.from_user.username, str(message.chat_id))
+                token = message.chat_id + '-' + str(message.chat_id) + '-' + str(
+                    hashlib.sha256(str(message.chat_id) + self.secret).hexdigest())
+                added = token in self.devices_tokens
+                ok = True
+                if not added:
+                    ok, r0, r1, r2, r3, token_set = self.issue_token(str(message.chat_id), str(message.chat_id))
 
-                if ok:
+                if ok or added:
                     token_message = self.bot.ask(
                         {'command': 'send', 'chat_id': message.chat_id,
-                         'message': 'https://kor-ka.github.io/uproar_client_web/?token=' + token_set})
+                         'message': 'https://kor-ka.github.io/uproar_client_web?token=' + token})
 
                     callback_vol_plus = 'vol' + ':' + '1'
 
@@ -137,8 +142,8 @@ class ChatActor(pykka.ThreadingActor):
                     self.actor_ref.tell(
                         {
                             'command': 'add_device',
-                            'device': self.get_device(token_set),
-                            'token': token_set,
+                            'device': self.get_device(token),
+                            'token': token,
                             'placeholder': placeholder,
                         })
 
