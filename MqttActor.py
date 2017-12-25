@@ -28,7 +28,7 @@ class MqttACtor(pykka.ThreadingActor):
                 update = json.loads(str(msg.payload))
                 token = update.get("token")
                 if token:
-                    self.manager.tell({'command':'device_out', 'token':token, 'update': update})
+                    self.manager.tell({'command':'device_out', 'token':token, 'additional_id':update.get("token"), 'update': update})
             
         except Exception as ex:
             logging.exception(ex)
