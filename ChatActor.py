@@ -116,7 +116,7 @@ class ChatActor(pykka.ThreadingActor):
                     hashlib.sha256(str(message.chat_id) + self.secret).hexdigest())
                 added = False
 
-                for t in self.devices_tokens:
+                for t in self.devices_tokens.get():
                     if t == token:
                         added = True
 
