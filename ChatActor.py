@@ -112,7 +112,7 @@ class ChatActor(pykka.ThreadingActor):
                 return
 
             if text.startswith('/web'):
-                ok, r0, r1, r2, r3, token_set = self.issue_token(message.from_user.username, message.chat_id)
+                ok, r0, r1, r2, r3, token_set = self.issue_token(message.from_user.username, str(message.chat_id))
 
                 if ok:
                     token_message = self.bot.ask(
