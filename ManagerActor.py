@@ -72,6 +72,7 @@ class ManagerActor(pykka.ThreadingActor):
         return inline_actor
 
     def get_device(self, token):
+        token = str(token).split("_web_")[0] if "_web_" in token else token
         device = self.devices.get(token)
         if device is None or not device.is_alive:
             device = DeviceActor.DeviceActor.start(token, self.actor_ref, self.mqtt, self.bot)
