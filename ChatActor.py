@@ -544,7 +544,7 @@ class ChatActor(pykka.ThreadingActor):
             except AttributeError:
                 pass
 
-    def on_boring(self, token, device):
+    def on_boring(self, token, device, additional_id):
         t = random.choice(self.latest_tracks.get())
         status = t.device_status.get(token.split('-')[1])
         if status is None or not status.startswith(skip):
@@ -552,9 +552,9 @@ class ChatActor(pykka.ThreadingActor):
             if hasattr(t, "file_id"):
                 t.data["track_url"] = self.get_d_url(t.file_id)
             if isinstance(t, TrackStatus):
-                device.tell({'command': 'add_track', 'track': t.data})
+                device.tell({'command': 'add_track', 'track': t.data, 'additional_id':additional_id})
             elif isinstance(t, YoutubeVidStatus):
-                device.tell({'command': 'add_youtube_link', 'youtube_link': t.data})
+                device.tell({'command': 'add_youtube_link', 'youtube_link': t.data, 'additional_id':additional_id})
 
     def on_receive(self, message):
         try:
@@ -583,7 +583,7 @@ class ChatActor(pykka.ThreadingActor):
             elif message.get('command') == 'device_message':
                 msg = message.get("message")
                 if msg["update"] == "boring":
-                    self.on_boring(message.get("token"), message.get("device"))
+                    self.on_boring(message.get("token"), message.get("device"), msg.get("additional_id"))
         except Exception as ex:
             logging.exception(ex)
 
