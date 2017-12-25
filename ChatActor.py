@@ -112,7 +112,7 @@ class ChatActor(pykka.ThreadingActor):
                 return
 
             if text.startswith('/web'):
-                token = message.chat_id + '-' + str(message.chat_id) + '-' + str(
+                token = str(message.chat_id) + '-' + str(message.chat_id) + '-' + str(
                     hashlib.sha256(str(message.chat_id) + self.secret).hexdigest())
                 added = token in self.devices_tokens
                 ok = True
