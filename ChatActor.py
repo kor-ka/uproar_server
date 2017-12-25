@@ -111,6 +111,48 @@ class ChatActor(pykka.ThreadingActor):
                      })
                 return
 
+            if text.startswith('/web'):
+                ok, r0, r1, r2, r3, token_set = self.issue_token(message.from_user.username, message.chat_id)
+
+                if ok:
+                    token_message = self.bot.ask(
+                        {'command': 'send', 'chat_id': message.chat_id,
+                         'message': 'https://kor-ka.github.io/uproar_client_web/?token=' + token_set})
+
+                    callback_vol_plus = 'vol' + ':' + '1'
+
+                    callback_vol_minus = 'vol' + ':' + '0'
+
+                    keyboard = [
+                        [InlineKeyboardButton(not_so_loud, callback_data=callback_vol_minus),
+                         InlineKeyboardButton(loud, callback_data=callback_vol_plus)],
+                    ]
+
+                    placeholder = self.bot.ask({'command': 'send',
+                                                'chat_id': message.chat_id,
+                                                'message': "link added",
+                                                'reply_markup': InlineKeyboardMarkup(keyboard),
+                                                })
+
+                    self.actor_ref.tell(
+                        {
+                            'command': 'add_device',
+                            'device': self.get_device(token_set),
+                            'token': token_set,
+                            'placeholder': placeholder,
+                        })
+
+
+                else:
+                    print(str(r0.status_code) + " " + r0.text)
+                    print(str(r1.status_code) + " " + r1.text)
+                    print(str(r2.status_code) + " " + r2.text)
+                    print(str(r3.status_code) + " " + r3.text)
+                    self.bot.tell(
+                        {'command': 'send', 'chat_id': message.chat_id,
+                         'message': "sorry, can't create token, try again later"})
+
+
             if text.startswith('/token'):
 
                 if not message.from_user.username:
@@ -121,37 +163,8 @@ class ChatActor(pykka.ThreadingActor):
 
                 random_str = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(5))
 
-                token_set = message.from_user.username + '-' + random_str + '-' + str(
-                    hashlib.sha256(random_str + self.secret).hexdigest())
-
-                device_mqtt_user = message.from_user.username + '-' + random_str
-
-                pattern_prefix = ""
-
-                r0 = requests.post("https://api.cloudmqtt.com/user",
-                                   data='{"username":"%s", "password":"%s"}' % (device_mqtt_user, token_set),
-                                   auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass),
-                                   headers={"Content-Type": "application/json"})
-
-                r1 = requests.post("https://api.cloudmqtt.com/acl",
-                                   data='{"type":"pattern","username":"%s",  "pattern":"%s", "read":false, "write":true}' % (
-                                       device_mqtt_user, pattern_prefix+"device_out"),
-                                   auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass),
-                                   headers={"Content-Type": "application/json"})
-
-                r2 = requests.post("https://api.cloudmqtt.com/acl",
-                                   data='{"type":"pattern","username":"%s", "pattern":"%s", "read":true, "write":false}' % (
-                                       device_mqtt_user, pattern_prefix+"device_in_" + token_set),
-                                   auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass),
-                                   headers={"Content-Type": "application/json"})
-
-                r3 = requests.post("https://api.cloudmqtt.com/acl",
-                                   data='{ "type":"pattern", "username":"%s","pattern":"%s", "read":false, "write":true}' % (
-                                       device_mqtt_user, pattern_prefix+"registry"),
-                                   auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass),
-                                   headers={"Content-Type": "application/json"})
-
-                if r0.status_code / 100 == 2 and r1.status_code / 100 == 2 and r2.status_code / 100 == 2 and r3.status_code / 100 == 2:
+                ok, r0, r1, r2, r3, token_set = self.issue_token(message.from_user.username, random_str)
+                if ok:
                     token_message = self.bot.ask(
                         {'command': 'send', 'chat_id': message.chat_id,
                          'message': loud + ' ' + message.from_user.username + '\'s device: ' + random_str})
@@ -279,6 +292,33 @@ class ChatActor(pykka.ThreadingActor):
             else:
                 self.bot.tell(
                     {'command': 'reply', 'base': message, 'message': 'no devices, please forward one from @uproarbot'})
+
+    def issue_token(self, username, random_str):
+        token_set =  username + '-' + random_str + '-' + str(
+            hashlib.sha256(random_str + self.secret).hexdigest())
+        device_mqtt_user = username + '-' + random_str
+        pattern_prefix = ""
+        r0 = requests.post("https://api.cloudmqtt.com/user",
+                           data='{"username":"%s", "password":"%s"}' % (device_mqtt_user, token_set),
+                           auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass),
+                           headers={"Content-Type": "application/json"})
+        r1 = requests.post("https://api.cloudmqtt.com/acl",
+                           data='{"type":"pattern","username":"%s",  "pattern":"%s", "read":false, "write":true}' % (
+                               device_mqtt_user, pattern_prefix + "device_out"),
+                           auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass),
+                           headers={"Content-Type": "application/json"})
+        r2 = requests.post("https://api.cloudmqtt.com/acl",
+                           data='{"type":"pattern","username":"%s", "pattern":"%s", "read":true, "write":false}' % (
+                               device_mqtt_user, pattern_prefix + "device_in_" + token_set),
+                           auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass),
+                           headers={"Content-Type": "application/json"})
+        r3 = requests.post("https://api.cloudmqtt.com/acl",
+                           data='{ "type":"pattern", "username":"%s","pattern":"%s", "read":false, "write":true}' % (
+                               device_mqtt_user, pattern_prefix + "registry"),
+                           auth=HTTPBasicAuth(self.mqtt_user, self.mqtt_pass),
+                           headers={"Content-Type": "application/json"})
+        ok = r0.status_code / 100 == 2 and r1.status_code / 100 == 2 and r2.status_code / 100 == 2 and r3.status_code / 100 == 2
+        return ok, r0, r1, r2, r3, token_set
 
     def utc_to_local(self, utc_dt):
         timestamp = calendar.timegm(utc_dt.timetuple())
