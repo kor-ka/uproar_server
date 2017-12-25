@@ -49,9 +49,9 @@ class DeviceActor(pykka.ThreadingActor):
         elif msg == 'promote':
             msg = u'\U00002B06 promoted'
         device_id = self.token.split('-')[1]
-        update['device'] = device_id + "" if additional_id is None else additional_id
+        update['device'] = device_id + ("" if additional_id is None else additional_id)
         update['placeholder'] = self.placeholder
-        update['device_name'] = get_name(self.token)
+        update['device_name'] = get_name(self.token) + update['device']
         update['message'] = msg
         if self.chat is not None:
             self.chat.tell({'command': 'device_content_status', 'content_status': update})
