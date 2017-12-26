@@ -596,16 +596,17 @@ class ChatActor(pykka.ThreadingActor):
                 pass
 
     def on_boring(self, token, device, additional_id):
-        t = random.choice(self.latest_tracks.get())
-        status = t.device_status.get(token.split('-')[1])
-        if status is None or not status.startswith(skip):
-            t.data['boring'] = True
-            if hasattr(t, "file_id"):
-                t.data["track_url"] = self.get_d_url(t.file_id)
-            if isinstance(t, TrackStatus):
-                device.tell({'command': 'add_track', 'track': t.data, 'additional_id':additional_id})
-            elif isinstance(t, YoutubeVidStatus):
-                device.tell({'command': 'add_youtube_link', 'youtube_link': t.data, 'additional_id':additional_id})
+        if len(self.latest_tracks.get()) > 0:
+            t = random.choice(self.latest_tracks.get())
+            status = t.device_status.get(token.split('-')[1])
+            if status is None or not status.startswith(skip):
+                t.data['boring'] = True
+                if hasattr(t, "file_id"):
+                    t.data["track_url"] = self.get_d_url(t.file_id)
+                if isinstance(t, TrackStatus):
+                    device.tell({'command': 'add_track', 'track': t.data, 'additional_id':additional_id})
+                elif isinstance(t, YoutubeVidStatus):
+                    device.tell({'command': 'add_youtube_link', 'youtube_link': t.data, 'additional_id':additional_id})
 
     def on_receive(self, message):
         try:
