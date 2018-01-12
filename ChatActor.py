@@ -113,7 +113,7 @@ class ChatActor(pykka.ThreadingActor):
 
             if text.startswith('/web'):
                 chat_id = str(message.chat_id).replace('-', '')
-                token = ("g" if message.chat.type != 'private' else "p") + chat_id
+                token = ("g-" if message.chat.type != 'private' else "p") + chat_id
                 added = False
 
                 for t in self.devices_tokens.get():
