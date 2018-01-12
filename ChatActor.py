@@ -113,8 +113,7 @@ class ChatActor(pykka.ThreadingActor):
 
             if text.startswith('/web'):
                 chat_id = str(message.chat_id).replace('-', '')
-                token = chat_id + '-' + chat_id + '-' + str(
-                    hashlib.sha256(chat_id + self.secret).hexdigest())
+                token = ("g" if message.chat.type != 'private' else "p") + chat_id
                 added = False
 
                 for t in self.devices_tokens.get():
@@ -130,13 +129,14 @@ class ChatActor(pykka.ThreadingActor):
                                             'message': "link added"
                                             })
 
-                self.actor_ref.tell(
-                    {
-                        'command': 'add_device',
-                        'device': self.get_device(token),
-                        'token': token,
-                        'placeholder': placeholder,
-                    })
+                if not added:
+                    self.actor_ref.tell(
+                        {
+                            'command': 'add_device',
+                            'device': self.get_device(token),
+                            'token': token,
+                            'placeholder': placeholder,
+                        })
 
 
             if text.startswith('/token'):
