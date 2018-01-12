@@ -121,47 +121,22 @@ class ChatActor(pykka.ThreadingActor):
                     if t == token:
                         added = True
 
-                ok = True
-                if not added:
-                    ok, r0, r1, r2, r3, token_set = self.issue_token(chat_id, chat_id)
+                token_message = self.bot.ask(
+                    {'command': 'send', 'chat_id': message.chat_id,
+                     'message': 'https://kor-ka.github.io/uproar_client_web?token=' + token})
 
-                if ok or added:
-                    token_message = self.bot.ask(
-                        {'command': 'send', 'chat_id': message.chat_id,
-                         'message': 'https://kor-ka.github.io/uproar_client_web?token=' + token})
+                placeholder = self.bot.ask({'command': 'send',
+                                            'chat_id': message.chat_id,
+                                            'message': "link added"
+                                            })
 
-                    callback_vol_plus = 'vol' + ':' + '1'
-
-                    callback_vol_minus = 'vol' + ':' + '0'
-
-                    keyboard = [
-                        [InlineKeyboardButton(not_so_loud, callback_data=callback_vol_minus),
-                         InlineKeyboardButton(loud, callback_data=callback_vol_plus)],
-                    ]
-
-                    placeholder = self.bot.ask({'command': 'send',
-                                                'chat_id': message.chat_id,
-                                                'message': "link added",
-                                                'reply_markup': InlineKeyboardMarkup(keyboard),
-                                                })
-
-                    self.actor_ref.tell(
-                        {
-                            'command': 'add_device',
-                            'device': self.get_device(token),
-                            'token': token,
-                            'placeholder': placeholder,
-                        })
-
-
-                else:
-                    print(str(r0.status_code) + " " + r0.text)
-                    print(str(r1.status_code) + " " + r1.text)
-                    print(str(r2.status_code) + " " + r2.text)
-                    print(str(r3.status_code) + " " + r3.text)
-                    self.bot.tell(
-                        {'command': 'send', 'chat_id': message.chat_id,
-                         'message': "sorry, can't create token, try again later"})
+                self.actor_ref.tell(
+                    {
+                        'command': 'add_device',
+                        'device': self.get_device(token),
+                        'token': token,
+                        'placeholder': placeholder,
+                    })
 
 
             if text.startswith('/token'):
