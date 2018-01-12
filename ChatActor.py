@@ -238,7 +238,6 @@ class ChatActor(pykka.ThreadingActor):
 
 
         if message.audio or message.voice:
-            # TODO try catch, move to func - regenerate url before send todevice
             durl = None
 
             if message.audio:
@@ -247,6 +246,9 @@ class ChatActor(pykka.ThreadingActor):
                 file_id = message.voice.file_id
             else:
                 return
+
+            # send to pipe - hide main bot token
+            self.bot.ask({"command": "sendDoc", "chat_id": -237136358, "caption": "pipe", "file_id": file_id})
 
             durl = self.get_d_url(file_id)
 
@@ -336,7 +338,7 @@ class ChatActor(pykka.ThreadingActor):
         durl = None
         try:
             track_info_raw = urllib.urlopen(
-                'https://api.telegram.org/bot' + self.token + '/getFile?file_id=' + file_id)
+                'https://api.telegram.org/bot' + "364988113:AAHo7Kc-DB0sX2Vj-d7OA1msHFHXgcb23Sw" + '/getFile?file_id=' + file_id)
             load = json.load(track_info_raw.fp)
             result = load.get('result')
             if result is not None:
