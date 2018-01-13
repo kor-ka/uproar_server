@@ -337,19 +337,22 @@ class ChatActor(pykka.ThreadingActor):
     def get_d_url(self, file_id):
         durl = None
         try:
+            url = 'https://api.telegram.org/bot' + "364988113:AAHo7Kc-DB0sX2Vj-d7OA1msHFHXgcb23Sw" + '/getFile?file_id=' + file_id
             track_info_raw = urllib.urlopen(
-                'https://api.telegram.org/bot' + "364988113:AAHo7Kc-DB0sX2Vj-d7OA1msHFHXgcb23Sw" + '/getFile?file_id=' + file_id)
+                url)
             load = json.load(track_info_raw.fp)
             result = load.get('result')
-
+            print(json.dumps(result))
             old = False
             # fallback to old bot token
             if result is None:
+                url = 'https://api.telegram.org/bot' + self.token + '/getFile?file_id=' + file_id
                 track_info_raw = urllib.urlopen(
-                    'https://api.telegram.org/bot' + self.token + '/getFile?file_id=' + file_id)
+                    url)
                 load = json.load(track_info_raw.fp)
                 result = load.get('result')
                 old = True
+                print(json.dumps(result))
             if result is not None:
                 file_path = result.get('file_path')
                 durl = 'https://api.telegram.org/file/bot' + (self.token if old else "364988113:AAHo7Kc-DB0sX2Vj-d7OA1msHFHXgcb23Sw") + '/' + urllib.quote(file_path.encode('utf-8'))
