@@ -44,8 +44,8 @@ class MqttACtor(pykka.ThreadingActor):
         client = mqtt.Client()
         client.on_connect = self.on_connect
         client.on_message = self.on_message
-        client.username_pw_set(self.mqtt_user, self.mqtt_pass)
-        client.connect('m21.cloudmqtt.com', 18552)
+        client.username_pw_set("web", "web")
+        client.connect('uproar.ddns.net', 18552)
         client.loop_start()
         return client
 
