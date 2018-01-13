@@ -43,12 +43,10 @@ class MqttACtor(pykka.ThreadingActor):
 
     def initMqtt(self):
         client = mqtt.Client()
-        client.tls_set(cert_reqs=ssl.CERT_NONE)
-        client.tls_insecure_set(True)
         client.on_connect = self.on_connect
         client.on_message = self.on_message
         client.username_pw_set("web", "web")
-        client.connect('uproar.ddns.net', 8883)
+        client.connect('uproar.ddns.net', 1883)
         client.loop_start()
         return client
 
