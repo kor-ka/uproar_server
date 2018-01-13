@@ -14,7 +14,6 @@ import requests
 from requests.auth import HTTPBasicAuth
 from telegram import InlineKeyboardButton
 import base64
-from Storage import StorageProvider
 import Storage
 import DeviceActor
 from collections import OrderedDict
@@ -61,8 +60,7 @@ class ChatActor(pykka.ThreadingActor):
         self.manager = manager
         self.context = context
         self.dialog_context = context
-        storage_provider = StorageProvider()
-        self.db = storage_provider.get_storage()
+        self.db = context.storage
         self.bot = bot
         self.token = os.getenv('token')
         self.secret = os.getenv('secret')

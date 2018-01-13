@@ -16,24 +16,6 @@ USER_STORAGE = 'user_storage'
 REMINDER_STORAGE = 'reminder_storage'
 
 
-class StorageProvider(object):
-    def __init__(self):
-        super(StorageProvider, self).__init__()
-        self.storage = None
-
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(StorageProvider, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
-
-    def get_storage(self):
-        if self.storage is None:
-            self.storage = StorageActor.start()
-        return self.storage
-
-
 class StorageActor(pykka.ThreadingActor):
     def __init__(self):
         super(StorageActor, self).__init__()

@@ -8,17 +8,16 @@ import time
 from telegram import LabeledPrice
 
 import Storage
-from Storage import StorageProvider
 
 crown_requset = "crown_requset"
 class UserActor(pykka.ThreadingActor):
-    def __init__(self, id, bot):
+    def __init__(self, id, context):
         super(UserActor, self).__init__()
-        self.bot = bot
+        self.bot = context.bot
         self.id = id
         self.poo = u'\U0001F4A9'
         self.crown = u'\U0001F451'
-        self.db = StorageProvider().get_storage()
+        self.db = context.storage
         self.storage = None
         self.crown_data = {"ends":0}
 

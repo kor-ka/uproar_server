@@ -11,6 +11,7 @@ class Context(object):
     def __init__(self):
         self.bot = None
         self.reminder = None
+        self.storage = None
 
 
 class ManagerActor(pykka.ThreadingActor):
@@ -19,9 +20,11 @@ class ManagerActor(pykka.ThreadingActor):
         self.context = Context()
         self.bot = BotActor.BotActor.start(self.actor_ref)
         self.mqtt = MqttActor.MqttACtor.start(self.actor_ref)
+        self.storage = Storage.StorageActor.start()
         # self.flask = FlaskRunner.FlaskRunner.start(self.actor_ref)
 
         self.context.bot = self.bot
+        self.context.storage = self.storage
 
         self.devices = dict()
         self.chats = dict()
@@ -59,7 +62,7 @@ class ManagerActor(pykka.ThreadingActor):
     def get_user(self, user_id):
         user = self.users.get(user_id)
         if user is None or not user.is_alive:
-            user = UserActor.UserActor.start(user_id, self.bot)
+            user = UserActor.UserActor.start(user_id, self.context)
             self.users[user_id] = user
         return user
 
@@ -74,7 +77,7 @@ class ManagerActor(pykka.ThreadingActor):
     def get_device(self, token):
         device = self.devices.get(token)
         if device is None or not device.is_alive:
-            device = DeviceActor.DeviceActor.start(token, self.actor_ref, self.mqtt, self.bot)
+            device = DeviceActor.DeviceActor.start(token, self.actor_ref, self.mqtt, self.context)
             self.devices[token] = device
         return device
 

@@ -4,7 +4,6 @@ import os
 import logging
 import pykka, shelve
 import Storage
-from Storage import StorageProvider
 from pprint import pprint
 
 
@@ -14,16 +13,15 @@ def get_name(token):
 
 
 class DeviceActor(pykka.ThreadingActor):
-    def __init__(self, token, manager, mqtt, bot):
+    def __init__(self, token, manager, mqtt, context):
         super(DeviceActor, self).__init__()
         self.token = token
         self.mqtt = mqtt
         self.manager = manager
-        self.bot = bot
+        self.bot = context.bot
         self.chat = None
         self.placeholder = None
-        storage_provider = StorageProvider()
-        self.db = storage_provider.get_storage()
+        self.db = context.storage
         self.storage = None
 
     def on_start(self):
