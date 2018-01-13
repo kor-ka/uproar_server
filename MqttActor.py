@@ -45,7 +45,7 @@ class MqttACtor(pykka.ThreadingActor):
         client.on_connect = self.on_connect
         client.on_message = self.on_message
         client.username_pw_set("web", "web")
-        client.connect('uproar.ddns.net', 18552)
+        client.connect('159.89.1.185', 18552)
         client.loop_start()
         return client
 
