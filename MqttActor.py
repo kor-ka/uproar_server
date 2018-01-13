@@ -1,4 +1,5 @@
 import logging
+import ssl
 from pprint import pprint
 
 import paho.mqtt.client as mqtt, pykka, os, json
@@ -42,6 +43,8 @@ class MqttACtor(pykka.ThreadingActor):
 
     def initMqtt(self):
         client = mqtt.Client()
+        client.tls_set(cert_reqs=ssl.CERT_NONE)
+        client.tls_insecure_set(True)
         client.on_connect = self.on_connect
         client.on_message = self.on_message
         client.username_pw_set("web", "web")
