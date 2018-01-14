@@ -387,13 +387,14 @@ class ChatActor(pykka.ThreadingActor):
                 if user_nick and user_nick == "kor_ka":
                     modifier = 2
                 if callback[1] == "1":
+                    from_user_id = orig_with_track_msg.from_user.id if orig_with_track_msg.from_user else 0
                     if user_id in likes_data.likes_owners:
                         likes_data.likes -= 1 * modifier
                         likes_data.likes_owners.remove(user_id)
                         user_likes = (orig_with_track_msg.from_user, 0)
-                        for user_likes_raw in self.users.get(orig_with_track_msg.from_user.id):
+                        for user_likes_raw in self.users.get(from_user_id):
                             user_likes = (user_likes_raw[0], user_likes_raw[1] - 1)
-                        self.users.put(orig_with_track_msg.from_user.id, user_likes)
+                        self.users.put(from_user_id, user_likes)
                         text = "you took your like back"
                     elif user_id in likes_data.dislikes_owners:
                         text = "take your dislike back first"
@@ -419,9 +420,9 @@ class ChatActor(pykka.ThreadingActor):
                         likes_data.likes_owners.add(user_id)
                         text = "+1"
                         user_likes = (orig_with_track_msg.from_user, 0)
-                        for user_likes_raw in self.users.get(orig_with_track_msg.from_user.id):
+                        for user_likes_raw in self.users.get(from_user_id):
                             user_likes = (user_likes_raw[0], user_likes_raw[1] + 1)
-                        self.users.put(orig_with_track_msg.from_user.id, user_likes)
+                        self.users.put(from_user_id, user_likes)
 
                 elif callback[1] == "0":
                     if user_id in likes_data.dislikes_owners:
