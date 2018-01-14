@@ -86,8 +86,8 @@ class ManagerActor(pykka.ThreadingActor):
             print "Manager Actor msg " + str(message)
             if message.get('command') == 'update':
                 update = message.get('update')
-                if update.message:
-                    self.on_message(update.message)
+                if update.message or update.channel_post:
+                    self.on_message(update.message if update.message else update.channel_post)
                 elif update.callback_query:
                     self.on_callback_query(update.callback_query)
                 elif update.inline_query:
