@@ -96,6 +96,7 @@ class ChatActor(pykka.ThreadingActor):
             self.devices.add((t, self.manager.ask({'command': 'get_device', 'token': t})))
 
     def on_message(self, message):
+        user_id = message.from_user.id if message.from_user else 0
         if message.text:
             text = message.text  # type: str
 
@@ -214,7 +215,7 @@ class ChatActor(pykka.ThreadingActor):
                         title = regex.search(page).group(1)
                         reply = self.reply_to_content(message, title)
                         status = YoutubeVidStatus(message.message_id, reply.message_id, message.chat_id, title, text,
-                                                  message.from_user.id, time())
+                                                  user_id, time())
                         data = status.data
                         data['url'] = text
 
@@ -258,7 +259,7 @@ class ChatActor(pykka.ThreadingActor):
                 reply = self.reply_to_content(message, title)
 
                 status = TrackStatus(message.message_id, reply.message_id, message.chat_id, title, file_id,
-                                     message.from_user.id, time())
+                                     user_id, time())
                 data = status.data
                 data['track_url'] = durl
                 self.latest_tracks.put(message.message_id, status)
