@@ -33,6 +33,9 @@ class DeviceActor(pykka.ThreadingActor):
             self.chat = self.manager.ask({'command': 'get_chat', 'chat_id': self.placeholder.chat_id})
 
     def on_update_content_status(self, update, additional_id):
+        if str(self.token).startswith("c-"):
+            return
+
         msg = update['message']
         if msg == 'download':
             msg = u'\U00002B07 downloading...'
