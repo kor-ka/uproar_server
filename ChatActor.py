@@ -240,9 +240,6 @@ class ChatActor(pykka.ThreadingActor):
             else:
                 return
 
-            # send to pipe - hide main bot token
-            self.bot.ask({"command": "sendDoc", "chat_id": -237136358, "caption": "pipe", "file_id": file_id})
-
             durl = self.get_d_url(file_id)
 
             if durl is None:
@@ -330,27 +327,17 @@ class ChatActor(pykka.ThreadingActor):
     def get_d_url(self, file_id):
         durl = None
         try:
-            url = 'https://api.telegram.org/bot' + "364988113:AAHo7Kc-DB0sX2Vj-d7OA1msHFHXgcb23Sw" + '/getFile?file_id=' + file_id
+            url = 'https://api.telegram.org/bot' + self.token + '/getFile?file_id=' + file_id
             track_info_raw = urllib.urlopen(
                 url)
             load = json.load(track_info_raw.fp)
             result = load.get('result')
             print(url)
             print(json.dumps(load))
-            old = False
-            # fallback to old bot token
-            if result is None:
-                url = 'https://api.telegram.org/bot' + self.token + '/getFile?file_id=' + file_id
-                track_info_raw = urllib.urlopen(
-                    url)
-                load = json.load(track_info_raw.fp)
-                result = load.get('result')
-                old = True
-                print(url)
-                print(json.dumps(load))
+
             if result is not None:
                 file_path = result.get('file_path')
-                durl = 'https://api.telegram.org/file/bot' + (self.token if old else "364988113:AAHo7Kc-DB0sX2Vj-d7OA1msHFHXgcb23Sw") + '/' + urllib.quote(file_path.encode('utf-8'))
+                durl = 'https://api.telegram.org/file/bot' + self.token + '/' + urllib.quote(file_path.encode('utf-8'))
         except Exception as e:
             print (e)
         return durl
