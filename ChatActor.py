@@ -582,6 +582,8 @@ class ChatActor(pykka.ThreadingActor):
                     device.tell({'command': 'add_youtube_link', 'youtube_link': t.data, 'additional_id': additional_id})
 
             # reach boring
+            if exclude is None:
+                return
             latest_tracks_list = sorted(latest_tracks_list,
                                         key=lambda track: (10000 + list(exclude).index(track)) if track.data[
                                                                                                       "message_id"] in exclude else random.randint(
@@ -625,7 +627,7 @@ class ChatActor(pykka.ThreadingActor):
             elif message.get('command') == 'device_message':
                 msg = message.get("message")
                 if msg["update"] == "boring":
-                    self.on_boring(message.get("token"), message.get("device"), msg.get("additional_id"))
+                    self.on_boring(message.get("token"), message.get("device"), msg.get("additional_id"), msg.get("exclude"))
         except Exception as ex:
             logging.exception(ex)
 
