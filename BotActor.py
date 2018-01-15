@@ -49,9 +49,9 @@ class BotActor(pykka.ThreadingActor):
 
 
 
-        self.bot.delete_message(-1001131441239, 13411)
-        self.bot.delete_message(-1001131441239, 13412)
-        self.bot.delete_message(-1001131441239, 13414)
+        self.bot.delete_message(1001131441239, 13411)
+        self.bot.delete_message(1001131441239, 13412)
+        self.bot.delete_message(1001131441239, 13414)
 
         # Start the Bot
         updater.start_polling()
