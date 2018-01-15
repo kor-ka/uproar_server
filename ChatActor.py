@@ -594,6 +594,7 @@ class ChatActor(pykka.ThreadingActor):
                 t.data['boring'] = True
                 content = None
                 if isinstance(t, TrackStatus):
+                    t.data["track_url"] = self.get_d_url(t.file_id)
                     content = {'audio': t.data, 'additional_id': additional_id}
                 elif isinstance(t, YoutubeVidStatus):
                     content = {'youtube_link': t.data, 'additional_id': additional_id}
