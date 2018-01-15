@@ -589,6 +589,7 @@ class ChatActor(pykka.ThreadingActor):
 
             res = []
             for t in latest_tracks_list[:10]:
+                t.data['boring'] = True
                 content = None
                 if isinstance(t, TrackStatus):
                     content = {'audio': t.data, 'additional_id': additional_id}
