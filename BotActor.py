@@ -47,6 +47,12 @@ class BotActor(pykka.ThreadingActor):
         dp.add_handler(InlineQueryHandler(self.post))
         dp.add_handler(PreCheckoutQueryHandler(self.post))
 
+
+
+        self.bot.delete_message(-1001131441239, 13411)
+        self.bot.delete_message(-1001131441239, 13412)
+        self.bot.delete_message(-1001131441239, 13414)
+
         # Start the Bot
         updater.start_polling()
 
@@ -108,5 +114,7 @@ class BotActor(pykka.ThreadingActor):
                 return self.bot.sendInvoice(**message["invoice_args"])
             elif message.get('command') == 'confirm_precheckout':
                 return self.bot.answer_pre_checkout_query(message["id"], True)
+            elif message.get('command') == 'delete':
+                return self.bot.delete(message["message"])
         except Exception as ex:
             logging.exception(ex)
