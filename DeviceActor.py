@@ -77,6 +77,9 @@ class DeviceActor(pykka.ThreadingActor):
                 self.storage.put('placeholder', self.placeholder)
 
 
+            elif message.get('command') == "publish":
+                return self.publish(message.get("topic"), message.get("data"))
+
             elif message.get('command') == "get_name":
                 return get_name(self.token)
 

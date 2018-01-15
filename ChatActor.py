@@ -598,7 +598,7 @@ class ChatActor(pykka.ThreadingActor):
                 elif isinstance(t, YoutubeVidStatus):
                     content = {'youtube_link': t.data, 'additional_id': additional_id}
                 res.append(content)
-            device.tell({'command': 'publish', "data": {"boring_list": res}})
+            device.tell({'command': 'publish', "data": {"boring_list": res}, "topic":"boring_list"})
 
     def on_receive(self, message):
         try:
