@@ -114,7 +114,6 @@ class ChatActor(pykka.ThreadingActor):
                 chat_id = str(message.chat_id).replace('-', '')
                 token = ( "p-" if message.chat.type == 'private' else "c-" if message.chat.type == "channel" else "g-") + chat_id
 
-
                 token_message = self.bot.ask(
                     {'command': 'send', 'chat_id': message.chat_id,
                      'message': 'https://kor-ka.github.io/uproar_client_web?token=' + token})
@@ -131,7 +130,6 @@ class ChatActor(pykka.ThreadingActor):
                         'token': token,
                         'placeholder': placeholder,
                     })
-
 
             if text.startswith('/token'):
 
@@ -230,7 +228,6 @@ class ChatActor(pykka.ThreadingActor):
                         {'command': 'reply', 'base': message,
                          'message': 'no devices, please forward one from @uproarbot'})
 
-
         if message.audio or message.voice:
             durl = None
 
@@ -273,7 +270,7 @@ class ChatActor(pykka.ThreadingActor):
                     {'command': 'reply', 'base': message, 'message': 'no devices, please forward one from @uproarbot'})
 
     def issue_token(self, username, random_str):
-        token_set =  username + '-' + random_str + '-' + str(
+        token_set = username + '-' + random_str + '-' + str(
             hashlib.sha256(random_str + self.secret).hexdigest())
         device_mqtt_user = username + '-' + random_str
         pattern_prefix = ""
@@ -568,18 +565,37 @@ class ChatActor(pykka.ThreadingActor):
             except AttributeError:
                 pass
 
-    def on_boring(self, token, device, additional_id):
-        if len(self.latest_tracks.get()) > 0:
-            t = random.choice(self.latest_tracks.get())
+    def on_boring(self, token, device, additional_id, exclude):
+        latest_tracks_list = self.latest_tracks.get()
+        if len(latest_tracks_list) > 0:
+
+            # old stuff
+            t = random.choice(latest_tracks_list)
             status = t.device_status.get(token.split('-')[1])
             if status is None or not status.startswith(skip):
                 t.data['boring'] = True
                 if hasattr(t, "file_id"):
                     t.data["track_url"] = self.get_d_url(t.file_id)
                 if isinstance(t, TrackStatus):
-                    device.tell({'command': 'add_track', 'track': t.data, 'additional_id':additional_id})
+                    device.tell({'command': 'add_track', 'track': t.data, 'additional_id': additional_id})
                 elif isinstance(t, YoutubeVidStatus):
-                    device.tell({'command': 'add_youtube_link', 'youtube_link': t.data, 'additional_id':additional_id})
+                    device.tell({'command': 'add_youtube_link', 'youtube_link': t.data, 'additional_id': additional_id})
+
+            # reach boring
+            latest_tracks_list = sorted(latest_tracks_list,
+                                        key=lambda track: (10000 + list(exclude).index(track)) if track.data[
+                                                                                                      "message_id"] in exclude else random.randint(
+                                            0, 1000))
+
+            res = []
+            for t in latest_tracks_list[:10]:
+                content = None
+                if isinstance(t, TrackStatus):
+                    content = {'audio': t.data, 'additional_id': additional_id}
+                elif isinstance(t, YoutubeVidStatus):
+                    content = {'youtube_link': t.data, 'additional_id': additional_id}
+                res.append(content)
+            device.tell({'command': 'publish', "data": {"boring_list": res}})
 
     def on_receive(self, message):
         try:
