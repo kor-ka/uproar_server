@@ -482,7 +482,8 @@ class ChatActor(pykka.ThreadingActor):
             option = InlineKeyboardButton(skip, callback_data='skip:' + str(orig_with_track_msg))
         if likes_data.likes >= votes_to_skip and likes_data.likes > likes_data.dislikes:
             option = InlineKeyboardButton(promoted, callback_data='promote:' + str(orig_with_track_msg))
-
+        if message and message.chat.type == "channel":
+            option = None
         first_row = [InlineKeyboardButton(thumb_up + " " + str(likes_data.likes),
                                           callback_data='like:1:' + str(orig_with_track_msg)),
                      InlineKeyboardButton(thumb_down + " " + str(likes_data.dislikes),
