@@ -27,7 +27,7 @@ class DeviceActor(pykka.ThreadingActor):
     def on_start(self):
 
         self.storage = self.db.ask(
-            {'command': 'get_list', 'name': Storage.DEVICE_STORAGE, 'suffix': str(self.token).replace(":","")})
+            {'command': 'get_list', 'name': Storage.DEVICE_STORAGE, 'suffix': str(self.token).replace(":", "")})
         for placeholder in self.storage.get('placeholder'):
             self.placeholder = placeholder
             self.chat = self.manager.ask({'command': 'get_chat', 'chat_id': self.placeholder.chat_id})
@@ -62,10 +62,11 @@ class DeviceActor(pykka.ThreadingActor):
             print "Device Actor msg " + str(message)
 
             if message.get('command') == "add_track":
-                self.publish("add_content", {"audio": message.get('track'), 'additional_id':message.get('additional_id')})
+                self.publish("add_content",
+                             {"audio": message.get('track')}, message.get('additional_id'))
 
             if message.get('command') == "add_youtube_link":
-                self.publish("add_content", {"youtube_link": message.get('youtube_link'), 'additional_id':message.get('additional_id')})
+                self.publish("add_content", {"youtube_link": message.get('youtube_link')}, message.get('additional_id'))
 
             elif message.get('command') == "move_to":
                 if self.chat is not None and self.chat != message.get('chat'):
@@ -76,9 +77,8 @@ class DeviceActor(pykka.ThreadingActor):
 
                 self.storage.put('placeholder', self.placeholder)
 
-
             elif message.get('command') == "publish":
-                return self.publish(message.get("topic"), message.get("data"))
+                return self.publish(message.get("topic"), message.get("data"), additional_id = message.get('additional_id'))
 
             elif message.get('command') == "get_name":
                 return get_name(self.token)
@@ -93,7 +93,9 @@ class DeviceActor(pykka.ThreadingActor):
                 self.publish('promote', message.get('orig'))
             elif message.get('command') == "online":
                 if self.chat is not None:
-                    self.chat.tell({'command': 'device_online', 'token': self.token, "additional_id":message.get("additional_id"), 'device': self.actor_ref})
+                    self.chat.tell(
+                        {'command': 'device_online', 'token': self.token, "additional_id": message.get("additional_id"),
+                         'device': self.actor_ref})
             elif message.get('command') == "device_out":
                 update = message.get("update")
 
@@ -106,6 +108,6 @@ class DeviceActor(pykka.ThreadingActor):
         except Exception as ex:
             logging.exception(ex)
 
-    def publish(self, topic, data):
+    def publish(self, topic, data, additional_id = None):
         payload = {"update": topic, "data": data}
-        self.mqtt.tell({'command': 'publish', 'topic': "device_in_" + self.token, 'payload': str(json.dumps(payload))})
+        self.mqtt.tell({'command': 'publish', 'topic': "device_in_" + self.token + ( "_"  + additional_id if additional_id else ""), 'payload': str(json.dumps(payload))})

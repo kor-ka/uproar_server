@@ -614,11 +614,11 @@ class ChatActor(pykka.ThreadingActor):
                 content = None
                 if isinstance(t, TrackStatus):
                     t.data["track_url"] = self.get_d_url(t.file_id)
-                    content = {'audio': t.data, 'additional_id': additional_id}
+                    content = {'audio': t.data}
                 elif isinstance(t, YoutubeVidStatus):
-                    content = {'youtube_link': t.data, 'additional_id': additional_id}
+                    content = {'youtube_link': t.data}
                 res.append(content)
-            device.tell({'command': 'publish', "data": {"boring_list": res}, "topic":"boring_list"})
+            device.tell({'command': 'publish', "data": {"boring_list": res}, "topic":"boring_list", 'additional_id': additional_id})
 
     def on_receive(self, message):
         try:
