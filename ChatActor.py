@@ -549,7 +549,7 @@ class ChatActor(pykka.ThreadingActor):
                 self.bot.tell({'command': 'edit', 'base': current_placeholder, 'message': message,
                                'reply_markup': InlineKeyboardMarkup(keyboard)})
 
-    def on_device_online(self, token, device):
+    def on_device_online(self, token, device, additional_id):
         for t in self.latest_tracks.get():
             try:
                 if time() - t.time < 60 * 15:
@@ -558,10 +558,15 @@ class ChatActor(pykka.ThreadingActor):
                             queued) or status.startswith(promoted):
                         if hasattr(t, "file_id"):
                             t.data["track_url"] = self.get_d_url(t.file_id)
+                        device_message = None
                         if isinstance(t, TrackStatus):
-                            device.tell({'command': 'add_track', 'track': t.data})
+                            device_message = {'command': 'add_track', 'track': t.data}
                         elif isinstance(t, YoutubeVidStatus):
-                            device.tell({'command': 'add_youtube_link', 'youtube_link': t.data})
+                            device_message = {'command': 'add_youtube_link', 'youtube_link': t.data}
+                        if device_message:
+                            if additional_id:
+                                device_message["additional_id"] = additional_id
+                            device.tell(device_message)
             except AttributeError:
                 pass
 
@@ -624,7 +629,7 @@ class ChatActor(pykka.ThreadingActor):
             elif message.get('command') == 'device_content_status':
                 self.on_device_update(message.get('content_status'))
             elif message.get('command') == 'device_online':
-                self.on_device_online(message.get('token'), message.get('device'))
+                self.on_device_online(message.get('token'), message.get('device'), message.get('additional_id'))
             elif message.get('command') == 'device_message':
                 msg = message.get("message")
                 if msg["update"] == "boring":

@@ -23,8 +23,17 @@ class MqttACtor(pykka.ThreadingActor):
             print "MQTT <-- topic: %s | msg: %s" % (msg.topic, str(msg.payload))
 
             if msg.topic == 'registry':
-                device = self.manager.ask({'command': 'get_device', 'token': str(msg.payload)})
-                device.tell({'command':'online'})
+                reg_json = None
+                try:
+                    reg_json = json.loads(msg.payload)
+                except Exception as ex:
+                   pass
+                if reg_json:
+                    device = self.manager.ask({'command': 'get_device', 'token': reg_json["token"]})
+                    device.tell({'command': 'online', "additional_id":reg_json.get("additional_id")})
+                else:
+                    device = self.manager.ask({'command': 'get_device', 'token': str(msg.payload)})
+                    device.tell({'command': 'online'})
             elif str(msg.topic).startswith("device_out"):
                 update = json.loads(str(msg.payload))
                 token = update.get("token")

@@ -93,7 +93,7 @@ class DeviceActor(pykka.ThreadingActor):
                 self.publish('promote', message.get('orig'))
             elif message.get('command') == "online":
                 if self.chat is not None:
-                    self.chat.tell({'command': 'device_online', 'token': self.token, 'device': self.actor_ref})
+                    self.chat.tell({'command': 'device_online', 'token': self.token, "additional_id":message.get("additional_id"), 'device': self.actor_ref})
             elif message.get('command') == "device_out":
                 update = message.get("update")
 
