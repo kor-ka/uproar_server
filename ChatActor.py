@@ -308,7 +308,7 @@ class ChatActor(pykka.ThreadingActor):
                InlineKeyboardButton(thumb_down + " 0", callback_data='like:0:' + str(message.message_id)), ]
 
         if message.chat.type == 'channel':
-            row.append(InlineKeyboardButton("Play " + play, url=self.get_web_link(message=message)))
+            row.append(InlineKeyboardButton("Play " + play, url=self.get_web_link(message.message_id, message=message)))
 
         keyboard = [
             row,
@@ -321,11 +321,12 @@ class ChatActor(pykka.ThreadingActor):
 
         return reply
 
-    def get_web_link(self, message = None, token = None):
+    def get_web_link(self, message_id, message = None, token = None):
         chat_id = str(message.chat_id).replace('-', '')
         if not token:
             token = ("p-" if message.chat.type == 'private' else "c-" if message.chat.type == "channel" else "g-") + chat_id
-        return 'https://kor-ka.github.io/uproar_client_web?token=' + token
+
+        return 'https://kor-ka.github.io/uproar_client_web?token=' + token + "&silent=true&start=" + message_id
 
     def enshure_device_ref(self, device):
         device_ref = device[1]
@@ -488,7 +489,7 @@ class ChatActor(pykka.ThreadingActor):
                                           callback_data='like:1:' + str(orig_with_track_msg)),
                      InlineKeyboardButton(thumb_down + " " + str(likes_data.dislikes),
                                           callback_data='like:0:' + str(orig_with_track_msg)),
-                     InlineKeyboardButton("Play " + play, url=self.get_web_link(message=message, token=token))]
+                     InlineKeyboardButton("Play " + play, url=self.get_web_link(orig_with_track_msg, message=message, token=token))]
         if option is not None:
             first_row.append(option)
         keyboard = [first_row]
@@ -564,26 +565,38 @@ class ChatActor(pykka.ThreadingActor):
                 self.bot.tell({'command': 'edit', 'base': current_placeholder, 'message': message,
                                'reply_markup': InlineKeyboardMarkup(keyboard)})
 
-    def on_device_online(self, token, device, additional_id):
-        for t in self.latest_tracks.get():
+    def on_device_online(self, token, device, additional_id, start_with):
+        latest_tracks = self.latest_tracks.get()
+        for t in latest_tracks:
             try:
-                if time() - t.time < 60 * 15:
-                    status = t.device_status.get(token.split('-')[1])
-                    if status is None or status.startswith(downloading) or status.startswith(
-                            queued) or status.startswith(promoted):
-                        if hasattr(t, "file_id"):
-                            t.data["track_url"] = self.get_d_url(t.file_id)
-                        device_message = None
-                        if isinstance(t, TrackStatus):
-                            device_message = {'command': 'add_track', 'track': t.data}
-                        elif isinstance(t, YoutubeVidStatus):
-                            device_message = {'command': 'add_youtube_link', 'youtube_link': t.data}
-                        if device_message:
-                            if additional_id:
-                                device_message["additional_id"] = additional_id
-                            device.tell(device_message)
+                if t.original_msg_id == start_with:
+                    self.send_current(additional_id, device, t, token)
+                    break
             except AttributeError:
                 pass
+
+        for t in latest_tracks:
+            try:
+                if t.original_msg_id != start_with and time() - t.time < 60 * 15:
+                    self.send_current(additional_id, device, t, token)
+            except AttributeError:
+                pass
+
+    def send_current(self, additional_id, device, t, token):
+        status = t.device_status.get(token.split('-')[1])
+        if status is None or status.startswith(downloading) or status.startswith(
+                queued) or status.startswith(promoted):
+            if hasattr(t, "file_id"):
+                t.data["track_url"] = self.get_d_url(t.file_id)
+            device_message = None
+            if isinstance(t, TrackStatus):
+                device_message = {'command': 'add_track', 'track': t.data}
+            elif isinstance(t, YoutubeVidStatus):
+                device_message = {'command': 'add_youtube_link', 'youtube_link': t.data}
+            if device_message:
+                if additional_id:
+                    device_message["additional_id"] = additional_id
+                device.tell(device_message)
 
     def on_boring(self, token, device, additional_id, exclude):
         latest_tracks_list = self.latest_tracks.get()
@@ -643,7 +656,7 @@ class ChatActor(pykka.ThreadingActor):
             elif message.get('command') == 'device_content_status':
                 self.on_device_update(message.get('content_status'), message.get('token'))
             elif message.get('command') == 'device_online':
-                self.on_device_online(message.get('token'), message.get('device'), message.get('additional_id'))
+                self.on_device_online(message.get('token'), message.get('device'), message.get('additional_id'), message.get('start_with'))
             elif message.get('command') == 'device_message':
                 msg = message.get("message")
                 if msg["update"] == "boring":

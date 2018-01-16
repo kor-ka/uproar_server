@@ -78,7 +78,8 @@ class DeviceActor(pykka.ThreadingActor):
                 self.storage.put('placeholder', self.placeholder)
 
             elif message.get('command') == "publish":
-                return self.publish(message.get("topic"), message.get("data"), additional_id = message.get('additional_id'))
+                return self.publish(message.get("topic"), message.get("data"),
+                                    additional_id=message.get('additional_id'))
 
             elif message.get('command') == "get_name":
                 return get_name(self.token)
@@ -95,6 +96,7 @@ class DeviceActor(pykka.ThreadingActor):
                 if self.chat is not None:
                     self.chat.tell(
                         {'command': 'device_online', 'token': self.token, "additional_id": message.get("additional_id"),
+                         "start_with": message.get("start_with"),
                          'device': self.actor_ref})
             elif message.get('command') == "device_out":
                 update = message.get("update")
@@ -108,6 +110,8 @@ class DeviceActor(pykka.ThreadingActor):
         except Exception as ex:
             logging.exception(ex)
 
-    def publish(self, topic, data, additional_id = None):
+    def publish(self, topic, data, additional_id=None):
         payload = {"update": topic, "data": data}
-        self.mqtt.tell({'command': 'publish', 'topic': "device_in_" + self.token + ( "_"  + additional_id if additional_id else ""), 'payload': str(json.dumps(payload))})
+        self.mqtt.tell(
+            {'command': 'publish', 'topic': "device_in_" + self.token + ("_" + additional_id if additional_id else ""),
+             'payload': str(json.dumps(payload))})

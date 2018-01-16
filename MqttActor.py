@@ -30,7 +30,7 @@ class MqttACtor(pykka.ThreadingActor):
                    pass
                 if reg_json:
                     device = self.manager.ask({'command': 'get_device', 'token': reg_json["token"]})
-                    device.tell({'command': 'online', "additional_id":reg_json.get("additional_id")})
+                    device.tell({'command': 'online', "additional_id":reg_json.get("additional_id"), "start_with":reg_json.get("start_with")})
                 else:
                     device = self.manager.ask({'command': 'get_device', 'token': str(msg.payload)})
                     device.tell({'command': 'online'})
