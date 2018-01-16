@@ -308,7 +308,7 @@ class ChatActor(pykka.ThreadingActor):
                InlineKeyboardButton(thumb_down + " 0", callback_data='like:0:' + str(message.message_id)), ]
 
         if message.chat.type == 'channel':
-            row.append(InlineKeyboardButton("Play " + play, url=self.get_web_link(message)))
+            row.append(InlineKeyboardButton("Play " + play, url=self.get_web_link(message=message)))
 
         keyboard = [
             row,
@@ -321,9 +321,10 @@ class ChatActor(pykka.ThreadingActor):
 
         return reply
 
-    def get_web_link(self, message):
+    def get_web_link(self, message = None, token = None):
         chat_id = str(message.chat_id).replace('-', '')
-        token = ("p-" if message.chat.type == 'private' else "c-" if message.chat.type == "channel" else "g-") + chat_id
+        if not token:
+            token = ("p-" if message.chat.type == 'private' else "c-" if message.chat.type == "channel" else "g-") + chat_id
         return 'https://kor-ka.github.io/uproar_client_web?token=' + token
 
     def enshure_device_ref(self, device):
@@ -446,7 +447,7 @@ class ChatActor(pykka.ThreadingActor):
 
                 self.latest_tracks.put(message_id, likes_data)
 
-                keyboard = self.get_keyboard(likes_data, message_id)
+                keyboard = self.get_keyboard(likes_data, message_id, message=message)
 
                 self.bot.tell({'command': 'edit_reply_markup', 'base': callback_query,
                                'reply_markup': InlineKeyboardMarkup(keyboard)})
@@ -475,24 +476,24 @@ class ChatActor(pykka.ThreadingActor):
         if answer:
             callback_query.answer(text=text, show_alert=show_alert)
 
-    def get_keyboard(self, likes_data, orig_with_track_msg):
+    def get_keyboard(self, likes_data, orig_with_track_msg, message = None, token = None):
         option = None
         if likes_data.dislikes >= votes_to_skip and likes_data.dislikes > likes_data.likes:
             option = InlineKeyboardButton(skip, callback_data='skip:' + str(orig_with_track_msg))
         if likes_data.likes >= votes_to_skip and likes_data.likes > likes_data.dislikes:
             option = InlineKeyboardButton(promoted, callback_data='promote:' + str(orig_with_track_msg))
-        if orig_with_track_msg.chat.type == 'channel':
-            option = InlineKeyboardButton("Play " + play, url=self.get_web_link(orig_with_track_msg))
+
         first_row = [InlineKeyboardButton(thumb_up + " " + str(likes_data.likes),
                                           callback_data='like:1:' + str(orig_with_track_msg)),
                      InlineKeyboardButton(thumb_down + " " + str(likes_data.dislikes),
-                                          callback_data='like:0:' + str(orig_with_track_msg))]
+                                          callback_data='like:0:' + str(orig_with_track_msg)),
+                     InlineKeyboardButton("Play " + play, url=self.get_web_link(message=message, token=token))]
         if option is not None:
             first_row.append(option)
         keyboard = [first_row]
         return keyboard
 
-    def on_device_update(self, update):
+    def on_device_update(self, update, token):
 
         track_keyboard = None
 
@@ -512,7 +513,7 @@ class ChatActor(pykka.ThreadingActor):
 
             update['message'] = message
 
-            track_keyboard = self.get_keyboard(track_status, orig_with_track)
+            track_keyboard = self.get_keyboard(track_status, orig_with_track, token = token)
 
             self.bot.tell({'command': 'update', 'update': update, 'reply_markup': InlineKeyboardMarkup(track_keyboard)})
             self.latest_tracks.put(self.current_orig_message_id, track_status)
@@ -640,7 +641,7 @@ class ChatActor(pykka.ThreadingActor):
                     self.devices.remove(to_remove)
                 self.devices_tokens.remove(message.get('token'))
             elif message.get('command') == 'device_content_status':
-                self.on_device_update(message.get('content_status'))
+                self.on_device_update(message.get('content_status'), message.get('token'))
             elif message.get('command') == 'device_online':
                 self.on_device_online(message.get('token'), message.get('device'), message.get('additional_id'))
             elif message.get('command') == 'device_message':

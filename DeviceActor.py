@@ -55,7 +55,7 @@ class DeviceActor(pykka.ThreadingActor):
         update['device_name'] = get_name(self.token) + update['device']
         update['message'] = msg
         if self.chat is not None:
-            self.chat.tell({'command': 'device_content_status', 'content_status': update})
+            self.chat.tell({'command': 'device_content_status', 'content_status': update, 'token': self.token})
 
     def on_receive(self, message):
         try:
