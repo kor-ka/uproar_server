@@ -326,7 +326,7 @@ class ChatActor(pykka.ThreadingActor):
         if not token:
             token = ("p-" if message.chat.type == 'private' else "c-" if message.chat.type == "channel" else "g-") + chat_id
 
-        return 'https://kor-ka.github.io/uproar_client_web?token=' + token + "&silent=true&start_with=" + message_id
+        return 'https://kor-ka.github.io/uproar_client_web?token=' + token + "&silent=true&start_with=" + str(message_id)
 
     def enshure_device_ref(self, device):
         device_ref = device[1]
