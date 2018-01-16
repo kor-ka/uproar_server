@@ -46,6 +46,7 @@ downloading = u'\U00002B07'
 queued = u'\U0000261D'
 playing = u'\U0001F3B6'
 stopped = u'\U00002B1B'
+play = u'\U000025B6'
 promoted = u'\U00002B06'
 poo = u'\U0001F4A9'
 crown = u'\U0001F451'
@@ -303,9 +304,14 @@ class ChatActor(pykka.ThreadingActor):
 
     def reply_to_content(self, message, title):
 
+        row = [InlineKeyboardButton(thumb_up + " 0", callback_data='like:1:' + str(message.message_id)),
+               InlineKeyboardButton(thumb_down + " 0", callback_data='like:0:' + str(message.message_id)), ]
+
+        if message.chat.type == 'channel':
+            row.append(InlineKeyboardButton("Play " + play, url=self.get_web_link(message)))
+
         keyboard = [
-            [InlineKeyboardButton(thumb_up + " 0", callback_data='like:1:' + str(message.message_id)),
-             InlineKeyboardButton(thumb_down + " 0", callback_data='like:0:' + str(message.message_id))],
+            row,
         ]
 
         title = title.decode("utf-8")
@@ -314,6 +320,11 @@ class ChatActor(pykka.ThreadingActor):
              'message': title, 'reply_markup': InlineKeyboardMarkup(keyboard)})
 
         return reply
+
+    def get_web_link(self, message):
+        chat_id = str(message.chat_id).replace('-', '')
+        token = ("p-" if message.chat.type == 'private' else "c-" if message.chat.type == "channel" else "g-") + chat_id
+        return 'https://kor-ka.github.io/uproar_client_web?token=' + token
 
     def enshure_device_ref(self, device):
         device_ref = device[1]
@@ -470,6 +481,8 @@ class ChatActor(pykka.ThreadingActor):
             option = InlineKeyboardButton(skip, callback_data='skip:' + str(orig_with_track_msg))
         if likes_data.likes >= votes_to_skip and likes_data.likes > likes_data.dislikes:
             option = InlineKeyboardButton(promoted, callback_data='promote:' + str(orig_with_track_msg))
+        if orig_with_track_msg.chat.type == 'channel':
+            option = InlineKeyboardButton("Play " + play, url=self.get_web_link(orig_with_track_msg))
         first_row = [InlineKeyboardButton(thumb_up + " " + str(likes_data.likes),
                                           callback_data='like:1:' + str(orig_with_track_msg)),
                      InlineKeyboardButton(thumb_down + " " + str(likes_data.dislikes),
