@@ -618,8 +618,8 @@ class ChatActor(pykka.ThreadingActor):
             if exclude is None:
                 return
             latest_tracks_list = sorted(latest_tracks_list,
-                                        key=lambda track: (10000 + list(exclude).index(track.original_msg_id)) if track.original_msg_id in exclude else random.randint(
-                                            0, 1000))
+                                        key=lambda track: (10000 + list(exclude).index(track.original_msg_id)) if track.original_msg_id in exclude else (random.randint(
+                                            0, 1000) - track.likes * 100 + track.dislikes * 300))
 
             res = []
             for t in latest_tracks_list[:10]:
