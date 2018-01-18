@@ -307,8 +307,7 @@ class ChatActor(pykka.ThreadingActor):
         row = [InlineKeyboardButton(thumb_up + " 0", callback_data='like:1:' + str(message.message_id)),
                InlineKeyboardButton(thumb_down + " 0", callback_data='like:0:' + str(message.message_id)), ]
 
-        if message.chat.type == 'channel':
-            row.append(InlineKeyboardButton("Play " + play, url=self.get_web_link(message.message_id, message=message)))
+        row.append(InlineKeyboardButton("Play " + play, url=self.get_web_link(message.message_id, message=message)))
 
         keyboard = [
             row,
@@ -326,7 +325,7 @@ class ChatActor(pykka.ThreadingActor):
         if not token:
             token = ("p-" if message.chat.type == 'private' else "c-" if message.chat.type == "channel" else "g-") + chat_id
 
-        if not token in self.devices_tokens:
+        if not token in [device[0] for device in self.devices]:
            self.actor_ref.tell(
                     {
                         'command': 'add_device',
