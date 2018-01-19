@@ -321,8 +321,8 @@ class ChatActor(pykka.ThreadingActor):
         return reply
 
     def get_web_link(self, message_id, message = None, token = None):
-        chat_id = str(message.chat_id).replace('-', '')
         if not token:
+            chat_id = str(message.chat_id).replace('-', '')
             token = ("p-" if message.chat.type == 'private' else "c-" if message.chat.type == "channel" else "g-") + chat_id
 
         if not token in [device[0] for device in self.devices]:
