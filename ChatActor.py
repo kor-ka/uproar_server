@@ -593,9 +593,9 @@ class ChatActor(pykka.ThreadingActor):
 
         context = {"title": title}
 
-        photo = chat.photo
+        photo = chat["photo"]
         if photo:
-            photo = self.get_d_url(photo.small_file_id)
+            photo = self.get_d_url(photo["small_file_id"])
             context["photo"] = photo
 
         device.tell({"command": "publish", "data": {"context": context}, "topic": "init", "additional_id": additional_id})
@@ -617,7 +617,7 @@ class ChatActor(pykka.ThreadingActor):
                 pass
 
     def get_chat_title(self, chat):
-        title = chat.title if chat.title else chat.username if chat.username else (chat.first_name + chat.last_name)
+        title = chat["title"] if chat["title"] else chat["username"] if chat["username"] else (chat["first_name"] + chat["last_name"])
         return title
 
     def send_current(self, additional_id, device, t, token):
