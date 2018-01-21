@@ -364,13 +364,13 @@ class ChatActor(pykka.ThreadingActor):
     def get_chat(self, chat_id):
         res = None
         try:
-            url = 'https://api.telegram.org/bot' + self.token + '/getChat?chat_id=' + chat_id
+            url = 'https://api.telegram.org/bot' + self.token + '/getChat?chat_id=' + str(chat_id)
             track_info_raw = urllib.urlopen(
                 url)
             res = json.load(track_info_raw.fp)
 
         except Exception as e:
-            print (e)
+            logging.exception(e)
         return res
 
     def get_token(self, text, user):
