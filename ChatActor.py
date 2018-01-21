@@ -361,6 +361,18 @@ class ChatActor(pykka.ThreadingActor):
             print (e)
         return durl
 
+    def get_chat(self, chat_id):
+        res = None
+        try:
+            url = 'https://api.telegram.org/bot' + self.token + '/getChat?chat_id=' + chat_id
+            track_info_raw = urllib.urlopen(
+                url)
+            res = json.load(track_info_raw.fp)
+
+        except Exception as e:
+            print (e)
+        return res
+
     def get_token(self, text, user):
         last_str = string.split(text, '\n')[-1].replace(loud, '').replace(' ', '')
         token = string.split(last_str, '\'')[0] + '-' + last_str[-5:] + '-' + str(
@@ -576,7 +588,7 @@ class ChatActor(pykka.ThreadingActor):
 
     def on_device_online(self, token, device, additional_id, start_with):
 
-        chat = self.bot.ask({"command": "get_chat", "chat_id":self.chat_id})
+        chat = self.get_chat(self.chat_id)
         title = self.get_chat_title(chat)
 
         context = {"title": title}

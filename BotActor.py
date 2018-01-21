@@ -110,7 +110,5 @@ class BotActor(pykka.ThreadingActor):
                 return self.bot.answer_pre_checkout_query(message["id"], True)
             elif message.get('command') == 'delete':
                 return self.bot.delete(message["message"])
-            elif message.get('command') == 'get_chat':
-                return self.bot.getChat(message["chat_id"])
         except Exception as ex:
             logging.exception(ex)
