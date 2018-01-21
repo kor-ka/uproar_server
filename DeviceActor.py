@@ -9,7 +9,7 @@ from pprint import pprint
 
 def get_name(token):
     split = token.split('-')
-    return split[0] + '\'s device: ' + split[1][-5:]
+    return split[0] + '\'s device: ' + split[1]
 
 
 class DeviceActor(pykka.ThreadingActor):
@@ -52,7 +52,7 @@ class DeviceActor(pykka.ThreadingActor):
         device_id = self.token.split('-')[1]
         update['device'] = device_id + ("" if additional_id is None else additional_id)
         update['placeholder'] = self.placeholder
-        update['device_name'] = get_name(self.token) + update['device']
+        update['device_name'] = additional_id[-5:] if additional_id else get_name(self.token) + update['device']
         update['message'] = msg
         if self.chat is not None:
             self.chat.tell({'command': 'device_content_status', 'content_status': update, 'token': self.token})
