@@ -214,7 +214,7 @@ class ChatActor(pykka.ThreadingActor):
                         title = regex.search(page).group(1)
                         reply = self.reply_to_content(message, title)
                         status = YoutubeVidStatus(message.message_id, reply.message_id, message.chat_id, title, text,
-                                                  user_id, time(), self.get_chat_title(message.chat))
+                                                  user_id, time(), self.get_chat_title(message.chat.to_dict()))
                         data = status.data
                         data['url'] = text
 
@@ -257,7 +257,7 @@ class ChatActor(pykka.ThreadingActor):
                 reply = self.reply_to_content(message, title)
 
                 status = TrackStatus(message.message_id, reply.message_id, message.chat_id, title, file_id,
-                                     user_id, time(), self.get_chat_title(message.chat))
+                                     user_id, time(), self.get_chat_title(message.chat.to_dict()))
                 data = status.data
                 data['track_url'] = durl
                 self.latest_tracks.put(message.message_id, status)
@@ -367,7 +367,7 @@ class ChatActor(pykka.ThreadingActor):
             url = 'https://api.telegram.org/bot' + self.token + '/getChat?chat_id=' + str(chat_id)
             track_info_raw = urllib.urlopen(
                 url)
-            res = json.load(track_info_raw.fp)
+            res = json.load(track_info_raw.fp)["result"]
 
         except Exception as e:
             logging.exception(e)
