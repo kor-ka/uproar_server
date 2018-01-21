@@ -214,7 +214,7 @@ class ChatActor(pykka.ThreadingActor):
                         title = regex.search(page).group(1)
                         reply = self.reply_to_content(message, title)
                         status = YoutubeVidStatus(message.message_id, reply.message_id, message.chat_id, title, text,
-                                                  user_id, time())
+                                                  user_id, time(), self.get_chat_title(message.chat))
                         data = status.data
                         data['url'] = text
 
@@ -257,7 +257,7 @@ class ChatActor(pykka.ThreadingActor):
                 reply = self.reply_to_content(message, title)
 
                 status = TrackStatus(message.message_id, reply.message_id, message.chat_id, title, file_id,
-                                     user_id, time())
+                                     user_id, time(), self.get_chat_title(message.chat))
                 data = status.data
                 data['track_url'] = durl
                 self.latest_tracks.put(message.message_id, status)
@@ -320,19 +320,21 @@ class ChatActor(pykka.ThreadingActor):
 
         return reply
 
-    def get_web_link(self, message_id, message = None, token = None):
+    def get_web_link(self, message_id, message=None, token=None):
         if not token:
             chat_id = str(message.chat_id).replace('-', '')
-            token = ("p-" if message.chat.type == 'private' else "c-" if message.chat.type == "channel" else "g-") + chat_id
+            token = (
+                        "p-" if message.chat.type == 'private' else "c-" if message.chat.type == "channel" else "g-") + chat_id
 
         if not token in [device[0] for device in self.devices]:
-           self.actor_ref.tell(
-                    {
-                        'command': 'add_device',
-                        'device': self.get_device(token),
-                        'token': token,
-                    }) 
-        return 'https://kor-ka.github.io/uproar_client_web?token=' + token + "&silent=true&start_with=" + str(message_id)
+            self.actor_ref.tell(
+                {
+                    'command': 'add_device',
+                    'device': self.get_device(token),
+                    'token': token,
+                })
+        return 'https://kor-ka.github.io/uproar_client_web?token=' + token + "&silent=true&start_with=" + str(
+            message_id)
 
     def enshure_device_ref(self, device):
         device_ref = device[1]
@@ -483,7 +485,7 @@ class ChatActor(pykka.ThreadingActor):
         if answer:
             callback_query.answer(text=text, show_alert=show_alert)
 
-    def get_keyboard(self, likes_data, orig_with_track_msg, message = None, token = None):
+    def get_keyboard(self, likes_data, orig_with_track_msg, message=None, token=None):
         option = None
         if likes_data.dislikes >= votes_to_skip and likes_data.dislikes > likes_data.likes:
             option = InlineKeyboardButton(skip, callback_data='skip:' + str(orig_with_track_msg))
@@ -495,7 +497,8 @@ class ChatActor(pykka.ThreadingActor):
                                           callback_data='like:1:' + str(orig_with_track_msg)),
                      InlineKeyboardButton(thumb_down + " " + str(likes_data.dislikes),
                                           callback_data='like:0:' + str(orig_with_track_msg)),
-                     InlineKeyboardButton("Play " + play, url=self.get_web_link(orig_with_track_msg, message=message, token=token))]
+                     InlineKeyboardButton("Play " + play,
+                                          url=self.get_web_link(orig_with_track_msg, message=message, token=token))]
         if option is not None:
             first_row.append(option)
         keyboard = [first_row]
@@ -517,11 +520,11 @@ class ChatActor(pykka.ThreadingActor):
             track_status.device_status[update.get('device')] = org_msg
 
             for k, v in track_status.device_status.items():
-                message += "\n" + v + ' : ' + k
+                message += "\n" + v + ' : ' + k[-5:]
 
             update['message'] = message
 
-            track_keyboard = self.get_keyboard(track_status, orig_with_track, token = token)
+            track_keyboard = self.get_keyboard(track_status, orig_with_track, token=token)
 
             self.bot.tell({'command': 'update', 'update': update, 'reply_markup': InlineKeyboardMarkup(track_keyboard)})
             self.latest_tracks.put(self.current_orig_message_id, track_status)
@@ -572,6 +575,19 @@ class ChatActor(pykka.ThreadingActor):
                                'reply_markup': InlineKeyboardMarkup(keyboard)})
 
     def on_device_online(self, token, device, additional_id, start_with):
+
+        chat = self.bot.ask({"command": "get_chat"})
+        title = self.get_chat_title(chat)
+
+        context = {"title": title}
+
+        photo = chat.photo
+        if photo:
+            photo = self.get_d_url(photo.small_file_id)
+            context["photo"] = photo
+
+        device.tell({"command": "publish", "data": {"context": context}, "topic": "init"})
+
         latest_tracks = self.latest_tracks.get()
         for t in latest_tracks:
             try:
@@ -587,6 +603,10 @@ class ChatActor(pykka.ThreadingActor):
                     self.send_current(additional_id, device, t, token)
             except AttributeError:
                 pass
+
+    def get_chat_title(self, chat):
+        title = chat.title if chat.title else chat.username if chat.username else (chat.first_name + chat.last_name)
+        return title
 
     def send_current(self, additional_id, device, t, token):
         status = t.device_status.get(token.split('-')[1])
@@ -624,8 +644,10 @@ class ChatActor(pykka.ThreadingActor):
             if exclude is None:
                 return
             latest_tracks_list = sorted(latest_tracks_list,
-                                        key=lambda track: (10000 + list(exclude).index(track.original_msg_id)) if track.original_msg_id in exclude else (random.randint(
-                                            0, 1000) - track.likes * 100 + track.dislikes * 300))
+                                        key=lambda track: (10000 + list(exclude).index(
+                                            track.original_msg_id)) if track.original_msg_id in exclude else (
+                                            random.randint(
+                                                0, 1000) - track.likes * 100 + track.dislikes * 300))
 
             res = []
             for t in latest_tracks_list[:10]:
@@ -637,7 +659,8 @@ class ChatActor(pykka.ThreadingActor):
                 elif isinstance(t, YoutubeVidStatus):
                     content = {'youtube_link': t.data}
                 res.append(content)
-            device.tell({'command': 'publish', "data": {"boring_list": res}, "topic":"boring_list", 'additional_id': additional_id})
+            device.tell({'command': 'publish', "data": {"boring_list": res}, "topic": "boring_list",
+                         'additional_id': additional_id})
 
     def on_receive(self, message):
         try:
@@ -662,11 +685,13 @@ class ChatActor(pykka.ThreadingActor):
             elif message.get('command') == 'device_content_status':
                 self.on_device_update(message.get('content_status'), message.get('token'))
             elif message.get('command') == 'device_online':
-                self.on_device_online(message.get('token'), message.get('device'), message.get('additional_id'), message.get('start_with'))
+                self.on_device_online(message.get('token'), message.get('device'), message.get('additional_id'),
+                                      message.get('start_with'))
             elif message.get('command') == 'device_message':
                 msg = message.get("message")
                 if msg["update"] == "boring":
-                    self.on_boring(message.get("token"), message.get("device"), msg.get("additional_id"), msg.get("data").get("exclude"))
+                    self.on_boring(message.get("token"), message.get("device"), msg.get("additional_id"),
+                                   msg.get("data").get("exclude"))
         except Exception as ex:
             logging.exception(ex)
 
@@ -681,7 +706,7 @@ class DeviceData(object):
 
 
 class ContentStatus(object):
-    def __init__(self, orig, msg_id, chat_id, title, owner, time):
+    def __init__(self, orig, msg_id, chat_id, title, owner, time, chat_title):
         super(ContentStatus, self).__init__()
         self.original_msg_id = orig
         self.likes = 0
@@ -694,16 +719,17 @@ class ContentStatus(object):
         self.owner = owner
         self.time = time
         self.data = {"chat_id": chat_id, "message_id": msg_id,
-                     "orig": orig, 'title': title}
+                     "orig": orig, 'title': title, "owner": chat_title}
+        self.chat_title = chat_title
 
 
 class TrackStatus(ContentStatus):
-    def __init__(self, orig, msg_id, chat_id, title, file_id, owner, time):
-        super(TrackStatus, self).__init__(orig, msg_id, chat_id, title, owner, time)
+    def __init__(self, orig, msg_id, chat_id, title, file_id, owner, time, chat_title):
+        super(TrackStatus, self).__init__(orig, msg_id, chat_id, title, owner, time, chat_title)
         self.file_id = file_id
 
 
 class YoutubeVidStatus(ContentStatus):
-    def __init__(self, orig, msg_id, chat_id, title, link, owner, time):
-        super(YoutubeVidStatus, self).__init__(orig, msg_id, chat_id, title, owner, time)
+    def __init__(self, orig, msg_id, chat_id, title, link, owner, time, chat_title):
+        super(YoutubeVidStatus, self).__init__(orig, msg_id, chat_id, title, owner, time, chat_title)
         self.link = link

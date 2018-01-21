@@ -9,7 +9,7 @@ from pprint import pprint
 
 def get_name(token):
     split = token.split('-')
-    return split[0] + '\'s device: ' + split[1]
+    return split[0] + '\'s device: ' + split[1][-5:]
 
 
 class DeviceActor(pykka.ThreadingActor):
