@@ -576,7 +576,7 @@ class ChatActor(pykka.ThreadingActor):
 
     def on_device_online(self, token, device, additional_id, start_with):
 
-        chat = self.bot.ask({"command": "get_chat"})
+        chat = self.bot.ask({"command": "get_chat", "chat_id":self.chat_id})
         title = self.get_chat_title(chat)
 
         context = {"title": title}
@@ -586,7 +586,7 @@ class ChatActor(pykka.ThreadingActor):
             photo = self.get_d_url(photo.small_file_id)
             context["photo"] = photo
 
-        device.tell({"command": "publish", "data": {"context": context}, "topic": "init"})
+        device.tell({"command": "publish", "data": {"context": context}, "topic": "init", "additional_id": additional_id})
 
         latest_tracks = self.latest_tracks.get()
         for t in latest_tracks:
