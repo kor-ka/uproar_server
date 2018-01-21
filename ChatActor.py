@@ -581,7 +581,7 @@ class ChatActor(pykka.ThreadingActor):
 
         context = {"title": title}
 
-        print(json.dumps(chat))
+        print(json.dumps(chat.to_dict()))
 
         photo = chat.photo
         if photo:
