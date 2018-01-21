@@ -593,8 +593,6 @@ class ChatActor(pykka.ThreadingActor):
 
         context = {"title": title}
 
-        print(json.dumps(chat.to_dict()))
-
         photo = chat.photo
         if photo:
             photo = self.get_d_url(photo.small_file_id)
