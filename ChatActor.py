@@ -617,7 +617,7 @@ class ChatActor(pykka.ThreadingActor):
                 pass
 
     def get_chat_title(self, chat):
-        title = chat["title"] if chat["title"] else chat["username"] if chat["username"] else (chat["first_name"] + chat["last_name"])
+        title = chat.get("title") if chat.get("title") else chat.get("username") if chat.get("username") else (chat.get("first_name") + chat.get("last_name"))
         return title
 
     def send_current(self, additional_id, device, t, token):
