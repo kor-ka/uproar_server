@@ -616,8 +616,10 @@ class ChatActor(pykka.ThreadingActor):
             except AttributeError:
                 pass
 
-    def get_chat_title(self, chat):
-        title = chat.get("title") if chat.get("title") else chat.get("username") if chat.get("username") else (chat.get("first_name") + chat.get("last_name"))
+    def get_chat_title,(self, chat):
+        title = None
+        if chat:
+            title = chat.get("title") if chat.get("title") else chat.get("username") if chat.get("username") else (chat.get("first_name") + chat.get("last_name"))
         return title
 
     def send_current(self, additional_id, device, t, token):
