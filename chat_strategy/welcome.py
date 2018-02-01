@@ -1,6 +1,7 @@
 import re
 from telegram import Message, User, InlineKeyboardMarkup, InlineKeyboardButton
-
+thumb_up = u'\U0001F44D'
+thumb_down = u'\U0001F44E'
 
 def on_message(chat_actor, message):
     chat_actor = chat_actor # type: ChatActor
@@ -32,5 +33,5 @@ def on_message(chat_actor, message):
              '\n'
              '\nOh, I almost forgot - see %s/%s buttons under your track?'
              '\nPress them if you like/dislike track'
-             '\nIf track gets 2 likes/dislikes anyone can promote/skip it!'})
+             '\nIf track gets 2 likes/dislikes anyone can promote/skip it!'}) % (thumb_up, thumb_down)
 
