@@ -192,28 +192,24 @@ class ChatActor(pykka.ThreadingActor):
                 self.bot.tell({'command': 'reply', 'base': message, 'message': score})
 
             elif re.match("^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$", text):
-                if len(self.devices) > 0:
-                    resp = urllib.urlopen(text)
-                    if resp.getcode() / 100 == 2:
-                        page = resp.read()
-                        regex = re.compile('<title>(.*?)</title>', re.IGNORECASE | re.DOTALL)
-                        title = regex.search(page).group(1)
-                        reply = self.reply_to_content(message, title)
-                        status = YoutubeVidStatus(message.message_id, reply.message_id, message.chat_id, title, text,
-                                                  user_id, time(), self.get_chat_title(message.from_user.to_dict() if message.from_user else None))
-                        data = status.data
-                        data['url'] = text
+                resp = urllib.urlopen(text)
+                if resp.getcode() / 100 == 2:
+                    page = resp.read()
+                    regex = re.compile('<title>(.*?)</title>', re.IGNORECASE | re.DOTALL)
+                    title = regex.search(page).group(1)
+                    reply = self.reply_to_content(message, title)
+                    status = YoutubeVidStatus(message.message_id, reply.message_id, message.chat_id, title, text,
+                                              user_id, time(), self.get_chat_title(
+                            message.from_user.to_dict() if message.from_user else None))
+                    data = status.data
+                    data['url'] = text
 
-                        self.latest_tracks.put(message.message_id, status)
+                    self.latest_tracks.put(message.message_id, status)
 
-                        for device in self.devices:
-                            device_ref = self.enshure_device_ref(device)
-                            device_ref.tell({'command': 'add_youtube_link', 'youtube_link': data})
+                    for device in self.devices:
+                        device_ref = self.enshure_device_ref(device)
+                        device_ref.tell({'command': 'add_youtube_link', 'youtube_link': data})
 
-                else:
-                    self.bot.tell(
-                        {'command': 'reply', 'base': message,
-                         'message': 'no devices, please forward one from @uproarbot'})
 
         if message.audio or message.voice:
             durl = None
@@ -230,31 +226,29 @@ class ChatActor(pykka.ThreadingActor):
             if durl is None:
                 return
 
-            if len(self.devices) > 0:
-                if message.audio:
-                    title = ' - '.join(filter(None, (message.audio.performer, message.audio.title)))
-                    title = playing if not title else title
-                    title = title.encode("utf-8")
-                elif message.voice:
-                    title = message.from_user.first_name + " - voice"
-                else:
-                    title = "some_audio"
-
-                reply = self.reply_to_content(message, title)
-
-                status = TrackStatus(message.message_id, reply.message_id, message.chat_id, title, file_id,
-                                     user_id, time(), self.get_chat_title(message.from_user.to_dict() if message.from_user else None))
-                data = status.data
-                data['track_url'] = durl
-                self.latest_tracks.put(message.message_id, status)
-
-                for device in self.devices:
-                    device_ref = self.enshure_device_ref(device)
-                    device_ref.tell({'command': 'add_track', 'track': data})
-
+            if message.audio:
+                title = ' - '.join(filter(None, (message.audio.performer, message.audio.title)))
+                title = playing if not title else title
+                title = title.encode("utf-8")
+            elif message.voice:
+                title = message.from_user.first_name + " - voice"
             else:
-                self.bot.tell(
-                    {'command': 'reply', 'base': message, 'message': 'no devices, please forward one from @uproarbot'})
+                title = "some_audio"
+
+            reply = self.reply_to_content(message, title)
+
+            status = TrackStatus(message.message_id, reply.message_id, message.chat_id, title, file_id,
+                                 user_id, time(),
+                                 self.get_chat_title(message.from_user.to_dict() if message.from_user else None))
+            data = status.data
+            data['track_url'] = durl
+            self.latest_tracks.put(message.message_id, status)
+
+            for device in self.devices:
+                device_ref = self.enshure_device_ref(device)
+                device_ref.tell({'command': 'add_track', 'track': data})
+
+
 
         for s in self.strategies:
             s.on_message(self, message)
@@ -310,6 +304,16 @@ class ChatActor(pykka.ThreadingActor):
         return local_dt.replace(microsecond=utc_dt.microsecond)
 
     def reply_to_content(self, message, title):
+        # check web device
+        chat_id = str(message.chat_id).replace('-', '')
+        token = ("p-" if message.chat.type == 'private' else "c-" if message.chat.type == "channel" else "g-") + chat_id
+        if not token in [device[0] for device in self.devices]:
+            self.actor_ref.tell(
+                {
+                    'command': 'add_device',
+                    'device': self.get_device(token),
+                    'token': token,
+                })
 
         row = [InlineKeyboardButton(thumb_up + " 0", callback_data='like:1:' + str(message.message_id)),
                InlineKeyboardButton(thumb_down + " 0", callback_data='like:0:' + str(message.message_id)), ]
@@ -333,13 +337,6 @@ class ChatActor(pykka.ThreadingActor):
             token = (
                         "p-" if message.chat.type == 'private' else "c-" if message.chat.type == "channel" else "g-") + chat_id
 
-        if not token in [device[0] for device in self.devices]:
-            self.actor_ref.tell(
-                {
-                    'command': 'add_device',
-                    'device': self.get_device(token),
-                    'token': token,
-                })
         return 'https://kor-ka.github.io/uproar_client_web?token=' + token + "&silent=true&start_with=" + str(
             message_id)
 
@@ -605,7 +602,8 @@ class ChatActor(pykka.ThreadingActor):
             photo = self.get_d_url(photo["small_file_id"])
             context["photo"] = photo
 
-        device.tell({"command": "publish", "data": {"context": context}, "topic": "init", "additional_id": additional_id})
+        device.tell(
+            {"command": "publish", "data": {"context": context}, "topic": "init", "additional_id": additional_id})
 
         latest_tracks = self.latest_tracks.get()
         for t in latest_tracks:
@@ -626,7 +624,8 @@ class ChatActor(pykka.ThreadingActor):
     def get_chat_title(self, chat):
         title = None
         if chat:
-            title = chat.get("title") if chat.get("title") else chat.get("username") if chat.get("username") else (chat.get("first_name") + chat.get("last_name"))
+            title = chat.get("title") if chat.get("title") else chat.get("username") if chat.get("username") else (
+            chat.get("first_name") + chat.get("last_name"))
         return title
 
     def send_current(self, additional_id, device, t, token):
