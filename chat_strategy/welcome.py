@@ -34,13 +34,13 @@ def step_two(chat_actor, message):
     chat_actor.bot.ask(
         {'command': 'send', 'chat_id': message.chat_id,
          'message': 'Great!'
-                    '\nAs it is your first track in this chat, I made link for you :)'
+                    '\nAs it is your first track in this chat, I\'ve made link for you :)'
                     '\nOpen it in your browser and track will play there'
                     '\n'
                     '\nWhat\'s next?'
                     '\nInvite some friends, let them send music here, have fun!'
                     '\n'
                     '\nOh, I almost forgot - see %s/%s buttons under your track?'
-                    '\nPress them if you like/dislike track'
-                    '\nIf track gets 2 likes/dislikes anyone can promote/skip it!' % (thumb_up, thumb_down)})
+                    '\nPress them if you like/dislike the track'
+                    '\nIf a track gets 2 likes/dislikes anyone can promote/skip it!' % (thumb_up, thumb_down)})
 
