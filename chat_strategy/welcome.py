@@ -11,7 +11,8 @@ def on_message(chat_actor, message):
             {'command': 'send', 'chat_id': message.chat_id,
              'message': 'Hi! I\'ll manage this chat playlist starting from... now! Send me some music from your own '
                         'library or using this bots:'
-                        '\n@vkm_bot - inline search music from vk.com\n@vid - inline video search'
+                        '\n@vkm\_bot - inline search music from vk.com'
+                        '\n@vid - inline video search'
                         '\n'
                         '\nfor example type'
                         '\n*@vkm_bot club foot*'
