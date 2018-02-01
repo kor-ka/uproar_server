@@ -1,8 +1,6 @@
 import re
 from telegram import Message, User, InlineKeyboardMarkup, InlineKeyboardButton
 
-from ChatActor import ChatActor
-
 
 def on_message(chat_actor, message):
     chat_actor = chat_actor # type: ChatActor
