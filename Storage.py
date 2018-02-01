@@ -14,6 +14,8 @@ CHAT_DEVICES_TABLE = 'chats_devices_table'
 DEVICE_STORAGE = 'device_storage'
 USER_STORAGE = 'user_storage'
 REMINDER_STORAGE = 'reminder_storage'
+CHAT_STAT_TABLE = 'chat_stat_table'
+USER_STAT_TABLE = 'user_stat_table'
 
 
 class StorageActor(pykka.ThreadingActor):

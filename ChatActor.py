@@ -22,6 +22,8 @@ from time import time
 import hashlib
 import dateutil.parser
 import pytz
+
+from Storage import DbList
 from chat_strategy import welcome
 
 from pprint import pprint
@@ -85,6 +87,9 @@ class ChatActor(pykka.ThreadingActor):
                              "CgADBAADpAMAAvkcZAfm332885NH7AI", "CgADBAADyQMAAsUZZAe4b-POmx-A8AI"]
 
         self.strategies = [welcome]
+
+        self.users_stat = self.context.storage.ask(
+            {'command': 'get_list', 'name': Storage.USER_STAT_TABLE, 'suffix': ""})  # type: DbList
 
     def on_start(self):
         self.latest_tracks = self.db.ask(
@@ -310,6 +315,8 @@ class ChatActor(pykka.ThreadingActor):
         return local_dt.replace(microsecond=utc_dt.microsecond)
 
     def reply_to_content(self, message, title):
+
+        self.users_stat.put(message.from_user.id, message.from_user.id)
 
         row = [InlineKeyboardButton(thumb_up + " 0", callback_data='like:1:' + str(message.message_id)),
                InlineKeyboardButton(thumb_down + " 0", callback_data='like:0:' + str(message.message_id)), ]
