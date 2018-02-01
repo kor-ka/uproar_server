@@ -22,6 +22,7 @@ from time import time
 import hashlib
 import dateutil.parser
 import pytz
+from chat_strategy import welcome
 
 from pprint import pprint
 
@@ -83,6 +84,8 @@ class ChatActor(pykka.ThreadingActor):
         self.promote_gifs = ["CgADBAADWSMAAjUeZAeEqT810zl7IgI", "CgADBAADUEkAAhEXZAfN5P28QjO3KQI",
                              "CgADBAADpAMAAvkcZAfm332885NH7AI", "CgADBAADyQMAAsUZZAe4b-POmx-A8AI"]
 
+        self.strategies = [welcome]
+
     def on_start(self):
         self.latest_tracks = self.db.ask(
             {'command': 'get_list', 'name': Storage.TRACK_TABLE, 'suffix': self.chat_id})
@@ -98,6 +101,7 @@ class ChatActor(pykka.ThreadingActor):
 
     def on_message(self, message):
         user_id = message.from_user.id if message.from_user else 0
+
         if message.text:
             text = message.text  # type: str
 
@@ -112,25 +116,7 @@ class ChatActor(pykka.ThreadingActor):
                 return
 
             if text.startswith('/web'):
-                chat_id = str(message.chat_id).replace('-', '')
-                token = ( "p-" if message.chat.type == 'private' else "c-" if message.chat.type == "channel" else "g-") + chat_id
-
-                token_message = self.bot.ask(
-                    {'command': 'send', 'chat_id': message.chat_id,
-                     'message': 'https://kor-ka.github.io/uproar_client_web?token=' + token})
-
-                placeholder = self.bot.ask({'command': 'send',
-                                            'chat_id': message.chat_id,
-                                            'message': "link added"
-                                            })
-
-                self.actor_ref.tell(
-                    {
-                        'command': 'add_device',
-                        'device': self.get_device(token),
-                        'token': token,
-                        'placeholder': placeholder,
-                    })
+                self.send_url(message)
 
             if text.startswith('/token'):
 
@@ -269,6 +255,27 @@ class ChatActor(pykka.ThreadingActor):
             else:
                 self.bot.tell(
                     {'command': 'reply', 'base': message, 'message': 'no devices, please forward one from @uproarbot'})
+
+        for s in self.strategies:
+            s.on_message(self, message)
+
+    def send_url(self, message):
+        chat_id = str(message.chat_id).replace('-', '')
+        token = ("p-" if message.chat.type == 'private' else "c-" if message.chat.type == "channel" else "g-") + chat_id
+        token_message = self.bot.ask(
+            {'command': 'send', 'chat_id': message.chat_id,
+             'message': 'https://kor-ka.github.io/uproar_client_web?token=' + token})
+        placeholder = self.bot.ask({'command': 'send',
+                                    'chat_id': message.chat_id,
+                                    'message': "link added"
+                                    })
+        self.actor_ref.tell(
+            {
+                'command': 'add_device',
+                'device': self.get_device(token),
+                'token': token,
+                'placeholder': placeholder,
+            })
 
     def issue_token(self, username, random_str):
         token_set = username + '-' + random_str + '-' + str(
