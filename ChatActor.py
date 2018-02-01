@@ -398,6 +398,8 @@ class ChatActor(pykka.ThreadingActor):
         if 0 == len(callback):
             return
 
+        self.users_stat.put(callback_query.from_user.id, callback_query.from_user.id)
+
         answer = True
         text = None
         show_alert = False
