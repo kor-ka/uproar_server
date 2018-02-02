@@ -320,7 +320,8 @@ class ChatActor(pykka.ThreadingActor):
                     'token': token,
                 })
 
-        self.users_stat.put(message.from_user.id, message.from_user.id)
+        if message.from_user:
+            self.users_stat.put(message.from_user.id, message.from_user.id)
 
         row = [InlineKeyboardButton(thumb_up + " 0", callback_data='like:1:' + str(message.message_id)),
                InlineKeyboardButton(thumb_down + " 0", callback_data='like:0:' + str(message.message_id)), ]
