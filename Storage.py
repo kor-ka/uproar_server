@@ -100,7 +100,7 @@ class StorageActor(pykka.ThreadingActor):
                     self.db.commit()
                     return True
                 except Exception as ex:
-                    print 'on put:' + str(ex)
+                    logging.exception(ex)
                     self.db.rollback()
                     return False
                 finally:
