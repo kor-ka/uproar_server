@@ -323,8 +323,8 @@ class ChatActor(pykka.ThreadingActor):
                 })
 
         if message.from_user:
-            self.users_stat.put({"id": message.from_user.id})
-        self.events_stat.put({"type": "reply_to_content", "chat_id":self.chat_id, "user": str( message.from_user.id if message.from_user else -1)})
+            self.users_stat.put_stat({"id": message.from_user.id})
+        self.events_stat.put_stat({"type": "reply_to_content", "chat_id":self.chat_id, "user": str( message.from_user.id if message.from_user else -1)})
 
         row = [InlineKeyboardButton(thumb_up + " 0", callback_data='like:1:' + str(message.message_id)),
                InlineKeyboardButton(thumb_down + " 0", callback_data='like:0:' + str(message.message_id)), ]
@@ -421,7 +421,7 @@ class ChatActor(pykka.ThreadingActor):
             pass
 
         try:
-            self.events_stat.put({"type": callback[0], "chat_id": self.chat_id,
+            self.events_stat.put_stat({"type": callback[0], "chat_id": self.chat_id,
                                   "user": str(callback_query.from_user.id if callback_query.from_user else -1)})
         except:
             pass
