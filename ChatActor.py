@@ -403,7 +403,7 @@ class ChatActor(pykka.ThreadingActor):
             return
 
         if callback_query.from_user:
-            self.users_stat.put({"id": callback_query.from_user.id})
+            self.users_stat.put_stat({"id": callback_query.from_user.id})
 
         answer = True
         text = None
