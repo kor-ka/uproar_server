@@ -104,7 +104,7 @@ class ChatActor(pykka.ThreadingActor):
         self.users = self.db.ask({'command': 'get_list', 'name': Storage.USER_TABLE, 'suffix': self.chat_id})
 
         for t in self.devices_tokens.get():
-            self.devices.add((t, self.manager.ask({'command': 'get_device', 'token': t})))
+            self.devices.add([t, self.manager.ask({'command': 'get_device', 'token': t})])
 
     def on_message(self, message):
         user_id = message.from_user.id if message.from_user else 0
@@ -710,7 +710,7 @@ class ChatActor(pykka.ThreadingActor):
             if message.get('command') == 'callback_query':
                 self.on_callback_query(message.get('callback_query'))
             elif message.get('command') == 'add_device':
-                self.devices.add((message.get('token'), message.get('device')))
+                self.devices.add([message.get('token'), message.get('device')])
                 self.devices_tokens.put(message.get('token'), message.get('token'))
                 message.get('device').tell(
                     {'command': 'move_to', 'chat': self.actor_ref, 'placeholder': message.get('placeholder')})
