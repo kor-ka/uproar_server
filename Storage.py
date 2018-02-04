@@ -1,3 +1,4 @@
+import json
 import os
 
 import logging
@@ -14,8 +15,9 @@ CHAT_DEVICES_TABLE = 'chats_devices_table'
 DEVICE_STORAGE = 'device_storage'
 USER_STORAGE = 'user_storage'
 REMINDER_STORAGE = 'reminder_storage'
-CHAT_STAT_TABLE = 'chat_stat_table'
-USER_STAT_TABLE = 'user_stat_table'
+CHAT_STAT_TABLE = 'chat_stats_table'
+USER_STAT_TABLE = 'user_stats_table'
+EVENTS_STAT_TABLE = 'user_stats_table'
 
 
 class StorageActor(pykka.ThreadingActor):
@@ -85,6 +87,23 @@ class StorageActor(pykka.ThreadingActor):
                     print 'on put:' + str(ex)
                     self.db.rollback()
                     return False
+                finally:  cur.close()
+
+            elif message.get('command') == "put_stat":
+                cur = self.db.cursor()
+                try:
+
+                    cur.execute('''INSERT INTO ${table} (val)
+                        VALUES (%s)
+                        ON CONFLICT DO NOTHING;'''.replace('${table}',
+                                                           message.get('table')), (key, json.dumps(message.get('val')))
+                                )
+                    self.db.commit()
+                    return True
+                except Exception as ex:
+                    print 'on put:' + str(ex)
+                    self.db.rollback()
+                    return False
                 finally:
                     cur.close()
 
@@ -106,12 +125,17 @@ class StorageActor(pykka.ThreadingActor):
 
             elif message.get('command') == "get_list":
                 cur = self.db.cursor()
-                table = "%s_%s" % (message.get('name'), clean_suffix(message.get('suffix')))
-                cur.execute('''CREATE TABLE IF NOT EXISTS %s (id SERIAL, val varchar, key varchar PRIMARY KEY);''' % table)
+                suffix = message.get('suffix')
+                suffix = suffix if suffix is not None else ""
+                table = "%s_%s" % (message.get('name'), clean_suffix(suffix))
+                if message.get("type") == "stat":
+                    cur.execute('''CREATE TABLE IF NOT EXISTS %s (id SERIAL, val json, timestamp timestamp default current_timestamp);''' % table)
+                else:
+                    cur.execute('''CREATE TABLE IF NOT EXISTS %s (id SERIAL, val varchar, key varchar PRIMARY KEY);''' % table)
                 self.db.commit()
                 print table + " created"
                 cur.close()
-                return DbList(message.get('name'), message.get('suffix'), self.actor_ref)
+                return DbList(message.get('name'), suffix, self.actor_ref)
         except Exception as ex:
             logging.exception(ex)
 
@@ -133,6 +157,11 @@ class DbList(object):
     def put(self, key, val):
         return self.storage_ref.ask(
             {"command": "put", "table": "%s_%s" % (self.name, self.suffix), "key": key, "val": val})
+
+    def put_stat(self, val):
+        return self.storage_ref.ask(
+            {"command": "put_stat", "table": "%s_%s" % (self.name, self.suffix), "val": val})
+
 
 
 def clean_suffix(suffix):

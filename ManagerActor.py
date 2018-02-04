@@ -34,7 +34,7 @@ class ManagerActor(pykka.ThreadingActor):
         self.inline_actors = dict()
 
         self.chats_stat = self.context.storage.ask(
-            {'command': 'get_list', 'name': Storage.CHAT_STAT_TABLE, 'suffix': ""}) # type: DbList
+            {'command': 'get_list', 'name': Storage.CHAT_STAT_TABLE, "type":"stat"}) # type: DbList
 
     def on_message(self, message):
         self.get_chat(message.chat_id).tell({'command':'message', 'message':message})
@@ -62,7 +62,7 @@ class ManagerActor(pykka.ThreadingActor):
         if chat is None or not chat.is_alive:
             chat = ChatActor.ChatActor.start(chat_id, self.actor_ref, self.bot, self.context)
             self.chats[chat_id] = chat
-            self.chats_stat.put(chat_id, chat_id)
+            self.chats_stat.put_stat({"id":chat_id})
         return chat
 
     def get_user(self, user_id):

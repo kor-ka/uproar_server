@@ -5,7 +5,7 @@ thumb_up = u'\U0001F44D'
 thumb_down = u'\U0001F44E'
 
 
-def on_message(chat_actor, message):
+def on_message(chat_actor, message, events_stat):
     chat_actor = chat_actor  # type: ChatActor
     message = message  # type: Message
 
@@ -20,11 +20,15 @@ def on_message(chat_actor, message):
                         '\nfor example type'
                         '\n*@vkm_bot club foot*'
                         '\nin this chat, and tap on first result from list', "parse_mode": "Markdown"})
+        events_stat.put({"type": "boarding_start", "chat_id": chat_actor.chat_id,
+                          "user": str(message.from_user.id if message.from_user else -1)})
 
     # first track in this chat
     if (message.audio or (message.text and re.match("^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$", message.text))) and len(chat_actor.latest_tracks.get()) == 1:
         chat_actor.send_url(message)
         step_two(chat_actor, message)
+        events_stat.put({"type": "boarding_end", "chat_id": chat_actor.chat_id,
+                         "user": str(message.from_user.id if message.from_user else -1)})
 
     if message.text and "/twst" in message.text:
         step_two(chat_actor,message)

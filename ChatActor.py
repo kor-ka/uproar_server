@@ -89,7 +89,9 @@ class ChatActor(pykka.ThreadingActor):
         self.strategies = [welcome]
 
         self.users_stat = self.context.storage.ask(
-            {'command': 'get_list', 'name': Storage.USER_STAT_TABLE, 'suffix': ""})  # type: DbList
+            {'command': 'get_list', 'name': Storage.USER_STAT_TABLE, "type":"stat"})  # type: DbList
+        self.events_stat = self.context.storage.ask(
+            {'command': 'get_list', 'name': Storage.EVENTS_STAT_TABLE, "type": "stat"})  # type: DbList
 
     def on_start(self):
         self.latest_tracks = self.db.ask(
@@ -256,7 +258,7 @@ class ChatActor(pykka.ThreadingActor):
 
 
         for s in self.strategies:
-            s.on_message(self, message)
+            s.on_message(self, message, self.events_stat)
 
     def send_url(self, message):
         chat_id = str(message.chat_id).replace('-', '')
@@ -321,7 +323,8 @@ class ChatActor(pykka.ThreadingActor):
                 })
 
         if message.from_user:
-            self.users_stat.put(message.from_user.id, message.from_user.id)
+            self.users_stat.put({"id": message.from_user.id})
+        self.events_stat.put({"type": "reply_to_content", "chat_id":self.chat_id, "user": str( message.from_user.id if message.from_user else -1)})
 
         row = [InlineKeyboardButton(thumb_up + " 0", callback_data='like:1:' + str(message.message_id)),
                InlineKeyboardButton(thumb_down + " 0", callback_data='like:0:' + str(message.message_id)), ]
@@ -399,7 +402,8 @@ class ChatActor(pykka.ThreadingActor):
         if 0 == len(callback):
             return
 
-        self.users_stat.put(callback_query.from_user.id, callback_query.from_user.id)
+        if callback_query.from_user:
+            self.users_stat.put({"id": callback_query.from_user.id})
 
         answer = True
         text = None
@@ -413,6 +417,12 @@ class ChatActor(pykka.ThreadingActor):
 
         try:
             message_id = callback[-1]
+        except:
+            pass
+
+        try:
+            self.events_stat.put({"type": callback[0], "chat_id": self.chat_id,
+                                  "user": str(callback_query.from_user.id if callback_query.from_user else -1)})
         except:
             pass
 
