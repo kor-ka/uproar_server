@@ -26,7 +26,7 @@ class StorageActor(pykka.ThreadingActor):
     def on_start(self):
 
         urlparse.uses_netloc.append("postgres")
-        url = urlparse.urlparse(os.environ["DATABASE_URL"])
+        url = urlparse.urlparse(os.environ["DB_URL"])
 
         self.db = psycopg2.connect(
             database=url.path[1:],
