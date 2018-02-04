@@ -96,7 +96,7 @@ class StorageActor(pykka.ThreadingActor):
                     cur.execute('''INSERT INTO ${table} (val)
                         VALUES (%s)
                         ON CONFLICT DO NOTHING;'''.replace('${table}',
-                                                           message.get('table')), (key, json.dumps(message.get('val')))
+                                                           message.get('table')), (json.dumps(message.get('val')))
                                 )
                     self.db.commit()
                     return True
