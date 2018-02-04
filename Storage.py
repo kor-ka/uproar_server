@@ -95,7 +95,7 @@ class StorageActor(pykka.ThreadingActor):
 
                     cur.execute('''INSERT INTO ${table} (val)
                         VALUES (%s)'''.replace('${table}',
-                                                           message.get('table')), (json.dumps(message.get('val')))
+                                                           message.get('table')), (json.dumps(message.get('val')),)
                                 )
                     self.db.commit()
                     return True
