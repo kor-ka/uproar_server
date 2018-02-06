@@ -170,7 +170,7 @@ class DbList(object):
              "offset": offset})
 
     def remove(self, key):
-        return self.storage_ref.ask({"command": "remove", "table": "%s_%s" % (self.name, self.suffix), "key": key})
+        return self.storage_ref.ask({"command": "remove", "table": "%s_%s" % (self.name, self.suffix), "key": str(key)})
 
     def put(self, key, val):
         return self.storage_ref.ask(
