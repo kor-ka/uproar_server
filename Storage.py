@@ -50,6 +50,8 @@ class StorageActor(pykka.ThreadingActor):
                 try:
 
                     limit = message.get("limit")
+                    limit = '' if limit is None else 'LIMIT %s' % limit
+
                     order = message.get("order")
                     offset = message.get("offset")
                     offset = '' if offset is None else 'OFFSET %s' % offset
@@ -62,9 +64,10 @@ class StorageActor(pykka.ThreadingActor):
                         cur.execute('''SELECT *
                                         FROM %s
                                         %s
-                                        ORDER BY id %s %s
-                                        LIMIT %s
-                                        ;''' % (message.get("table"), where, order, offset, limit))
+                                        ORDER BY id %s 
+                                        %s
+                                        %s
+                                        ;''' % (message.get("table"), where, order, limit, offset))
 
                     vals = cur.fetchall()
                     for v in vals:
