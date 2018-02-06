@@ -18,6 +18,7 @@ REMINDER_STORAGE = 'reminder_storage'
 CHAT_STAT_TABLE = 'chat_stats_table'
 USER_STAT_TABLE = 'user_stats_table'
 EVENTS_STAT_TABLE = 'event_stats_table'
+LIKED_TRACKS_TABLE = 'liked_tracks_table'
 
 
 class StorageActor(pykka.ThreadingActor):
@@ -49,6 +50,9 @@ class StorageActor(pykka.ThreadingActor):
                 try:
 
                     limit = message.get("limit")
+                    order = message.get("order")
+                    offset = message.get("offset")
+                    offset = '' if offset is None else 'OFFSET %s' % offset
 
                     where = '' if key is None else ("WHERE key = '%s'" % key)
                     if limit is None:
@@ -56,9 +60,11 @@ class StorageActor(pykka.ThreadingActor):
 
                     else:
                         cur.execute('''SELECT *
-                                        FROM (SELECT val FROM %s ORDER BY id DESC LIMIT %s)
+                                        FROM %s
                                         %s
-                                        ORDER BY id ASC;''' % (message.get("table"), limit, where))
+                                        ORDER BY id %s %s
+                                        LIMIT %s
+                                        ;''' % (message.get("table"), where, order, offset, limit))
 
                     vals = cur.fetchall()
                     for v in vals:
@@ -79,7 +85,8 @@ class StorageActor(pykka.ThreadingActor):
                         ON CONFLICT (key) DO UPDATE SET
                             key = excluded.key,
                             val = excluded.val;'''.replace('${table}',
-                                                           message.get('table')), (key, pickle.dumps(message.get('val')))
+                                                           message.get('table')),
+                                (key, pickle.dumps(message.get('val')))
                                 )
                     self.db.commit()
                     return True
@@ -87,7 +94,8 @@ class StorageActor(pykka.ThreadingActor):
                     print 'on put:' + str(ex)
                     self.db.rollback()
                     return False
-                finally:  cur.close()
+                finally:
+                    cur.close()
 
             elif message.get('command') == "put_stat":
                 cur = self.db.cursor()
@@ -95,7 +103,7 @@ class StorageActor(pykka.ThreadingActor):
 
                     cur.execute('''INSERT INTO ${table} (val)
                         VALUES (%s)'''.replace('${table}',
-                                                           message.get('table')), (json.dumps(message.get('val')),)
+                                               message.get('table')), (json.dumps(message.get('val')),)
                                 )
                     self.db.commit()
                     return True
@@ -128,9 +136,11 @@ class StorageActor(pykka.ThreadingActor):
                 suffix = suffix if suffix is not None else ""
                 table = "%s_%s" % (message.get('name'), clean_suffix(suffix))
                 if message.get("type") == "stat":
-                    cur.execute('''CREATE TABLE IF NOT EXISTS %s (id SERIAL, val json, timestamp timestamp default current_timestamp);''' % table)
+                    cur.execute(
+                        '''CREATE TABLE IF NOT EXISTS %s (id SERIAL, val json, timestamp timestamp default current_timestamp);''' % table)
                 else:
-                    cur.execute('''CREATE TABLE IF NOT EXISTS %s (id SERIAL, val varchar, key varchar PRIMARY KEY);''' % table)
+                    cur.execute(
+                        '''CREATE TABLE IF NOT EXISTS %s (id SERIAL, val varchar, key varchar PRIMARY KEY);''' % table)
                 self.db.commit()
                 print table + " created"
                 cur.close()
@@ -146,9 +156,10 @@ class DbList(object):
         self.suffix = clean_suffix(suffix)
         self.storage_ref = storage_ref
 
-    def get(self, key=None, limit=None):
+    def get(self, key=None, limit=None, order="ASC", offset=0):
         return self.storage_ref.ask(
-            {"command": "get", "table": "%s_%s" % (self.name, self.suffix), "key": key, "limit": limit})
+            {"command": "get", "table": "%s_%s" % (self.name, self.suffix), "key": key, "limit": limit, "order": order,
+             "offset": offset})
 
     def remove(self, key):
         return self.storage_ref.ask({"command": "remove", "table": "%s_%s" % (self.name, self.suffix), "key": key})
@@ -160,7 +171,6 @@ class DbList(object):
     def put_stat(self, val):
         return self.storage_ref.ask(
             {"command": "put_stat", "table": "%s_%s" % (self.name, self.suffix), "val": val})
-
 
 
 def clean_suffix(suffix):

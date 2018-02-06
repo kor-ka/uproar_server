@@ -46,7 +46,8 @@ class ManagerActor(pykka.ThreadingActor):
             self.get_chat(callback_query.message.chat_id).tell({'command':'callback_query', 'callback_query':callback_query})
 
     def on_inline_query(self, inline_query):
-        self.get_inline_actor(inline_query.from_user.id).tell({"command": "q", "q":inline_query})
+        self.get_chat(inline_query.from_user.id).tell({"command": "inline_query", "q":inline_query})
+        # self.get_inline_actor(inline_query.from_user.id).tell({"command": "q", "q":inline_query})
 
     def on_pre_checkout_query(self, pre_checkout_query):
         self.get_user(pre_checkout_query.from_user.id).tell({"command": "pre", "pre":pre_checkout_query})

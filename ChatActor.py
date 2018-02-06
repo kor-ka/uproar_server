@@ -24,7 +24,7 @@ import dateutil.parser
 import pytz
 
 from Storage import DbList
-from chat_strategy import welcome
+from chat_strategy import welcome, inline
 
 from pprint import pprint
 
@@ -88,16 +88,20 @@ class ChatActor(pykka.ThreadingActor):
 
         self.strategies = [welcome]
 
-        self.users_stat = self.context.storage.ask(
-            {'command': 'get_list', 'name': Storage.USER_STAT_TABLE, "type":"stat"})  # type: DbList
-        self.events_stat = self.context.storage.ask(
-            {'command': 'get_list', 'name': Storage.EVENTS_STAT_TABLE, "type": "stat"})  # type: DbList
+        self.users_stat = None  # type: DbList
+        self.events_stat = None  # type: DbList
 
     def on_start(self):
         self.latest_tracks = self.db.ask(
             {'command': 'get_list', 'name': Storage.TRACK_TABLE, 'suffix': self.chat_id})
         self.devices_tokens = self.db.ask(
             {'command': 'get_list', 'name': Storage.CHAT_DEVICES_TABLE, 'suffix': self.chat_id})
+
+        self.users_stat = self.context.storage.ask(
+            {'command': 'get_list', 'name': Storage.USER_STAT_TABLE, "type": "stat"})
+
+        self.events_stat = self.context.storage.ask(
+            {'command': 'get_list', 'name': Storage.EVENTS_STAT_TABLE, "type": "stat"})
 
         self.devices = set()
 
@@ -434,6 +438,7 @@ class ChatActor(pykka.ThreadingActor):
             else:
                 text = 'Ooops, looks like it\'s not yours'
         elif callback[0] == 'like':
+
             for likes_data in self.latest_tracks.get(key=message_id):
 
                 user_id = callback_query.from_user.id
@@ -443,6 +448,11 @@ class ChatActor(pykka.ThreadingActor):
                     modifier = 2
                 if callback[1] == "1":
                     from_user_id = orig_with_track_msg.from_user.id if orig_with_track_msg.from_user else 0
+
+                    liked_tracks = self.context.storage.ask(
+                        {'command': 'get_list', 'name': Storage.LIKED_TRACKS_TABLE, "type": "stat",
+                         "suffix": from_user_id})
+
                     if user_id in likes_data.likes_owners:
                         likes_data.likes -= 1 * modifier
                         likes_data.likes_owners.remove(user_id)
@@ -451,6 +461,9 @@ class ChatActor(pykka.ThreadingActor):
                             user_likes = (user_likes_raw[0], user_likes_raw[1] - 1)
                         self.users.put(from_user_id, user_likes)
                         text = "you took your like back"
+                        if orig_with_track_msg.audio:
+                            liked_tracks.remove(orig_with_track_msg.id)
+
                     elif user_id in likes_data.dislikes_owners:
                         text = "take your dislike back first"
                     else:
@@ -473,11 +486,13 @@ class ChatActor(pykka.ThreadingActor):
                             print  "selflike: %s" % str(e)
                         likes_data.likes += 1 * modifier
                         likes_data.likes_owners.add(user_id)
-                        text = "+1"
+                        text = "+1 track saved and available from inline mode"
                         user_likes = (orig_with_track_msg.from_user, 0)
                         for user_likes_raw in self.users.get(from_user_id):
                             user_likes = (user_likes_raw[0], user_likes_raw[1] + 1)
                         self.users.put(from_user_id, user_likes)
+                        if orig_with_track_msg.audio:
+                            liked_tracks.put(orig_with_track_msg.id, orig_with_track_msg.audio.to_dict())
 
                 elif callback[1] == "0":
                     if user_id in likes_data.dislikes_owners:
@@ -733,6 +748,8 @@ class ChatActor(pykka.ThreadingActor):
                 if msg["update"] == "boring":
                     self.on_boring(message.get("token"), message.get("device"), msg.get("additional_id"),
                                    msg.get("data").get("exclude"))
+            elif message.get('command') == 'inline_query':
+                inline.on_query(message.get("q"), self)
         except Exception as ex:
             logging.exception(ex)
 

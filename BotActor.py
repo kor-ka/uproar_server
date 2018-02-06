@@ -73,19 +73,15 @@ class BotActor(pykka.ThreadingActor):
         return self.bot.sendDocument(chat_id, file_id, caption=caption, reply_to_message_id=reply_to)
 
     def reply_inline(self, q, res):
-        results = []
         offset = 0
         try:
             offset = int(q.offset)
         except:
             pass
-        i = offset
-        for r in res:
-            i += 1
-            results.append(InlineQueryResultAudio(i, r.url, r.title, performer=r.artist, audio_duration=r.duration))
-        return self.bot.answerInlineQuery(q.id, results=results,
-                                          next_offset=(None if len(results) < 49 else len(results)),
-                                          cache_time=(0 if len(results) == 0 else 1000 * 60 * 60 * 24 * 365))
+
+        return self.bot.answerInlineQuery(q.id, results=res,
+                                          next_offset=(None if len(res) < 10 else len(res) + offset),
+                                          cache_time=1)
 
     def on_receive(self, message):
         try:
