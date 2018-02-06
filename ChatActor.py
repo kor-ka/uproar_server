@@ -450,7 +450,7 @@ class ChatActor(pykka.ThreadingActor):
                     from_user_id = orig_with_track_msg.from_user.id if orig_with_track_msg.from_user else 0
 
                     liked_tracks = self.context.storage.ask(
-                        {'command': 'get_list', 'name': Storage.LIKED_TRACKS_TABLE, "type": "stat",
+                        {'command': 'get_list', 'name': Storage.LIKED_TRACKS_TABLE,
                          "suffix": from_user_id})
 
                     if user_id in likes_data.likes_owners:
