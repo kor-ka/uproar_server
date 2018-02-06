@@ -451,7 +451,7 @@ class ChatActor(pykka.ThreadingActor):
 
                     liked_tracks = self.context.storage.ask(
                         {'command': 'get_list', 'name': Storage.LIKED_TRACKS_TABLE,
-                         "suffix": from_user_id})
+                         "suffix": callback_query.from_user.id})
 
                     if user_id in likes_data.likes_owners:
                         likes_data.likes -= 1 * modifier
