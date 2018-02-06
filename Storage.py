@@ -40,6 +40,7 @@ class StorageActor(pykka.ThreadingActor):
         )
 
     def on_receive(self, message):
+        sql = None
         try:
             print "Storage Actor msg " + str(message)
             key = message.get('key')
@@ -74,8 +75,9 @@ class StorageActor(pykka.ThreadingActor):
                         res.append(pickle.loads(str(v[0])))
                     cur.close()
                 except Exception as ex:
-                    print 'on get: ' + str(ex)
-                    print( 'with: ' + sql)
+                    logging.exception(ex)
+                    if sql:
+                        print( 'with: ' + sql)
                     self.db.rollback()
                 cur.close()
                 return res
