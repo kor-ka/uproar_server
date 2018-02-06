@@ -61,20 +61,21 @@ class StorageActor(pykka.ThreadingActor):
                         cur.execute("SELECT val from %s %s" % (message.get("table"), where))
 
                     else:
-                        cur.execute('''SELECT *
+                        sql = '''SELECT *
                                         FROM %s
                                         %s
                                         ORDER BY id %s 
                                         %s
-                                        %s
-                                        ;''' % (message.get("table"), where, order, limit, offset))
+                                        %s;''' % (message.get("table"), where, order, limit, offset)
+                        cur.execute(sql)
 
                     vals = cur.fetchall()
                     for v in vals:
                         res.append(pickle.loads(str(v[0])))
                     cur.close()
                 except Exception as ex:
-                    print 'on get:' + str(ex)
+                    print 'on get: ' + str(ex)
+                    print( 'with: ' + sql)
                     self.db.rollback()
                 cur.close()
                 return res
