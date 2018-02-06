@@ -18,7 +18,7 @@ REMINDER_STORAGE = 'reminder_storage'
 CHAT_STAT_TABLE = 'chat_stats_table'
 USER_STAT_TABLE = 'user_stats_table'
 EVENTS_STAT_TABLE = 'event_stats_table'
-LIKED_TRACKS_TABLE = 'liked_tracks_table'
+LIKED_TRACKS_TABLE = 'liked_track_table'
 
 
 class StorageActor(pykka.ThreadingActor):
