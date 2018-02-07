@@ -370,7 +370,6 @@ class ChatActor(pykka.ThreadingActor):
         return device_ref
 
     def get_d_url(self, file_id):
-        start = self.time_milis()
 
         durl = None
         try:
@@ -387,7 +386,6 @@ class ChatActor(pykka.ThreadingActor):
                 durl = 'http://uproar.ddns.net/proxy/' + urllib.quote(file_path.encode('utf-8'))
         except Exception as e:
             print (e)
-        print('get_d_url: ' + str(self.time_milis() - start));
 
         return durl
 
@@ -694,7 +692,6 @@ class ChatActor(pykka.ThreadingActor):
         latest_tracks_list = self.latest_tracks.get()
         if len(latest_tracks_list) > 0:
 
-            start = self.time_milis()
             # old stuff
             t = random.choice(latest_tracks_list)
             status = t.device_status.get(token.split('-')[1])
@@ -706,7 +703,6 @@ class ChatActor(pykka.ThreadingActor):
                     device.tell({'command': 'add_track', 'track': t.data, 'additional_id': additional_id})
                 elif isinstance(t, YoutubeVidStatus):
                     device.tell({'command': 'add_youtube_link', 'youtube_link': t.data, 'additional_id': additional_id})
-            print('old boring: ' + str(self.time_milis() - start));
 
             # reach boring
             start = self.time_milis()
@@ -717,11 +713,9 @@ class ChatActor(pykka.ThreadingActor):
                                             track.original_msg_id)) if track.original_msg_id in exclude else (
                                             random.randint(
                                                 0, 1000) - track.likes * 100 + track.dislikes * 300))
-            print('new boring sort: ' + str(self.time_milis() - start));
 
-            start = self.time_milis()
             res = []
-            for t in latest_tracks_list[:10]:
+            for t in latest_tracks_list[:5]:
                 t.data['boring'] = True
                 content = None
                 if isinstance(t, TrackStatus):
@@ -732,7 +726,6 @@ class ChatActor(pykka.ThreadingActor):
                 res.append(content)
             device.tell({'command': 'publish', "data": {"boring_list": res}, "topic": "boring_list",
                          'additional_id': additional_id})
-            print('new boring build and send: ' + str(self.time_milis() - start));
 
 
     def time_milis(self):
