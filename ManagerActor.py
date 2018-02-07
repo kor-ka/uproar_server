@@ -34,36 +34,40 @@ class ManagerActor(pykka.ThreadingActor):
         self.inline_actors = dict()
 
         self.chats_stat = self.context.storage.ask(
-            {'command': 'get_list', 'name': Storage.CHAT_STAT_TABLE, "type":"stat"}) # type: DbList
+            {'command': 'get_list', 'name': Storage.CHAT_STAT_TABLE, "type": "stat"})  # type: DbList
 
     def on_message(self, message):
-        self.get_chat(message.chat_id).tell({'command':'message', 'message':message})
+        self.get_chat(message.chat_id, chat_type=message.chat.type).tell({'command': 'message', 'message': message})
         if message.chat.type == 'private':
             self.get_user(message.from_user.id).tell({"command": "msg", "msg": message})
 
     def on_callback_query(self, callback_query):
         if callback_query.message:
-            self.get_chat(callback_query.message.chat_id).tell({'command':'callback_query', 'callback_query':callback_query})
+            self.get_chat(callback_query.message.chat_id, chat_type=callback_query.chat.type).tell(
+                {'command': 'callback_query', 'callback_query': callback_query})
 
     def on_inline_query(self, inline_query):
-        self.get_chat(inline_query.from_user.id).tell({"command": "inline_query", "q":inline_query})
+        self.get_chat(inline_query.from_user.id).tell({"command": "inline_query", "q": inline_query})
         # self.get_inline_actor(inline_query.from_user.id).tell({"command": "q", "q":inline_query})
 
     def on_pre_checkout_query(self, pre_checkout_query):
-        self.get_user(pre_checkout_query.from_user.id).tell({"command": "pre", "pre":pre_checkout_query})
+        self.get_user(pre_checkout_query.from_user.id).tell({"command": "pre", "pre": pre_checkout_query})
 
     def on_device_update(self, token, update):
-        self.get_device(token).tell({'command':'update', 'update':update})
+        self.get_device(token).tell({'command': 'update', 'update': update})
 
     def on_device_out_update(self, token, message):
-        self.get_device(token).tell({'command':'device_out', 'update':message})
+        self.get_device(token).tell({'command': 'device_out', 'update': message})
 
-    def get_chat(self, chat_id):
+    def get_chat(self, chat_id, chat_type=None):
         chat = self.chats.get(chat_id)
         if chat is None or not chat.is_alive:
             chat = ChatActor.ChatActor.start(chat_id, self.actor_ref, self.bot, self.context)
             self.chats[chat_id] = chat
-            self.chats_stat.put_stat({"id":chat_id})
+
+        if chat_type != 'private':
+            self.chats_stat.put_stat({"id": chat_id})
+
         return chat
 
     def get_user(self, user_id):
@@ -113,4 +117,3 @@ class ManagerActor(pykka.ThreadingActor):
                 pprint(message['data'])
         except Exception as ex:
             logging.exception(ex)
-
