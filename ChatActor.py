@@ -763,7 +763,7 @@ class ChatActor(pykka.ThreadingActor):
                 {"type": message.get("command"), "time": int(round(time() * 1000)) - start, "chat": self.chat_id})
         except Exception as ex:
             logging.exception(ex)
-            self.error_stats.put_stat({"type": message.get("command"), "ex": ex.message, "chat": self.chat_id})
+            self.error_stats.put_stat({"type": "error_" + message.get("command"), "ex": ex.message, "chat": self.chat_id})
 
 
 class DeviceData(object):
