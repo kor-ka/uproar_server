@@ -65,7 +65,7 @@ class ManagerActor(pykka.ThreadingActor):
             chat = ChatActor.ChatActor.start(chat_id, self.actor_ref, self.bot, self.context)
             self.chats[chat_id] = chat
 
-        if chat_type != 'private':
+        if chat_type and chat_type != 'private':
             self.chats_stat.put_stat({"id": chat_id})
 
         return chat
