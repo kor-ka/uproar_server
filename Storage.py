@@ -19,6 +19,8 @@ CHAT_STAT_TABLE = 'chat_stats_table'
 USER_STAT_TABLE = 'user_stats_table'
 EVENTS_STAT_TABLE = 'event_stats_table'
 LIKED_TRACKS_TABLE = 'liked_trackss_table'
+TIME_TRACK_TABLE = "time_track_table"
+ERROR_STAT_TABLE = "error_stat_table"
 
 
 class StorageActor(pykka.ThreadingActor):

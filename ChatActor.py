@@ -90,6 +90,8 @@ class ChatActor(pykka.ThreadingActor):
 
         self.users_stat = None  # type: DbList
         self.events_stat = None  # type: DbList
+        self.time_stats = None  # type: DbList
+        self.error_stats = None  # type: DbList
 
     def on_start(self):
         self.latest_tracks = self.db.ask(
@@ -102,6 +104,12 @@ class ChatActor(pykka.ThreadingActor):
 
         self.events_stat = self.context.storage.ask(
             {'command': 'get_list', 'name': Storage.EVENTS_STAT_TABLE, "type": "stat"})
+
+        self.time_stats = self.context.storage.ask(
+            {'command': 'get_list', 'name': Storage.TIME_TRACK_TABLE, "type": "stat"})
+
+        self.error_stats = self.context.storage.ask(
+            {'command': 'get_list', 'name': Storage.ERROR_STAT_TABLE, "type": "stat"})
 
         self.devices = set()
 
@@ -221,7 +229,6 @@ class ChatActor(pykka.ThreadingActor):
                         device_ref = self.enshure_device_ref(device)
                         device_ref.tell({'command': 'add_youtube_link', 'youtube_link': data})
 
-
         if message.audio or message.voice:
             durl = None
 
@@ -258,8 +265,6 @@ class ChatActor(pykka.ThreadingActor):
             for device in self.devices:
                 device_ref = self.enshure_device_ref(device)
                 device_ref.tell({'command': 'add_track', 'track': data})
-
-
 
         for s in self.strategies:
             s.on_message(self, message, self.events_stat)
@@ -328,7 +333,8 @@ class ChatActor(pykka.ThreadingActor):
 
         if message.from_user:
             self.users_stat.put_stat({"id": message.from_user.id})
-        self.events_stat.put_stat({"type": "reply_to_content", "chat_id":self.chat_id, "user": str( message.from_user.id if message.from_user else -1)})
+        self.events_stat.put_stat({"type": "reply_to_content", "chat_id": self.chat_id,
+                                   "user": str(message.from_user.id if message.from_user else -1)})
 
         row = [InlineKeyboardButton(thumb_up + " 0", callback_data='like:1:' + str(message.message_id)),
                InlineKeyboardButton(thumb_down + " 0", callback_data='like:0:' + str(message.message_id)), ]
@@ -427,7 +433,7 @@ class ChatActor(pykka.ThreadingActor):
 
         try:
             self.events_stat.put_stat({"type": callback[0], "chat_id": self.chat_id,
-                                  "user": str(callback_query.from_user.id if callback_query.from_user else -1)})
+                                       "user": str(callback_query.from_user.id if callback_query.from_user else -1)})
         except:
             pass
 
@@ -661,7 +667,7 @@ class ChatActor(pykka.ThreadingActor):
         title = None
         if chat:
             title = chat.get("title") if chat.get("title") else chat.get("username") if chat.get("username") else (
-            chat.get("first_name") + chat.get("last_name"))
+                chat.get("first_name") + chat.get("last_name"))
         return title
 
     def send_current(self, additional_id, device, t, token):
@@ -720,6 +726,8 @@ class ChatActor(pykka.ThreadingActor):
 
     def on_receive(self, message):
         try:
+            start = int(round(time() * 1000))
+
             print "Chat Actor msg " + str(message)
             if message.get('command') == 'message':
                 self.on_message(message.get('message'))
@@ -750,8 +758,12 @@ class ChatActor(pykka.ThreadingActor):
                                    msg.get("data").get("exclude"))
             elif message.get('command') == 'inline_query':
                 inline.on_query(message.get("q"), self)
+
+            self.time_stats.put_stat(
+                {"type": message.get("command"), "time": int(round(time() * 1000)) - start, "chat": self.chat_id})
         except Exception as ex:
             logging.exception(ex)
+            self.error_stats.put_stat({"type": message.get("command"), "ex": ex.message, "chat": self.chat_id})
 
 
 class DeviceData(object):
