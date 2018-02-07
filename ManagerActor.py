@@ -43,7 +43,7 @@ class ManagerActor(pykka.ThreadingActor):
 
     def on_callback_query(self, callback_query):
         if callback_query.message:
-            self.get_chat(callback_query.message.chat_id, chat_type=callback_query.chat.type).tell(
+            self.get_chat(callback_query.message.chat_id, chat_type=callback_query.message.chat.type).tell(
                 {'command': 'callback_query', 'callback_query': callback_query})
 
     def on_inline_query(self, inline_query):
