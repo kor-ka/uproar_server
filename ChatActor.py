@@ -462,7 +462,7 @@ class ChatActor(pykka.ThreadingActor):
                         self.users.put(from_user_id, user_likes)
                         text = "you took your like back"
                         if orig_with_track_msg.audio:
-                            liked_tracks.remove(orig_with_track_msg.message_id)
+                            liked_tracks.remove(orig_with_track_msg.audio.file_id)
 
                     elif user_id in likes_data.dislikes_owners:
                         text = "take your dislike back first"
@@ -492,7 +492,7 @@ class ChatActor(pykka.ThreadingActor):
                             user_likes = (user_likes_raw[0], user_likes_raw[1] + 1)
                         self.users.put(from_user_id, user_likes)
                         if orig_with_track_msg.audio:
-                            liked_tracks.put(orig_with_track_msg.message_id, orig_with_track_msg.audio.to_json())
+                            liked_tracks.put(orig_with_track_msg.audio.file_id, orig_with_track_msg.audio.to_json())
 
                 elif callback[1] == "0":
                     if user_id in likes_data.dislikes_owners:
