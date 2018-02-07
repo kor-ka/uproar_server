@@ -18,5 +18,5 @@ def on_query(q, chat_actor):
     res = []
     for track in liked_tracks:
         track = json.loads(track)
-        res.append(InlineQueryResultAudio(str(q.from_user.id)  + "_"+ str(track.get("file_id")), chat_actor.get_d_url(track.get("file_id")), track.get("title"), performer=track.get("artist"), audio_duration=track.get("duration")))
+        res.append(InlineQueryResultAudio(str(q.from_user.id)  + "_"+ str(track.get("file_id")), track.get("file_id"), track.get("title"), performer=track.get("performer"), audio_duration=track.get("duration")))
     chat_actor.context.bot.tell({"command":"inline_res", "q":q, "res": res})
