@@ -456,22 +456,61 @@ class ChatActor(pykka.ThreadingActor):
                 if user_nick and user_nick == "kor_ka":
                     modifier = 2
                 if callback[1] == "1":
+
+                    #
+                    t = self.time_milis()
+                    #
+
                     from_user_id = orig_with_track_msg.from_user.id if orig_with_track_msg.from_user else 0
 
                     liked_tracks = self.context.storage.ask(
                         {'command': 'get_list', 'name': Storage.LIKED_TRACKS_TABLE,
                          "suffix": callback_query.from_user.id})
 
+                    #
+                    print str(self.time_milis() - t) + " get liked tracks"
+                    t = self.time_milis()
+                    #
+
                     if user_id in likes_data.likes_owners:
+
+                        #
+                        print str(self.time_milis() - t) + " found uwner"
+                        t = self.time_milis()
+                        #
+
                         likes_data.likes -= 1 * modifier
                         likes_data.likes_owners.remove(user_id)
+
+                        #
+                        print str(self.time_milis() - t) + " decriment and remove owner"
+                        t = self.time_milis()
+                        #
+
                         user_likes = (orig_with_track_msg.from_user, 0)
                         for user_likes_raw in self.users.get(from_user_id):
                             user_likes = (user_likes_raw[0], user_likes_raw[1] - 1)
+
+                        #
+                        print str(self.time_milis() - t) + " update user likes"
+                        t = self.time_milis()
+                        #
+
                         self.users.put(from_user_id, user_likes)
+
+                        #
+                        print str(self.time_milis() - t) + " write user likes"
+                        t = self.time_milis()
+                        #
+
                         text = "you took your like back"
                         if orig_with_track_msg.audio:
                             liked_tracks.remove(orig_with_track_msg.audio.file_id)
+
+                            #
+                            print str(self.time_milis() - t) + " remove from liked tracks"
+                            t = self.time_milis()
+                            #
 
                     elif user_id in likes_data.dislikes_owners:
                         text = "take your dislike back first"
