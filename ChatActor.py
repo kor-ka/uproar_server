@@ -8,6 +8,8 @@ import random
 import re
 import logging
 
+import thread
+
 import apiai
 import pykka, os, urllib, json
 import requests
@@ -230,7 +232,6 @@ class ChatActor(pykka.ThreadingActor):
                         device_ref.tell({'command': 'add_youtube_link', 'youtube_link': data})
 
         if message.audio or message.voice:
-            durl = None
 
             if message.audio:
                 file_id = message.audio.file_id
@@ -761,8 +762,8 @@ class ChatActor(pykka.ThreadingActor):
             elif message.get('command') == 'device_message':
                 msg = message.get("message")
                 if msg["update"] == "boring":
-                    self.on_boring(message.get("token"), message.get("device"), msg.get("additional_id"),
-                                   msg.get("data").get("exclude"))
+                    thread.start_new_thread(self.on_boring, (message.get("token"), message.get("device"), msg.get("additional_id"),
+                                   msg.get("data").get("exclude")))
             elif message.get('command') == 'inline_query':
                 inline.on_query(message.get("q"), self)
 
