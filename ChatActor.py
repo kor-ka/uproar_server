@@ -598,7 +598,7 @@ class ChatActor(pykka.ThreadingActor):
         if answer:
             callback_query.answer(text=text, show_alert=show_alert)
             #
-            print str(self.time_milis() - t) + " answer
+            print str(self.time_milis() - t) + " answer"
             #
 
     def get_keyboard(self, likes_data, orig_with_track_msg, message=None, token=None):
