@@ -28,7 +28,7 @@ class UserActor(pykka.ThreadingActor):
             self.storage = self.db.ask(
                 {'command': 'get_list', 'name': Storage.USER_STORAGE, 'suffix': str(self.id)})
 
-            self.liked_tracks = self.context.storage.ask(
+            self.liked_tracks = self.db.ask(
                 {'command': 'get_list', 'name': Storage.LIKED_TRACKS_TABLE,
                  "suffix": self.id})
 
