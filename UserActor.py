@@ -21,10 +21,17 @@ class UserActor(pykka.ThreadingActor):
         self.storage = None
         self.crown_data = {"ends":0}
 
+        liked_tracks = None
+
     def on_start(self):
         try:
             self.storage = self.db.ask(
                 {'command': 'get_list', 'name': Storage.USER_STORAGE, 'suffix': str(self.id)})
+
+            self.liked_tracks = self.context.storage.ask(
+                {'command': 'get_list', 'name': Storage.LIKED_TRACKS_TABLE,
+                 "suffix": self.id})
+
             for crown in self.storage.get('crown'):
                 self.crown_data = crown
                 pprint(self.crown_data)
@@ -40,6 +47,10 @@ class UserActor(pykka.ThreadingActor):
                 self.on_precheckout(message['pre'])
             elif message['command'] == 'crown_active':
                 return self.crown_active()
+            elif message['command'] == 'remove_track':
+                self.liked_tracks.remove(message.get("file_id"))
+            elif message['command'] == 'add_track':
+                self.liked_tracks.put(message.get("file_id"), message.get("data"))
         except Exception as ex:
             logging.exception(ex)
 

@@ -81,7 +81,6 @@ class ChatActor(pykka.ThreadingActor):
         self.devices_tokens = None
         self.latest_tracks = None
         self.current_orig_message_id = None
-        self.users = None
         self.current_playing_ids = dict()
         self.skip_gifs = ["CgADBAADqWkAAtkcZAc7PiBvHsR8IwI", "CgADBAADrgMAAuMYZAcKVOFNREMINDER_STORAGEoEE_xgI",
                           "CgADBAADJkAAAnobZAftbqSTl-HsIQI", "CgADBAADLBkAAuIaZAej8zwqpX3GeAI"]
@@ -114,8 +113,6 @@ class ChatActor(pykka.ThreadingActor):
             {'command': 'get_list', 'name': Storage.ERROR_STAT_TABLE, "type": "stat"})
 
         self.devices = set()
-
-        self.users = self.db.ask({'command': 'get_list', 'name': Storage.USER_TABLE, 'suffix': self.chat_id})
 
         for t in self.devices_tokens.get():
             self.devices.add((t, self.manager.ask({'command': 'get_device', 'token': t})))
@@ -200,17 +197,6 @@ class ChatActor(pykka.ThreadingActor):
 
                 else:
                     self.bot.tell({'command': 'reply', 'base': message, 'message': 'Ooops, looks like it\'s not yours'})
-
-            elif text.startswith('/score'):
-                sortd = sorted(self.users.get(), key=itemgetter(1))
-                score = ""
-                for user_likes in sortd:
-                    user = user_likes[0]
-                    score += (user.first_name if not user.username else  '@' + user.username) + ' ' + str(
-                        user_likes[1]) + '\n'
-                if not score:
-                    score = 'no one have likes for now'
-                self.bot.tell({'command': 'reply', 'base': message, 'message': score})
 
             elif re.match("^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$", text):
                 resp = urllib.urlopen(text)
@@ -463,54 +449,14 @@ class ChatActor(pykka.ThreadingActor):
 
                     from_user_id = orig_with_track_msg.from_user.id if orig_with_track_msg.from_user else 0
 
-                    liked_tracks = self.context.storage.ask(
-                        {'command': 'get_list', 'name': Storage.LIKED_TRACKS_TABLE,
-                         "suffix": callback_query.from_user.id})
-
-                    #
-                    print str(self.time_milis() - t) + " get liked tracks"
-                    t = self.time_milis()
-                    #
-
                     if user_id in likes_data.likes_owners:
-
-                        #
-                        print str(self.time_milis() - t) + " found uwner"
-                        t = self.time_milis()
-                        #
 
                         likes_data.likes -= 1 * modifier
                         likes_data.likes_owners.remove(user_id)
 
-                        #
-                        print str(self.time_milis() - t) + " decriment and remove owner"
-                        t = self.time_milis()
-                        #
-
-                        user_likes = (orig_with_track_msg.from_user, 0)
-                        for user_likes_raw in self.users.get(from_user_id):
-                            user_likes = (user_likes_raw[0], user_likes_raw[1] - 1)
-
-                        #
-                        print str(self.time_milis() - t) + " update user likes"
-                        t = self.time_milis()
-                        #
-
-                        self.users.put(from_user_id, user_likes)
-
-                        #
-                        print str(self.time_milis() - t) + " write user likes"
-                        t = self.time_milis()
-                        #
-
-                        text = "you took your like back"
                         if orig_with_track_msg.audio:
-                            liked_tracks.remove(orig_with_track_msg.audio.file_id)
-
-                            #
-                            print str(self.time_milis() - t) + " remove from liked tracks"
-                            t = self.time_milis()
-                            #
+                            self.manager.ask({"command": "get_user", "user_id": callback_query.from_user.id}).tell(
+                                {"command": "remove_track", "file_id": orig_with_track_msg.audio.file_id})
 
                     elif user_id in likes_data.dislikes_owners:
                         text = "take your dislike back first"
@@ -535,12 +481,10 @@ class ChatActor(pykka.ThreadingActor):
                         likes_data.likes += 1 * modifier
                         likes_data.likes_owners.add(user_id)
                         text = "+1 track saved and available from inline mode"
-                        user_likes = (orig_with_track_msg.from_user, 0)
-                        for user_likes_raw in self.users.get(from_user_id):
-                            user_likes = (user_likes_raw[0], user_likes_raw[1] + 1)
-                        self.users.put(from_user_id, user_likes)
+
                         if orig_with_track_msg.audio:
-                            liked_tracks.put(orig_with_track_msg.audio.file_id, orig_with_track_msg.audio.to_json())
+                            self.manager.ask({"command": "get_user", "user_id": callback_query.from_user.id}).tell(
+                                {"command": "add_track", "file_id": orig_with_track_msg.audio.file_id, "data":orig_with_track_msg.audio.to_json()})
 
                 elif callback[1] == "0":
                     if user_id in likes_data.dislikes_owners:
@@ -554,23 +498,12 @@ class ChatActor(pykka.ThreadingActor):
                         likes_data.dislikes_owners.add(user_id)
                         text = "-1"
 
-                #
-                t = self.time_milis()
-                #
                 self.latest_tracks.put(message_id, likes_data)
-                #
-                print str(self.time_milis() - t) + " update track info"
-                t = self.time_milis()
-                #
 
                 keyboard = self.get_keyboard(likes_data, message_id, message=message)
 
                 self.bot.tell({'command': 'edit_reply_markup', 'base': callback_query,
                                'reply_markup': InlineKeyboardMarkup(keyboard)})
-                #
-                print str(self.time_milis() - t) + " update message"
-                t = self.time_milis()
-                #
 
         elif callback[0] == 'skip':
             for likes_data in self.latest_tracks.get(int(message_id)):
@@ -593,13 +526,10 @@ class ChatActor(pykka.ThreadingActor):
                                "caption": "Promote by %s" % callback_query.from_user.first_name,
                                "reply_to": int(message_id), "file_id": random.choice(self.promote_gifs)})
 
-
-        t = self.time_milis()
         if answer:
-            callback_query.answer(text=text, show_alert=show_alert)
-            #
-            print str(self.time_milis() - t) + " answer"
-            #
+            def answr(callback_query, text, show_alert):
+                callback_query.answer(text=text, show_alert=show_alert)
+            thread.start_new_thread(answr, (callback_query, text, show_alert))
 
     def get_keyboard(self, likes_data, orig_with_track_msg, message=None, token=None):
         option = None
@@ -783,7 +713,6 @@ class ChatActor(pykka.ThreadingActor):
             device.tell({'command': 'publish', "data": {"boring_list": res}, "topic": "boring_list",
                          'additional_id': additional_id})
 
-
     def time_milis(self):
         return int(round(time() * 1000))
 
@@ -812,13 +741,15 @@ class ChatActor(pykka.ThreadingActor):
             elif message.get('command') == 'device_content_status':
                 self.on_device_update(message.get('content_status'), message.get('token'))
             elif message.get('command') == 'device_online':
-                thread.start_new_thread(self.on_device_online, (message.get('token'), message.get('device'), message.get('additional_id'),
-                                      message.get('start_with')))
+                thread.start_new_thread(self.on_device_online,
+                                        (message.get('token'), message.get('device'), message.get('additional_id'),
+                                         message.get('start_with')))
             elif message.get('command') == 'device_message':
                 msg = message.get("message")
                 if msg["update"] == "boring":
-                    thread.start_new_thread(self.on_boring, (message.get("token"), message.get("device"), msg.get("additional_id"),
-                                   msg.get("data").get("exclude")))
+                    thread.start_new_thread(self.on_boring,
+                                            (message.get("token"), message.get("device"), msg.get("additional_id"),
+                                             msg.get("data").get("exclude")))
             elif message.get('command') == 'inline_query':
                 inline.on_query(message.get("q"), self)
 
@@ -826,7 +757,8 @@ class ChatActor(pykka.ThreadingActor):
                 {"type": message.get("command"), "time": self.time_milis() - start, "chat": self.chat_id})
         except Exception as ex:
             logging.exception(ex)
-            self.error_stats.put_stat({"type": "error_" + message.get("command"), "ex": ex.message, "chat": self.chat_id})
+            self.error_stats.put_stat(
+                {"type": "error_" + message.get("command"), "ex": ex.message, "chat": self.chat_id})
 
 
 class DeviceData(object):
