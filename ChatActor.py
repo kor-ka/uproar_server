@@ -757,8 +757,8 @@ class ChatActor(pykka.ThreadingActor):
             elif message.get('command') == 'device_content_status':
                 self.on_device_update(message.get('content_status'), message.get('token'))
             elif message.get('command') == 'device_online':
-                self.on_device_online(message.get('token'), message.get('device'), message.get('additional_id'),
-                                      message.get('start_with'))
+                thread.start_new_thread(self.on_device_online, (message.get('token'), message.get('device'), message.get('additional_id'),
+                                      message.get('start_with')))
             elif message.get('command') == 'device_message':
                 msg = message.get("message")
                 if msg["update"] == "boring":
