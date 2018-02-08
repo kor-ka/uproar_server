@@ -412,6 +412,10 @@ class ChatActor(pykka.ThreadingActor):
         return self.manager.ask({'command': 'get_device', 'token': token})
 
     def on_callback_query(self, callback_query):
+        #
+        t = self.time_milis()
+        #
+
         callback = string.split(callback_query.data, ":")
         if 0 == len(callback):
             return
@@ -456,10 +460,6 @@ class ChatActor(pykka.ThreadingActor):
                 if user_nick and user_nick == "kor_ka":
                     modifier = 2
                 if callback[1] == "1":
-
-                    #
-                    t = self.time_milis()
-                    #
 
                     from_user_id = orig_with_track_msg.from_user.id if orig_with_track_msg.from_user else 0
 
@@ -554,12 +554,23 @@ class ChatActor(pykka.ThreadingActor):
                         likes_data.dislikes_owners.add(user_id)
                         text = "-1"
 
+                #
+                t = self.time_milis()
+                #
                 self.latest_tracks.put(message_id, likes_data)
+                #
+                print str(self.time_milis() - t) + " update track info"
+                t = self.time_milis()
+                #
 
                 keyboard = self.get_keyboard(likes_data, message_id, message=message)
 
                 self.bot.tell({'command': 'edit_reply_markup', 'base': callback_query,
                                'reply_markup': InlineKeyboardMarkup(keyboard)})
+                #
+                print str(self.time_milis() - t) + " update message"
+                t = self.time_milis()
+                #
 
         elif callback[0] == 'skip':
             for likes_data in self.latest_tracks.get(int(message_id)):
@@ -582,8 +593,13 @@ class ChatActor(pykka.ThreadingActor):
                                "caption": "Promote by %s" % callback_query.from_user.first_name,
                                "reply_to": int(message_id), "file_id": random.choice(self.promote_gifs)})
 
+
+        t = self.time_milis()
         if answer:
             callback_query.answer(text=text, show_alert=show_alert)
+            #
+            print str(self.time_milis() - t) + " answer
+            #
 
     def get_keyboard(self, likes_data, orig_with_track_msg, message=None, token=None):
         option = None
