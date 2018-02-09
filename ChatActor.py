@@ -210,16 +210,7 @@ class ChatActor(pykka.ThreadingActor):
             else:
                 return
 
-            if message.audio:
-                title = ' - '.join(filter(None, (message.audio.performer, message.audio.title)))
-                title = playing if not title else title
-                title = title.encode("utf-8")
-            elif message.voice:
-                title = message.from_user.first_name + " - voice"
-            else:
-                title = "some_audio"
-            reply = self.reply_to_content(message, title)
-            thread.start_new_thread(self.publish_track, (file_id, message, user_id, title, reply))
+            thread.start_new_thread(self.publish_track, (file_id, message, user_id))
 
         for s in self.strategies:
             s.on_message(self, message, self.events_stat)
@@ -243,9 +234,19 @@ class ChatActor(pykka.ThreadingActor):
                 device_ref = self.enshure_device_ref(device)
                 device_ref.tell({'command': 'add_youtube_link', 'youtube_link': data})
 
-    def publish_track(self, file_id, message, user_id, title, reply):
+    def publish_track(self, file_id, message, user_id):
         durl = self.get_d_url(file_id)
-
+        # if durl is None:
+        #     return
+        if message.audio:
+            title = ' - '.join(filter(None, (message.audio.performer, message.audio.title)))
+            title = playing if not title else title
+            title = title.encode("utf-8")
+        elif message.voice:
+            title = message.from_user.first_name + " - voice"
+        else:
+            title = "some_audio"
+        reply = self.reply_to_content(message, title)
         status = TrackStatus(message.message_id, reply.message_id, message.chat_id, title, file_id,
                              user_id, time(),
                              self.get_chat_title(message.from_user.to_dict() if message.from_user else None))
