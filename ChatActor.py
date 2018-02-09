@@ -199,23 +199,7 @@ class ChatActor(pykka.ThreadingActor):
                     self.bot.tell({'command': 'reply', 'base': message, 'message': 'Ooops, looks like it\'s not yours'})
 
             elif re.match("^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$", text):
-                resp = urllib.urlopen(text)
-                if resp.getcode() / 100 == 2:
-                    page = resp.read()
-                    regex = re.compile('<title>(.*?)</title>', re.IGNORECASE | re.DOTALL)
-                    title = regex.search(page).group(1)
-                    reply = self.reply_to_content(message, title)
-                    status = YoutubeVidStatus(message.message_id, reply.message_id, message.chat_id, title, text,
-                                              user_id, time(), self.get_chat_title(
-                            message.from_user.to_dict() if message.from_user else None))
-                    data = status.data
-                    data['url'] = text
-
-                    self.latest_tracks.put(message.message_id, status)
-
-                    for device in self.devices:
-                        device_ref = self.enshure_device_ref(device)
-                        device_ref.tell({'command': 'add_youtube_link', 'youtube_link': data})
+                thread.start_new_thread(self.publish_youtube_track, (message, text, user_id))
 
         if message.audio or message.voice:
 
@@ -226,35 +210,52 @@ class ChatActor(pykka.ThreadingActor):
             else:
                 return
 
-            durl = self.get_d_url(file_id)
+            thread.start_new_thread(self.publish_track, (file_id, message, user_id))
 
-            if durl is None:
-                return
+        for s in self.strategies:
+            s.on_message(self, message, self.events_stat)
 
-            if message.audio:
-                title = ' - '.join(filter(None, (message.audio.performer, message.audio.title)))
-                title = playing if not title else title
-                title = title.encode("utf-8")
-            elif message.voice:
-                title = message.from_user.first_name + " - voice"
-            else:
-                title = "some_audio"
-
+    def publish_youtube_track(self, message, text, user_id):
+        resp = urllib.urlopen(text)
+        if resp.getcode() / 100 == 2:
+            page = resp.read()
+            regex = re.compile('<title>(.*?)</title>', re.IGNORECASE | re.DOTALL)
+            title = regex.search(page).group(1)
             reply = self.reply_to_content(message, title)
-
-            status = TrackStatus(message.message_id, reply.message_id, message.chat_id, title, file_id,
-                                 user_id, time(),
-                                 self.get_chat_title(message.from_user.to_dict() if message.from_user else None))
+            status = YoutubeVidStatus(message.message_id, reply.message_id, message.chat_id, title, text,
+                                      user_id, time(), self.get_chat_title(
+                    message.from_user.to_dict() if message.from_user else None))
             data = status.data
-            data['track_url'] = durl
+            data['url'] = text
+
             self.latest_tracks.put(message.message_id, status)
 
             for device in self.devices:
                 device_ref = self.enshure_device_ref(device)
-                device_ref.tell({'command': 'add_track', 'track': data})
+                device_ref.tell({'command': 'add_youtube_link', 'youtube_link': data})
 
-        for s in self.strategies:
-            s.on_message(self, message, self.events_stat)
+    def publish_track(self, file_id, message, user_id):
+        durl = self.get_d_url(file_id)
+        # if durl is None:
+        #     return
+        if message.audio:
+            title = ' - '.join(filter(None, (message.audio.performer, message.audio.title)))
+            title = playing if not title else title
+            title = title.encode("utf-8")
+        elif message.voice:
+            title = message.from_user.first_name + " - voice"
+        else:
+            title = "some_audio"
+        reply = self.reply_to_content(message, title)
+        status = TrackStatus(message.message_id, reply.message_id, message.chat_id, title, file_id,
+                             user_id, time(),
+                             self.get_chat_title(message.from_user.to_dict() if message.from_user else None))
+        data = status.data
+        data['track_url'] = durl
+        self.latest_tracks.put(message.message_id, status)
+        for device in self.devices:
+            device_ref = self.enshure_device_ref(device)
+            device_ref.tell({'command': 'add_track', 'track': data})
 
     def send_url(self, message):
         chat_id = str(message.chat_id).replace('-', '')
