@@ -29,8 +29,9 @@ class DeviceActor(pykka.ThreadingActor):
         self.storage = self.db.ask(
             {'command': 'get_list', 'name': Storage.DEVICE_STORAGE, 'suffix': str(self.token).replace(":", "")})
         for placeholder in self.storage.get('placeholder'):
-            self.placeholder = placeholder
-            self.chat = self.manager.ask({'command': 'get_chat', 'chat_id': self.placeholder.chat_id})
+            if placeholder:
+                self.placeholder = placeholder
+                self.chat = self.manager.ask({'command': 'get_chat', 'chat_id': self.placeholder.chat_id})
 
     def on_update_content_status(self, update, additional_id):
         if str(self.token).startswith("c-"):
