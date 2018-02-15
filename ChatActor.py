@@ -98,7 +98,7 @@ class ChatActor(pykka.ThreadingActor):
     def on_start(self):
         self.latest_tracks = self.db.ask(
             {'command': 'get_list', 'name': Storage.TRACK_TABLE, 'suffix': self.chat_id})
-        self.latest_tracks = self.db.ask(
+        self.chat_storage = self.db.ask(
             {'command': 'get_list', 'name': Storage.CHAT_STORAGE, 'suffix': self.chat_id})
         self.devices_tokens = self.db.ask(
             {'command': 'get_list', 'name': Storage.CHAT_DEVICES_TABLE, 'suffix': self.chat_id})
