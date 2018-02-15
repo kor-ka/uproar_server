@@ -484,11 +484,12 @@ class ChatActor(pykka.ThreadingActor):
                             print  "selflike: %s" % str(e)
                         likes_data.likes += 1 * modifier
                         likes_data.likes_owners.add(user_id)
-                        text = "+1 track saved and available from inline mode"
+                        text = "+1"
 
                         if orig_with_track_msg.audio:
                             self.manager.ask({"command": "get_user", "user_id": callback_query.from_user.id}).tell(
                                 {"command": "add_track", "file_id": orig_with_track_msg.audio.file_id, "data":orig_with_track_msg.audio.to_json()})
+                            text = "+1 track saved and available from inline mode"
 
                 elif callback[1] == "0":
                     if user_id in likes_data.dislikes_owners:

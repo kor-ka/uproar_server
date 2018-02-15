@@ -23,7 +23,7 @@ def on_message(chat_actor, message, events_stat):
         events_stat.put_stat({"type": "boarding_start", "chat_id": chat_actor.chat_id,
                           "user": str(message.from_user.id if message.from_user else -1)})
 
-    if (message.audio or (message.text and re.match("^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$", message.text))) and len(chat_actor.chat_storage.get("is_first")) == 0:
+    if (message.audio or (message.text and re.match("^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$", message.text))) and len(chat_actor.chat_storage.get("is_first_content")) == 0:
         chat_actor.send_url(message)
         step_two(chat_actor, message)
         events_stat.put_stat({"type": "boarding_end", "chat_id": chat_actor.chat_id,
