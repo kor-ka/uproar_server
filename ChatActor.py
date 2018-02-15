@@ -80,6 +80,7 @@ class ChatActor(pykka.ThreadingActor):
         self.devices = None
         self.devices_tokens = None
         self.latest_tracks = None
+        self.chat_storage = None
         self.current_orig_message_id = None
         self.current_playing_ids = dict()
         self.skip_gifs = ["CgADBAADqWkAAtkcZAc7PiBvHsR8IwI", "CgADBAADrgMAAuMYZAcKVOFNREMINDER_STORAGEoEE_xgI",
@@ -97,6 +98,8 @@ class ChatActor(pykka.ThreadingActor):
     def on_start(self):
         self.latest_tracks = self.db.ask(
             {'command': 'get_list', 'name': Storage.TRACK_TABLE, 'suffix': self.chat_id})
+        self.latest_tracks = self.db.ask(
+            {'command': 'get_list', 'name': Storage.CHAT_STORAGE, 'suffix': self.chat_id})
         self.devices_tokens = self.db.ask(
             {'command': 'get_list', 'name': Storage.CHAT_DEVICES_TABLE, 'suffix': self.chat_id})
 

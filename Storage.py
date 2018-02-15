@@ -11,6 +11,7 @@ import pickle
 
 USER_TABLE = 'users_table'
 TRACK_TABLE = 'tracks_table'
+CHAT_STORAGE = 'chat_storage'
 CHAT_DEVICES_TABLE = 'chats_devices_table'
 DEVICE_STORAGE = 'device_storage'
 USER_STORAGE = 'user_storage'
