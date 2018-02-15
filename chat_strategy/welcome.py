@@ -24,18 +24,15 @@ def on_message(chat_actor, message, events_stat):
                           "user": str(message.from_user.id if message.from_user else -1)})
 
     if (message.audio or (message.text and re.match("^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$", message.text))) and len(chat_actor.chat_storage.get("is_first")) == 0:
-        chat_actor.chat_storage.put("is_first", True)
         chat_actor.send_url(message)
         step_two(chat_actor, message)
         events_stat.put_stat({"type": "boarding_end", "chat_id": chat_actor.chat_id,
                          "user": str(message.from_user.id if message.from_user else -1)})
-
-    if message.text and "/twst" in message.text:
-        step_two(chat_actor,message)
+        chat_actor.chat_storage.put("is_first_content", True)
 
 
 def step_two(chat_actor, message):
-    chat_actor.bot.ask(
+    chat_actor.bot.tell(
         {'command': 'send', 'chat_id': message.chat_id,
          'message': 'Great!'
                     '\nAs it is your first track in this chat, I\'ve made link for you :)'
