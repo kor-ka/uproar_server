@@ -9,7 +9,7 @@ def on_message(chat_actor, message, events_stat):
     chat_actor = chat_actor  # type: ChatActor
     message = message  # type: Message
 
-    if message.new_chat_members and message.new_chat_members[0].username == "uproarbot":
+    if message.new_chat_members and message.new_chat_members[0].username == "party_radio_bot":
         chat_actor.bot.ask(
             {'command': 'send', 'chat_id': message.chat_id,
              'message': 'Hi! I\'ll manage this chat playlist starting from... now! Send me some music from your own '
