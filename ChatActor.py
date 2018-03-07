@@ -635,7 +635,7 @@ class ChatActor(pykka.ThreadingActor):
             context["username"] = chat["username"]
 
         if chat and chat.get("photo"):
-            context["photo"] = chat["photo"]
+            context["photo"] = self.get_d_url(chat["photo"]["small_file_id"])
 
         device.tell(
             {"command": "publish", "data": {"context": context}, "topic": "init", "additional_id": additional_id})
