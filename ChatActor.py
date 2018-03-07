@@ -631,11 +631,11 @@ class ChatActor(pykka.ThreadingActor):
         title = self.get_chat_title(chat)
 
         context = {"title": title}
+        if chat and chat.get("username"):
+            context["username"] = chat["username"]
 
-        photo = chat.get("photo")
-        if photo:
-            photo = self.get_d_url(photo["small_file_id"])
-            context["photo"] = photo
+        if chat and chat.get("photo"):
+            context["photo"] = chat["photo"]
 
         device.tell(
             {"command": "publish", "data": {"context": context}, "topic": "init", "additional_id": additional_id})
