@@ -374,7 +374,7 @@ class ChatActor(pykka.ThreadingActor):
 
             if result is not None:
                 file_path = result.get('file_path')
-                durl = 'http://uproar.ddns.net/proxy/' + urllib.quote(file_path.encode('utf-8'))
+                durl = 'http://uproar.servebeer.com/proxy/' + urllib.quote(file_path.encode('utf-8'))
         except Exception as e:
             print (e)
 
