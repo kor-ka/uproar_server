@@ -265,7 +265,7 @@ class ChatActor(pykka.ThreadingActor):
         token = ("p-" if message.chat.type == 'private' else "c-" if message.chat.type == "channel" else "g-") + chat_id
         token_message = self.bot.ask(
             {'command': 'send', 'chat_id': message.chat_id,
-             'message': 'https://kor-ka.github.io/uproar_client_web?token=' + token})
+             'message': 'http://uproarfront.servebeer.com/?token=' + token})
         placeholder = self.bot.ask({'command': 'send',
                                     'chat_id': message.chat_id,
                                     'message': "link added"
